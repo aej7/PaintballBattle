@@ -3,75 +3,82 @@ package pb.ajneb97.database;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.util.Objects;
 
-import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import org.bukkit.configuration.file.FileConfiguration;
 
-import pb.ajneb97.PaintballBattle;
+public class DatabaseConnection implements AutoCloseable {
 
-public class DatabaseConnection {
+	private volatile Connection connection;
+	private final String host;
+	private final int port;
+	private final String database;
+	private final String username;
+	private final String password;
+	private static final Logger logger = LogManager.getLogger(DatabaseConnection.class);
 
-	private Connection connection;
-	private String host;
-	private String database;
-	private String username;
-	private String password;
-	private String tablePlayerdata;
-	private String tablePlayerPerks;
-	private String tablePlayerHats;
-	private int port;
-	
-	public DatabaseConnection(FileConfiguration config){
-		host = config.getString("mysql-database.host");
-		port = Integer.valueOf(config.getString("mysql-database.port"));
-		database = config.getString("mysql-database.database");		
-		username = config.getString("mysql-database.username");
-		password = config.getString("mysql-database.password");
-		tablePlayerdata = "paintball_data";
-		tablePlayerPerks = "paintball_perks";
-		tablePlayerHats = "paintball_hats";
-		mySqlAbrirConexion();
-		MySql.createTablePlayers(this);
-		MySql.createTablePerks(this);
-		MySql.createTableHats(this);
+  public DatabaseConnection(FileConfiguration config){
+		this.host = Objects.requireNonNull(config.getString("mysql-database.host"));
+		this.port = Integer.parseInt(Objects.requireNonNull(config.getString("mysql-database.port")));
+		this.database = Objects.requireNonNull(config.getString("mysql-database.database"));
+		this.username = Objects.requireNonNull(config.getString("mysql-database.username"));
+		this.password = Objects.requireNonNull(config.getString("mysql-database.password"));
+
+		connectToDatabase();
+		initializeTables();
 	}
 	
-	public String getTablePlayers(){
-		return this.tablePlayerdata;
+	public String getTablePlayers() {
+    return "paintball_data";
 	}
 	
 	public String getTablePerks(){
-		return this.tablePlayerPerks;
+    return "paintball_perks";
 	}
 	
 	public String getTableHats(){
-		return this.tablePlayerHats;
+    return "paintball_hats";
 	}
 	
 	public String getDatabase() {
 		return this.database;
 	}
 	
-	private void mySqlAbrirConexion(){
+	private synchronized void connectToDatabase() {
 		try {
-			synchronized(this){
-				if(getConnection() != null && !getConnection().isClosed()){
-					Bukkit.getConsoleSender().sendMessage(PaintballBattle.prefix+ChatColor.RED + "Error while connecting to the Database.");
+				if(connection != null && !isConnectionClosed()) {
+					logger.warn("Already connected to the database.");
 					return;
 				}
-				Class.forName("com.mysql.jdbc.Driver");
-				setConnection(DriverManager.getConnection("jdbc:mysql://"+this.host+":"+this.port+"/"+this.database,this.username,this.password));
-				
-				Bukkit.getConsoleSender().sendMessage(PaintballBattle.prefix+ChatColor.GREEN + "Successfully connected to the Database.");
-				return;
-			}
-			
+
+				Class.forName("com.mysql.cj.jdbc.Driver");
+				String url = String.format("jdbc:mysql://%s:%d/%s", host, port, database);
+				connection = DriverManager.getConnection(url, username, password);
+
+				logger.info("Successfully connected to the database.");
 		} catch (SQLException e) {
-			e.printStackTrace();
-		}catch(ClassNotFoundException e){
-			e.printStackTrace();
+			logger.error("An error occurred while trying to connect to the database.", e);
+		} catch (ClassNotFoundException e) {
+			logger.error("MySQL JDBC Driver not found.", e);
 		}
+	}
+
+	private boolean isConnectionClosed() {
+		try {
+			return connection == null || connection.isClosed();
+		} catch (SQLException e) {
+			logger.error("An error occurred while trying to check if the connection is closed.", e);
+			return true;
+		}
+	}
+
+	private void initializeTables() {
+		MySql.createTablePlayers(this);
+		MySql.createTablePerks(this);
+		MySql.createTableHats(this);
 	}
 	
 	public Connection getConnection() {
@@ -80,5 +87,13 @@ public class DatabaseConnection {
 
 	public void setConnection(Connection connection) {
 		this.connection = connection;
+	}
+
+	@Override
+	public void close() throws SQLException {
+		if (connection != null && !connection.isClosed()) {
+			connection.close();
+			logger.info("Database connection closed.");
+		}
 	}
 }
