@@ -104,7 +104,7 @@ public class CooldownKillstreaks {
 					if(Bukkit.getVersion().contains("1.8")) {
 						l.getWorld().playEffect(l, Effect.valueOf("VILLAGER_THUNDERCLOUD"),1);	
 					}else {
-						l.getWorld().spawnParticle(Particle.VILLAGER_ANGRY,l,1);
+						l.getWorld().spawnParticle(Particle.ANGRY_VILLAGER,l,1);
 					}
 					return true;
 				}else {

@@ -513,7 +513,7 @@ public class PartidaManager {
 	
 	public static void lanzarFuegos(ArrayList<JugadorPaintball> jugadores) {
 		for(JugadorPaintball j : jugadores) {
-			Firework fw = (Firework) j.getJugador().getWorld().spawnEntity(j.getJugador().getLocation(), EntityType.FIREWORK);
+			Firework fw = (Firework) j.getJugador().getWorld().spawnEntity(j.getJugador().getLocation(), EntityType.FIREWORK_ROCKET);
 	        FireworkMeta fwm = fw.getFireworkMeta();
 	        Type type = Type.BALL;
 	        Color c1 = Color.RED;
@@ -786,7 +786,7 @@ public class PartidaManager {
 				if(Bukkit.getVersion().contains("1.8")) {
 					jugadorDañado.getJugador().getWorld().playEffect(jugadorDañado.getJugador().getLocation(), Effect.valueOf("EXPLOSION_LARGE"), 2);
 				}else {
-					jugadorDañado.getJugador().getWorld().spawnParticle(Particle.EXPLOSION_LARGE,jugadorDañado.getJugador().getLocation(),2);
+					jugadorDañado.getJugador().getWorld().spawnParticle(Particle.EXPLOSION,jugadorDañado.getJugador().getLocation(),2);
 				}
 				separados = config.getString("explosiveHatSound").split(";");
 				try {

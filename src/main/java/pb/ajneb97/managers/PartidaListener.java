@@ -238,9 +238,9 @@ public class PartidaListener implements Listener{
 						int duration = Integer.valueOf(config.getString("hats_items."+hat+".duration"));
 						int cooldown = Integer.valueOf(config.getString("hats_items."+hat+".cooldown"));
 						if(hat.equals("jump_hat")) {
-							jugador.addPotionEffect(new PotionEffect(PotionEffectType.JUMP,20*duration,1,false,false));
+							jugador.addPotionEffect(new PotionEffect(PotionEffectType.JUMP_BOOST,20*duration,1,false,false));
 						}else if(hat.equals("guardian_hat")) {
-							jugador.addPotionEffect(new PotionEffect(PotionEffectType.SLOW,20*duration,2,false,false));
+							jugador.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS,20*duration,2,false,false));
 							CooldownHats c = new CooldownHats(plugin);
 							c.durationHat(j, partida, duration);
 						}

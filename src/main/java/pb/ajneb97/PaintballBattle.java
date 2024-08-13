@@ -762,7 +762,7 @@ public class PaintballBattle extends JavaPlugin {
 				FileConfiguration holograms = getHolograms();
 				holograms.set("Holograms", null);
 				for(int i=0;i<topHologramas.size();i++) {
-					Location l = topHologramas.get(i).getHologram().getLocation();
+					Location l = topHologramas.get(i).getHologram().getPosition().toLocation();
 					String name = topHologramas.get(i).getName();
 					String type = topHologramas.get(i).getType();
 					String period = topHologramas.get(i).getPeriod();

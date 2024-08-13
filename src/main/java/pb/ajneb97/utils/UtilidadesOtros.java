@@ -10,23 +10,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 
-import pb.ajneb97.versiones.V1_10;
-import pb.ajneb97.versiones.V1_11;
-import pb.ajneb97.versiones.V1_12;
-import pb.ajneb97.versiones.V1_13;
-import pb.ajneb97.versiones.V1_13_R2;
-import pb.ajneb97.versiones.V1_14;
-import pb.ajneb97.versiones.V1_15;
-import pb.ajneb97.versiones.V1_16;
-import pb.ajneb97.versiones.V1_17;
-import pb.ajneb97.versiones.V1_18;
-import pb.ajneb97.versiones.V1_19;
 import pb.ajneb97.versiones.V1_20;
-import pb.ajneb97.versiones.V1_8_R1;
-import pb.ajneb97.versiones.V1_8_R2;
-import pb.ajneb97.versiones.V1_8_R3;
-import pb.ajneb97.versiones.V1_9_R1;
-import pb.ajneb97.versiones.V1_9_R2;
 
 public class UtilidadesOtros {
 
@@ -72,70 +56,6 @@ public class UtilidadesOtros {
 		String packageName = Bukkit.getServer().getClass().getPackage().getName();
 		if(packageName.contains("1_20_")){
 			V1_20 u = new V1_20();
-			u.generarParticula(particle, loc, xOffset, yOffset, zOffset, speed, count);		
-		}else
-		if(packageName.contains("1_19_")){
-			V1_19 u = new V1_19();
-			u.generarParticula(particle, loc, xOffset, yOffset, zOffset, speed, count);		
-		}else
-		if(packageName.contains("1_18_")){
-			V1_18 u = new V1_18();
-			u.generarParticula(particle, loc, xOffset, yOffset, zOffset, speed, count);		
-		}else
-		if(packageName.contains("1_17_")){
-			V1_17 u = new V1_17();
-			u.generarParticula(particle, loc, xOffset, yOffset, zOffset, speed, count);		
-		}else
-		if(packageName.contains("1_16_")){
-			V1_16 u = new V1_16();
-			u.generarParticula(particle, loc, xOffset, yOffset, zOffset, speed, count);		
-		}else
-		if(packageName.contains("1_15_R1")){
-			V1_15 u = new V1_15();
-			u.generarParticula(particle, loc, xOffset, yOffset, zOffset, speed, count);		
-		}else
-		if(packageName.contains("1_14_R1")){
-			V1_14 u = new V1_14();
-			u.generarParticula(particle, loc, xOffset, yOffset, zOffset, speed, count);		
-		}else
-		if(packageName.contains("1_13_R2")){
-			V1_13_R2 u = new V1_13_R2();
-			u.generarParticula(particle, loc, xOffset, yOffset, zOffset, speed, count);		
-		}else
-		if(packageName.contains("1_13_R1")){
-			V1_13 u = new V1_13();
-			u.generarParticula(particle, loc, xOffset, yOffset, zOffset, speed, count);		
-		}else
-		if(packageName.contains("1_12_R1")){
-			V1_12 u = new V1_12();
-			u.generarParticula(particle, loc, xOffset, yOffset, zOffset, speed, count);		
-		}
-		else if(packageName.contains("1_11_R1")){
-			V1_11 u = new V1_11();
-			u.generarParticula(particle, loc, xOffset, yOffset, zOffset, speed, count);		
-		}
-		else if(packageName.contains("1_10_R1")){
-			V1_10 u = new V1_10();
-			u.generarParticula(particle, loc, xOffset, yOffset, zOffset, speed, count);		
-		}
-		else if(packageName.contains("1_9_R2")){
-			V1_9_R2 u = new V1_9_R2();
-			u.generarParticula(particle, loc, xOffset, yOffset, zOffset, speed, count);		
-		}
-		else if(packageName.contains("1_9_R1")){
-			V1_9_R1 u = new V1_9_R1();
-			u.generarParticula(particle, loc, xOffset, yOffset, zOffset, speed, count);		
-		}
-		else if(packageName.contains("1_8_R3")){
-			V1_8_R3 u = new V1_8_R3();
-			u.generarParticula(particle, loc, xOffset, yOffset, zOffset, speed, count);		
-		}
-		else if(packageName.contains("1_8_R2")){
-			V1_8_R2 u = new V1_8_R2();
-			u.generarParticula(particle, loc, xOffset, yOffset, zOffset, speed, count);		
-		}
-		else if(packageName.contains("1_8_R1")){
-			V1_8_R1 u = new V1_8_R1();
 			u.generarParticula(particle, loc, xOffset, yOffset, zOffset, speed, count);		
 		}
 	}
