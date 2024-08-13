@@ -15,7 +15,6 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.logging.log4j.LogManager;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
@@ -148,21 +147,21 @@ public class PaintballBattle extends JavaPlugin {
 		Bukkit.getConsoleSender().sendMessage(prefix+ChatColor.YELLOW + "Has been disabled! " + ChatColor.WHITE + "Version: " + version);
 	}
 	
-	public void recargarScoreboard() {
+	public void reloadScoreboard() {
 		int taskID = scoreboardTask.getTaskID();
 		Bukkit.getScheduler().cancelTask(taskID);
 		scoreboardTask = new ScoreboardAdmin(this);
 		scoreboardTask.crearScoreboards();
 	}
 	
-	public void recargarCarteles() {
+	public void reloadSigns() {
 		int taskID = cartelesTask.getTaskID();
 		Bukkit.getScheduler().cancelTask(taskID);
 		cartelesTask = new CartelesAdmin(this);
 		cartelesTask.actualizarCarteles();
 	}
 	
-	public void recargarHologramas() {
+	public void reloadHolograms() {
 		int taskID = hologramasTask.getTaskID();
 		Bukkit.getScheduler().cancelTask(taskID);
 		hologramasTask = new TopHologramAdmin(this);

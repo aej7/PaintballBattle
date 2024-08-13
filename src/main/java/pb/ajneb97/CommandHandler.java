@@ -1,6 +1,7 @@
 package pb.ajneb97;
 
 import java.util.ArrayList;
+import java.util.Objects;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -11,6 +12,7 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 
 import net.md_5.bungee.api.ChatColor;
+import org.jetbrains.annotations.NotNull;
 import pb.ajneb97.api.Hat;
 import pb.ajneb97.api.Perk;
 import pb.ajneb97.database.JugadorDatos;
@@ -25,108 +27,151 @@ import pb.ajneb97.managers.PartidaManager;
 import pb.ajneb97.managers.TopHologram;
 import pb.ajneb97.utils.UtilidadesOtros;
 
-public class Comando implements CommandExecutor {
+public class CommandHandler implements CommandExecutor {
 	
-	PaintballBattle plugin;
-	public Comando(PaintballBattle plugin) {
+	private final PaintballBattle plugin;
+
+	public CommandHandler(PaintballBattle plugin) {
 		this.plugin = plugin;
 	}
+
+	private void reloadPlugin() {
+		plugin.reloadConfig();
+		plugin.reloadMessages();
+		plugin.reloadShop();
+		plugin.reloadSigns();
+		plugin.reloadScoreboard();
+		plugin.reloadHolograms();
+	}
+
+	private boolean hasAdminPermission(CommandSender sender) {
+		return sender.isOp() || sender.hasPermission("paintball.admin");
+	}
+
+	private void sendMessage(CommandSender sender, String message) {
+		sender.sendMessage(ChatColor.translateAlternateColorCodes('&', message));
+	}
+
+	private void handleCreateArenaCommand(Player player, String[] args) {
+		if (args.length < 2) {
+			sendMessage(player, plugin.getMessages().getString("commandCreateErrorUse"));
+		}
+
+		String arenaName = args[1];
+		if (plugin.getPartida(arenaName) != null) {
+			sendMessage(player, plugin.getMessages().getString("arenaAlreadyExists"));
+			return;
+		}
+
+		FileConfiguration config = plugin.getConfig();
+		if (!config.contains("MainLobby")) {
+			sendMessage(player, plugin.getMessages().getString("noMainLobby"));
+		}
+
+		String equipo1 = "";
+		String equipo2 = "";
+		int i = 0;
+
+		for (String key : Objects.requireNonNull(config.getConfigurationSection("teams")).getKeys(false)) {
+			if (i == 0) {
+				equipo1 = key;
+			} else {
+				equipo2 = key;
+				break;
+			}
+
+			i++;
+		}
+	}
 	
-	public boolean onCommand(CommandSender sender, Command command, String label, String[] args){
+	public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, String[] args){
 		FileConfiguration messages = plugin.getMessages();
-		String prefix = ChatColor.translateAlternateColorCodes('&', messages.getString("prefix"))+" ";
-	   if (!(sender instanceof Player)){
-		   if(args.length >= 1) {
-			   if(args[0].equalsIgnoreCase("givecoins")) {
-				   // /paintball givecoins <player> <amount>
-				   giveCoins(sender,args,messages,prefix);
-			   }else if(args[0].equalsIgnoreCase("reload")) {
-				   // /paintball reload
-				   plugin.reloadConfig();
-				   plugin.reloadMessages();
-				   plugin.reloadShop();
-				   plugin.recargarCarteles();
-				   plugin.recargarScoreboard();
-				   plugin.recargarHologramas();
-				   sender.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("configReloaded"))); 
+		String prefix = ChatColor.translateAlternateColorCodes('&', Objects.requireNonNull(messages.getString("prefix"))) + " ";
+	   if (!(sender instanceof Player)) {
+		   if	(args.length >= 1) {
+			   if	(args[0].equalsIgnoreCase("givecoins")) {
+				   giveCoins(sender, args, messages, prefix);
+				 } else if (args[0].equalsIgnoreCase("reload")) {
+					 reloadPlugin();
+				   sender.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', Objects.requireNonNull(messages.getString("configReloaded"))));
 			   }
 		   }
 		   return false;   	
 	   }
-	   Player jugador = (Player)sender;
+
+	   Player player = (Player) sender;
 	   if(args.length >= 1) {
-		   
 		   if(args[0].equalsIgnoreCase("create")) {
-			   // /paintball create <nombre>
-			   if(jugador.isOp() || jugador.hasPermission("paintball.admin")) {
+			   if(player.isOp() || player.hasPermission("paintball.admin")) {
 				   if(args.length >= 2) {
 					   if(plugin.getPartida(args[1]) == null) {
 						   FileConfiguration config = plugin.getConfig();
 						   if(!config.contains("MainLobby")) {
-							   jugador.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("noMainLobby")));  
+							   player.sendMessage(prefix + ChatColor.translateAlternateColorCodes('&', messages.getString("noMainLobby")));
 							   return true;
 						   }
 						   String equipo1 = "";
 						   String equipo2 = "";
 						   int i=0;
-						   for(String key : config.getConfigurationSection("teams").getKeys(false)) {
+						   for(String key : Objects.requireNonNull(config.getConfigurationSection("teams")).getKeys(false)) {
 							   if(i==0) {
 								   equipo1 = key;
-							   }else {
+							   } else {
 								   equipo2 = key;
 								   break;
 							   }
+
 							   i++;
 						   }
 						   
 						   Partida partida = new Partida(args[1],Integer.valueOf(config.getString("arena_time_default")),equipo1,equipo2,Integer.valueOf(config.getString("team_starting_lives_default")));
 						   plugin.agregarPartida(partida);
-						   jugador.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("arenaCreated").replace("%name%", args[1]))); 
-						   jugador.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("arenaCreatedExtraInfo").replace("%name%", args[1]))); 
-					   }else {
-						   jugador.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("arenaAlreadyExists")));  
+						   player.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("arenaCreated").replace("%name%", args[1])));
+						   player.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("arenaCreatedExtraInfo").replace("%name%", args[1])));
+					   } else {
+						   player.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("arenaAlreadyExists")));
 					   }
-				   }else {
-					   jugador.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("commandCreateErrorUse"))); 
+				   } else {
+					   player.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("commandCreateErrorUse")));
 				   }
-			   }else {
-				   jugador.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("noPermissions")));
+			   } else {
+				   player.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("noPermissions")));
 			   }
-		   }else if(args[0].equalsIgnoreCase("delete")) {
+		   } else if(args[0].equalsIgnoreCase("delete")) {
 			   // /paintball delete <nombre>
-			   if(jugador.isOp() || jugador.hasPermission("paintball.admin")) {
+			   if(player.isOp() || player.hasPermission("paintball.admin")) {
 				   if(args.length >= 2) {
 					   if(plugin.getPartida(args[1]) != null) {
 						   plugin.removerPartida(args[1]);
-						   jugador.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("arenaDeleted").replace("%name%", args[1]))); 
+						   player.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("arenaDeleted").replace("%name%", args[1])));
 					   }else {
-						   jugador.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("arenaDoesNotExists")));  
+						   player.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("arenaDoesNotExists")));
 					   }
 				   }else {
-					   jugador.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("commandDeleteErrorUse"))); 
+					   player.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("commandDeleteErrorUse")));
 				   }
 			   }else {
-				   jugador.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("noPermissions")));
+				   player.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("noPermissions")));
 			   }
 		   }else if(args[0].equalsIgnoreCase("reload")) {
 			   // /paintball reload
-			   if(jugador.isOp() || jugador.hasPermission("paintball.admin")) {
+			   if(player.isOp() || player.hasPermission("paintball.admin")) {
 				   plugin.reloadConfig();
 				   plugin.reloadMessages();
 				   plugin.reloadShop();
-				   plugin.recargarCarteles();
-				   plugin.recargarScoreboard();
-				   plugin.recargarHologramas();
-				   jugador.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("configReloaded"))); 
+				   plugin.reloadSigns();
+				   plugin.reloadScoreboard();
+				   plugin.reloadHolograms();
+				   player.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("configReloaded")));
 			   }else {
-				   jugador.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("noPermissions")));
+				   player.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("noPermissions")));
 			   }
 		   }else if(args[0].equalsIgnoreCase("setmainlobby")) {
 			   // /paintball setmainlobby
-			   if(jugador.isOp() || jugador.hasPermission("paintball.admin")) {
+			   if(player.isOp() || player.hasPermission("paintball.admin")) {
 				   FileConfiguration config = plugin.getConfig();
 				   
-				   Location l = jugador.getLocation();
+				   Location l = player.getLocation();
 				   config.set("MainLobby.x", l.getX()+"");
 				   config.set("MainLobby.y", l.getY()+"");
 				   config.set("MainLobby.z", l.getZ()+"");
@@ -134,131 +179,131 @@ public class Comando implements CommandExecutor {
 				   config.set("MainLobby.pitch", l.getPitch());
 				   config.set("MainLobby.yaw", l.getYaw());
 				   plugin.saveConfig();
-				   jugador.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("mainLobbyDefined"))); 
+				   player.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("mainLobbyDefined")));
 			   }else {
-				   jugador.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("noPermissions")));
+				   player.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("noPermissions")));
 			   }
 		   }else if(args[0].equalsIgnoreCase("join")) {
 			   // /paintball join <arena>
-			   if(!Checks.checkTodo(plugin, jugador)) {
+			   if(!Checks.checkTodo(plugin, player)) {
 				   return false;
 			   }
 			   if(args.length >= 2) {
 				   Partida partida = plugin.getPartida(args[1]);
 				   if(partida != null) {
 					   if(partida.estaActivada()) {
-						   if(plugin.getPartidaJugador(jugador.getName()) == null) {
+						   if(plugin.getPartidaJugador(player.getName()) == null) {
 							   if(!partida.estaIniciada()) {
 								   if(!partida.estaLlena()) {
-									   if(!UtilidadesOtros.pasaConfigInventario(jugador, plugin.getConfig())) {
-										   jugador.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("errorClearInventory"))); 
+									   if(!UtilidadesOtros.pasaConfigInventario(player, plugin.getConfig())) {
+										   player.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("errorClearInventory")));
 										   return true;
 									   }
-									   PartidaManager.jugadorEntra(partida, jugador,plugin);
+									   PartidaManager.jugadorEntra(partida, player,plugin);
 								   }else {
-									   jugador.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("arenaIsFull"))); 
+									   player.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("arenaIsFull")));
 								   }
 							   }else {
-								   jugador.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("arenaAlreadyStarted"))); 
+								   player.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("arenaAlreadyStarted")));
 							   }
 						   }else {
-							   jugador.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("alreadyInArena"))); 
+							   player.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("alreadyInArena")));
 						   }
 					   }else {
-						   jugador.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("arenaDisabledError"))); 
+						   player.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("arenaDisabledError")));
 					   }
 				   }else {
-					   jugador.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("arenaDoesNotExists"))); 
+					   player.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("arenaDoesNotExists")));
 				   }
 			   }else {
-				   jugador.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("commandJoinErrorUse"))); 
+				   player.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("commandJoinErrorUse")));
 			   }
 		   }else if(args[0].equalsIgnoreCase("joinrandom")) {
 			   // /paintball joinrandom
-			   if(plugin.getPartidaJugador(jugador.getName()) == null) {
+			   if(plugin.getPartidaJugador(player.getName()) == null) {
 				    Partida partidaNueva = PartidaManager.getPartidaDisponible(plugin);
 					if(partidaNueva == null) {
-						jugador.sendMessage(ChatColor.translateAlternateColorCodes('&', messages.getString("noArenasAvailable")));
+						player.sendMessage(ChatColor.translateAlternateColorCodes('&', messages.getString("noArenasAvailable")));
 					}else {
-						PartidaManager.jugadorEntra(partidaNueva, jugador, plugin);
+						PartidaManager.jugadorEntra(partidaNueva, player, plugin);
 					}
 			   }else {
-				   jugador.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("alreadyInArena"))); 
+				   player.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("alreadyInArena")));
 			   }
 		   }else if(args[0].equalsIgnoreCase("leave")) {
 			   // /paintball leave
-			   Partida partida = plugin.getPartidaJugador(jugador.getName());
+			   Partida partida = plugin.getPartidaJugador(player.getName());
 			   if(partida != null) {  
-				   PartidaManager.jugadorSale(partida, jugador, false, plugin, false);;
+				   PartidaManager.jugadorSale(partida, player, false, plugin, false);;
 			   }else {
-				   jugador.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("notInAGame"))); 
+				   player.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("notInAGame")));
 			   }
 		   }else if(args[0].equalsIgnoreCase("shop")) {   
 			   // /paintball shop
-			   if(!Checks.checkTodo(plugin, jugador)) {
+			   if(!Checks.checkTodo(plugin, player)) {
 				   return false;
 			   }
-			   InventarioShop.crearInventarioPrincipal(jugador, plugin);
+			   InventarioShop.crearInventarioPrincipal(player, plugin);
 		   }else if(args[0].equalsIgnoreCase("enable")) {
 			   // /paintball enable <arena>
 			   //Para activar una arena todo debe estar definido
-			   if(jugador.isOp() || jugador.hasPermission("paintball.admin")) {
+			   if(player.isOp() || player.hasPermission("paintball.admin")) {
 				   if(args.length >= 2) {
 					   Partida partida = plugin.getPartida(args[1]);
 					   if(partida != null) {
 						   if(partida.estaActivada()) {
-							   jugador.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("arenaAlreadyEnabled"))); 
+							   player.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("arenaAlreadyEnabled")));
 						   }else {
 							   if(partida.getLobby() == null) {
-								   jugador.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("enableArenaLobbyError"))); 
+								   player.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("enableArenaLobbyError")));
 								   return true;
 							   }
 							   if(partida.getTeam1().getSpawn() == null) {
-								   jugador.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("enableArenaSpawnError").replace("%number%", "1"))); 
+								   player.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("enableArenaSpawnError").replace("%number%", "1")));
 								   return true;
 							   }
 							   if(partida.getTeam2().getSpawn() == null) {
-								   jugador.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("enableArenaSpawnError").replace("%number%", "2"))); 
+								   player.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("enableArenaSpawnError").replace("%number%", "2")));
 								   return true;
 							   }
 							   
 							   partida.setEstado(EstadoPartida.ESPERANDO);
-							   jugador.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("arenaEnabled").replace("%name%", args[1]))); 
+							   player.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("arenaEnabled").replace("%name%", args[1])));
 						   }
 					   }else {
-						   jugador.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("arenaDoesNotExists"))); 
+						   player.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("arenaDoesNotExists")));
 					   }
 				   }else {
-					   jugador.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("commandEnableErrorUse"))); 
+					   player.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("commandEnableErrorUse")));
 				   }
 			   }else {
-				   jugador.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("noPermissions")));
+				   player.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("noPermissions")));
 			   }
 		   }else if(args[0].equalsIgnoreCase("disable")) {
 			   // /paintball disable <arena>
-			   if(jugador.isOp() || jugador.hasPermission("paintball.admin")) {
+			   if(player.isOp() || player.hasPermission("paintball.admin")) {
 				   if(args.length >= 2) {
 					   Partida partida = plugin.getPartida(args[1]);
 					   if(partida != null) {
 						   if(!partida.estaActivada()) {
-							   jugador.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("arenaAlreadyDisabled"))); 
+							   player.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("arenaAlreadyDisabled")));
 						   }else {
 							   partida.setEstado(EstadoPartida.DESACTIVADA);
-							   jugador.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("arenaDisabled").replace("%name%", args[1]))); 
+							   player.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("arenaDisabled").replace("%name%", args[1])));
 						   }
 					   }else {
-						   jugador.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("arenaDoesNotExists"))); 
+						   player.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("arenaDoesNotExists")));
 					   }
 				   }else {
-					   jugador.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("commandDisableErrorUse"))); 
+					   player.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("commandDisableErrorUse")));
 				   }
 			   }else {
-				   jugador.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("noPermissions")));
+				   player.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("noPermissions")));
 			   }
 		   }else if(args[0].equalsIgnoreCase("edit")) {
 			   // /paintball edit <arena>  
-			   if(jugador.isOp() || jugador.hasPermission("paintball.admin")) {
-				   if(!Checks.checkTodo(plugin, jugador)) {
+			   if(player.isOp() || player.hasPermission("paintball.admin")) {
+				   if(!Checks.checkTodo(plugin, player)) {
 					   return false;
 				   }
 				   if(args.length >= 2) {
@@ -268,27 +313,27 @@ public class Comando implements CommandExecutor {
 							   PartidaEditando p = plugin.getPartidaEditando();
 							   if(p == null) {
 								   
-								   InventarioAdmin.crearInventario(jugador,partida,plugin);
+								   InventarioAdmin.crearInventario(player,partida,plugin);
 							   }else {
-								   jugador.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("arenaModifyingError"))); 
+								   player.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("arenaModifyingError")));
 							   }
 						   }else {
-							   jugador.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("arenaMustBeDisabled")));  
+							   player.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("arenaMustBeDisabled")));
 						   }
 					   }else {
-						   jugador.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("arenaDoesNotExists"))); 
+						   player.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("arenaDoesNotExists")));
 					   }
 				   }else {
-					   jugador.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("commandAdminErrorUse"))); 
+					   player.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("commandAdminErrorUse")));
 				   }
 			   }else {
-				   jugador.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("noPermissions"))); 
+				   player.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("noPermissions")));
 			   }
 		   }else if(args[0].equalsIgnoreCase("createtophologram")) {
 			   // /paintball createtophologram <name> kills/wins <global/monthly/weekly>
-			   if(jugador.isOp() || jugador.hasPermission("paintball.admin")) {
+			   if(player.isOp() || player.hasPermission("paintball.admin")) {
 				   if (plugin.getServer().getPluginManager().getPlugin("HolographicDisplays") == null) {
-					   jugador.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', "&cYou need HolographicDisplays plugin to use this feature."));  
+					   player.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', "&cYou need HolographicDisplays plugin to use this feature."));
 				        return true;
 				   }
 				   if(args.length >= 3) {
@@ -301,71 +346,71 @@ public class Comando implements CommandExecutor {
 							   }
 							   if(period.equalsIgnoreCase("global") || period.equalsIgnoreCase("monthly") || period.equalsIgnoreCase("weekly")) {
 								   if(!MySQL.isEnabled(plugin.getConfig()) && (period.equalsIgnoreCase("monthly") || period.equalsIgnoreCase("weekly"))) {
-									   jugador.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("topHologramPeriodSQLError")));  
+									   player.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("topHologramPeriodSQLError")));
 									   return true;
 								   }
-								   TopHologram hologram = new TopHologram(args[1],args[2],jugador.getLocation(),plugin,period);
+								   TopHologram hologram = new TopHologram(args[1],args[2],player.getLocation(),plugin,period);
 								   plugin.agregarTopHolograma(hologram);
 								   hologram.spawnHologram(plugin);
-								   jugador.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("topHologramCreated")));  
+								   player.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("topHologramCreated")));
 							   }else {
-								   jugador.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("commandCreateHologramErrorUse")));  
+								   player.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("commandCreateHologramErrorUse")));
 							   }					    
 						   }else {
-							   jugador.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("topHologramAlreadyExists")));  
+							   player.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("topHologramAlreadyExists")));
 						   }
 					   }else {
-						   jugador.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("commandCreateHologramErrorUse")));   
+						   player.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("commandCreateHologramErrorUse")));
 					   }  
 				   }else {
-					   jugador.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("commandCreateHologramErrorUse")));
+					   player.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("commandCreateHologramErrorUse")));
 				   }
 			   }else {
-				   jugador.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("noPermissions")));
+				   player.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("noPermissions")));
 			   }
 		   }else if(args[0].equalsIgnoreCase("removetophologram")) {
 			   // /paintball removetophologram <name>
-			   if(jugador.isOp() || jugador.hasPermission("paintball.admin")) {
+			   if(player.isOp() || player.hasPermission("paintball.admin")) {
 				   if (plugin.getServer().getPluginManager().getPlugin("HolographicDisplays") == null) {
-					   jugador.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', "&cYou need HolographicDisplays plugin to use this feature."));  
+					   player.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', "&cYou need HolographicDisplays plugin to use this feature."));
 				        return true;
 				   }
 				   if(args.length >= 2) {
 					   TopHologram topHologram = plugin.getTopHologram(args[1]);
 					   if(topHologram != null) {
 						   plugin.eliminarTopHologama(args[1]);
-						   jugador.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("topHologramRemoved")));  
+						   player.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("topHologramRemoved")));
 					   }else {
-						   jugador.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("topHologramDoesNotExists")));  
+						   player.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("topHologramDoesNotExists")));
 					   }  
 				   }else {
-					   jugador.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("commandRemoveHologramErrorUse")));
+					   player.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("commandRemoveHologramErrorUse")));
 				   }
 			   }else {
-				   jugador.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("noPermissions")));
+				   player.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("noPermissions")));
 			   }
 		   }else if(args[0].equalsIgnoreCase("givecoins")) {
 			   // /paintball givecoins <player> <amount>
-			   if(jugador.isOp() || jugador.hasPermission("paintball.admin")) {
+			   if(player.isOp() || player.hasPermission("paintball.admin")) {
 				   giveCoins(sender,args,messages,prefix);
 			   }else {
-				   jugador.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("noPermissions")));
+				   player.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("noPermissions")));
 			   }
 		   }
 		   else {
 			   // /paintball help /o cualquier otro comando
-			   if(jugador.isOp() || jugador.hasPermission("paintball.admin")) {
-				   enviarAyuda(jugador);
+			   if(player.isOp() || player.hasPermission("paintball.admin")) {
+				   enviarAyuda(player);
 			   }else {
-				   jugador.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("noPermissions")));
+				   player.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("noPermissions")));
 			   }
 			   
 		   }
 	   }else {
-		   if(jugador.isOp() || jugador.hasPermission("paintball.admin")) {
-			   enviarAyuda(jugador);
+		   if(player.isOp() || player.hasPermission("paintball.admin")) {
+			   enviarAyuda(player);
 		   }else {
-			   jugador.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("noPermissions")));
+			   player.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("noPermissions")));
 		   }
 	   }
 	   
