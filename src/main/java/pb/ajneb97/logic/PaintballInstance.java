@@ -32,7 +32,7 @@ public class PaintballInstance {
 		this.cantidadMaximaJugadores = 16;
 		this.cantidadMinimaJugadores = 4;
 		this.cantidadActualJugadores = 0;
-		this.estado = MatchStatus.DESACTIVADA;
+		this.estado = MatchStatus.OFF;
 		this.tiempo = 0;
 		this.tiempoMaximo = tiempoMaximo;
 		this.vidasIniciales = vidasIniciales;
@@ -179,7 +179,7 @@ public class PaintballInstance {
 	}
 	
 	public boolean estaIniciada() {
-		if(!this.estado.equals(MatchStatus.ESPERANDO) && !this.estado.equals(MatchStatus.COMENZANDO)) {
+		if(!this.estado.equals(MatchStatus.WAITING) && !this.estado.equals(MatchStatus.STARTING)) {
 			return true;
 		}else {
 			return false;
@@ -195,7 +195,7 @@ public class PaintballInstance {
 	}
 	
 	public boolean estaActivada() {
-		if(this.estado.equals(MatchStatus.DESACTIVADA)) {
+		if(this.estado.equals(MatchStatus.OFF)) {
 			return false;
 		}else {
 			return true;

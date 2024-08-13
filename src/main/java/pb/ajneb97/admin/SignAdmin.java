@@ -64,15 +64,15 @@ public class SignAdmin {
 							if(block.getType().name().contains("SIGN")) {
 								Sign sign = (Sign) block.getState();
 								String estado = "";
-								if(paintballInstance.getEstado().equals(MatchStatus.JUGANDO)) {
+								if(paintballInstance.getEstado().equals(MatchStatus.PLAYING)) {
 									estado = messages.getString("signStatusIngame");
-								}else if(paintballInstance.getEstado().equals(MatchStatus.COMENZANDO)) {
+								}else if(paintballInstance.getEstado().equals(MatchStatus.STARTING)) {
 									estado = messages.getString("signStatusStarting");
-								}else if(paintballInstance.getEstado().equals(MatchStatus.ESPERANDO)) {
+								}else if(paintballInstance.getEstado().equals(MatchStatus.WAITING)) {
 									estado = messages.getString("signStatusWaiting");
-								}else if(paintballInstance.getEstado().equals(MatchStatus.DESACTIVADA)) {
+								}else if(paintballInstance.getEstado().equals(MatchStatus.OFF)) {
 									estado = messages.getString("signStatusDisabled");
-								}else if(paintballInstance.getEstado().equals(MatchStatus.TERMINANDO)) {
+								}else if(paintballInstance.getEstado().equals(MatchStatus.ENDING)) {
 									estado = messages.getString("signStatusFinishing");
 								}
 								

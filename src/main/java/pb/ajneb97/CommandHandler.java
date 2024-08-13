@@ -266,7 +266,7 @@ public class CommandHandler implements CommandExecutor {
 								   return true;
 							   }
 							   
-							   paintballInstance.setEstado(MatchStatus.ESPERANDO);
+							   paintballInstance.setEstado(MatchStatus.WAITING);
 							   player.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("arenaEnabled").replace("%name%", args[1])));
 						   }
 					   }else {
@@ -287,7 +287,7 @@ public class CommandHandler implements CommandExecutor {
 						   if(!paintballInstance.estaActivada()) {
 							   player.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("arenaAlreadyDisabled")));
 						   }else {
-							   paintballInstance.setEstado(MatchStatus.DESACTIVADA);
+							   paintballInstance.setEstado(MatchStatus.OFF);
 							   player.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("arenaDisabled").replace("%name%", args[1])));
 						   }
 					   }else {

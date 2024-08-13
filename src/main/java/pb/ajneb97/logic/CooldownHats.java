@@ -29,7 +29,7 @@ public class CooldownHats {
 		public void run(){
 			if(!ejecutarCooldownHat()){
 				FileConfiguration messages = plugin.getMessages();
-				if(!paintballInstance.getEstado().equals(MatchStatus.TERMINANDO)) {
+				if(!paintballInstance.getEstado().equals(MatchStatus.ENDING)) {
 					jugador.getJugador().sendMessage(ChatColor.translateAlternateColorCodes('&', messages.getString("hatCooldownFinished")));
 				}
 				
@@ -41,7 +41,7 @@ public class CooldownHats {
 	}
 
 	protected boolean ejecutarCooldownHat() {
-		if(paintballInstance != null && paintballInstance.getEstado().equals(MatchStatus.JUGANDO)) {
+		if(paintballInstance != null && paintballInstance.getEstado().equals(MatchStatus.PLAYING)) {
 			if(tiempo <= 0) {
 				jugador.setEfectoHatEnCooldown(false);
 				return false;
@@ -72,7 +72,7 @@ public class CooldownHats {
 	}
 	
 	protected boolean ejecutarDurationHat() {
-		if(paintballInstance != null && paintballInstance.getEstado().equals(MatchStatus.JUGANDO)) {
+		if(paintballInstance != null && paintballInstance.getEstado().equals(MatchStatus.PLAYING)) {
 			if(tiempo <= 0) {
 				jugador.setEfectoHatActivado(false);
 				return false;

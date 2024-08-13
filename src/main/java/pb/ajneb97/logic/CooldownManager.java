@@ -45,7 +45,7 @@ public class CooldownManager {
 	}
 	
 	protected boolean ejecutarComenzarJuego(FileConfiguration messages,FileConfiguration config,String prefix) {
-		if(paintballInstance != null && paintballInstance.getEstado().equals(MatchStatus.COMENZANDO)) {
+		if(paintballInstance != null && paintballInstance.getEstado().equals(MatchStatus.STARTING)) {
 			if(tiempo <= 5 && tiempo > 0) {
 				ArrayList<PaintballPlayer> jugadores = paintballInstance.getJugadores();
 				for(int i=0;i<jugadores.size();i++) {
@@ -94,7 +94,7 @@ public class CooldownManager {
 	}
 	
 	protected boolean ejecutarJuego() {
-		if(paintballInstance != null && paintballInstance.getEstado().equals(MatchStatus.JUGANDO)) {
+		if(paintballInstance != null && paintballInstance.getEstado().equals(MatchStatus.PLAYING)) {
 			paintballInstance.disminuirTiempo();
 			if(tiempo == 0) {
 				PartidaManager.iniciarFaseFinalizacion(paintballInstance, plugin);
@@ -124,7 +124,7 @@ public class CooldownManager {
 	}
 	
 	protected boolean ejecutarComenzarFaseFinalizacion(Team ganador) {
-		if(paintballInstance != null && paintballInstance.getEstado().equals(MatchStatus.TERMINANDO)) {
+		if(paintballInstance != null && paintballInstance.getEstado().equals(MatchStatus.ENDING)) {
 			paintballInstance.disminuirTiempo();
 			if(tiempo == 0) {
 				PartidaManager.finalizarPartida(paintballInstance,plugin,false,ganador);

@@ -136,7 +136,7 @@ public class PaintballBattle extends JavaPlugin {
 	public void onDisable(){
 		if(paintballInstances != null) {
 			for(int i = 0; i< paintballInstances.size(); i++) {
-				if(!paintballInstances.get(i).getEstado().equals(MatchStatus.DESACTIVADA)) {
+				if(!paintballInstances.get(i).getEstado().equals(MatchStatus.OFF)) {
 					PartidaManager.finalizarPartida(paintballInstances.get(i),this,true,null);
 				}
 			}
@@ -318,9 +318,9 @@ public class PaintballBattle extends JavaPlugin {
 				  paintballInstance.getTeam2().setSpawn(lSpawnTeam2);
 				  String enabled = arenas.getString("Arenas."+key+".enabled");
 				  if(enabled.equals("true")) {
-					  paintballInstance.setEstado(MatchStatus.ESPERANDO);
+					  paintballInstance.setEstado(MatchStatus.WAITING);
 				  }else {
-					  paintballInstance.setEstado(MatchStatus.DESACTIVADA);
+					  paintballInstance.setEstado(MatchStatus.OFF);
 				  }
 				  
 				  this.paintballInstances.add(paintballInstance);
@@ -379,7 +379,7 @@ public class PaintballBattle extends JavaPlugin {
 				  arenas.set("Arenas."+nombre+".Team2.name", p.getTeam2().getTipo()); 
 			  }
 			  
-			  if(p.getEstado().equals(MatchStatus.DESACTIVADA)) {
+			  if(p.getEstado().equals(MatchStatus.OFF)) {
 				  arenas.set("Arenas."+nombre+".enabled", "false");
 			  }else {
 				  arenas.set("Arenas."+nombre+".enabled", "true");

@@ -95,7 +95,7 @@ public class PartidaManager {
 		}
 		
 		if(paintballInstance.getCantidadActualJugadores() >= paintballInstance.getCantidadMinimaJugadores()
-				&& paintballInstance.getEstado().equals(MatchStatus.ESPERANDO)) {
+				&& paintballInstance.getEstado().equals(MatchStatus.WAITING)) {
 			cooldownIniciarPartida(paintballInstance,plugin);
 		}
 	}
@@ -154,12 +154,12 @@ public class PartidaManager {
 		
 		if(!cerrandoServer) {
 			if(paintballInstance.getCantidadActualJugadores() < paintballInstance.getCantidadMinimaJugadores()
-					&& paintballInstance.getEstado().equals(MatchStatus.COMENZANDO)){
-				paintballInstance.setEstado(MatchStatus.ESPERANDO);
-			}else if(paintballInstance.getCantidadActualJugadores() <= 1 && (paintballInstance.getEstado().equals(MatchStatus.JUGANDO))) {
+					&& paintballInstance.getEstado().equals(MatchStatus.STARTING)){
+				paintballInstance.setEstado(MatchStatus.WAITING);
+			}else if(paintballInstance.getCantidadActualJugadores() <= 1 && (paintballInstance.getEstado().equals(MatchStatus.PLAYING))) {
 				//fase finalizacion
 				PartidaManager.iniciarFaseFinalizacion(paintballInstance, plugin);
-			}else if((paintballInstance.getTeam1().getCantidadJugadores() == 0 || paintballInstance.getTeam2().getCantidadJugadores() == 0) && paintballInstance.getEstado().equals(MatchStatus.JUGANDO)) {
+			}else if((paintballInstance.getTeam1().getCantidadJugadores() == 0 || paintballInstance.getTeam2().getCantidadJugadores() == 0) && paintballInstance.getEstado().equals(MatchStatus.PLAYING)) {
 				//fase finalizacion
 				PartidaManager.iniciarFaseFinalizacion(paintballInstance, plugin);
 			}
@@ -167,7 +167,7 @@ public class PartidaManager {
 	}
 	
 	public static void cooldownIniciarPartida(PaintballInstance paintballInstance, PaintballBattle plugin) {
-		paintballInstance.setEstado(MatchStatus.COMENZANDO);
+		paintballInstance.setEstado(MatchStatus.STARTING);
 		FileConfiguration config = plugin.getConfig();
 		FileConfiguration messages = plugin.getMessages();
 		int time = Integer.valueOf(config.getString("arena_starting_cooldown"));
@@ -191,7 +191,7 @@ public class PartidaManager {
 	}
 	
 	public static void iniciarPartida(PaintballInstance paintballInstance, PaintballBattle plugin) {
-		paintballInstance.setEstado(MatchStatus.JUGANDO);
+		paintballInstance.setEstado(MatchStatus.PLAYING);
 		FileConfiguration messages = plugin.getMessages();
 		FileConfiguration config = plugin.getConfig();
 		//String prefix = ChatColor.translateAlternateColorCodes('&', messages.getString("prefix"))+" ";
@@ -528,7 +528,7 @@ public class PartidaManager {
 	}
 	
 	public static void iniciarFaseFinalizacion(PaintballInstance paintballInstance, PaintballBattle plugin) {
-		paintballInstance.setEstado(MatchStatus.TERMINANDO);
+		paintballInstance.setEstado(MatchStatus.ENDING);
 		Team ganador = paintballInstance.getGanador();
 		FileConfiguration messages = plugin.getMessages();
 		FileConfiguration config = plugin.getConfig();
@@ -728,7 +728,7 @@ public class PartidaManager {
 		paintballInstance.setEnNuke(false);
 		paintballInstance.modificarTeams(config);
 		
-		paintballInstance.setEstado(MatchStatus.ESPERANDO);
+		paintballInstance.setEstado(MatchStatus.WAITING);
 	}
 	
 	public static void muereJugador(PaintballInstance paintballInstance, PaintballPlayer jugadorAtacante, final PaintballPlayer jugadorDañado, PaintballBattle plugin, boolean lightning, boolean nuke) {
@@ -894,8 +894,8 @@ public class PartidaManager {
 		ArrayList<PaintballInstance> paintballInstances = plugin.getPartidas();
 		ArrayList<PaintballInstance> disponibles = new ArrayList<PaintballInstance>();
 		for(int i = 0; i< paintballInstances.size(); i++) {
-			if(paintballInstances.get(i).getEstado().equals(MatchStatus.ESPERANDO) ||
-					paintballInstances.get(i).getEstado().equals(MatchStatus.COMENZANDO)) {
+			if(paintballInstances.get(i).getEstado().equals(MatchStatus.WAITING) ||
+					paintballInstances.get(i).getEstado().equals(MatchStatus.STARTING)) {
 				if(!paintballInstances.get(i).estaLlena()) {
 					disponibles.add(paintballInstances.get(i));
 				}

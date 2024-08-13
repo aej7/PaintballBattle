@@ -85,12 +85,12 @@ public class ScoreboardAdmin {
 	
 	private String getEstado(PaintballInstance paintballInstance, FileConfiguration messages) {
 		//Remplazar variables del %time%
-		if(paintballInstance.getEstado().equals(MatchStatus.ESPERANDO)) {
+		if(paintballInstance.getEstado().equals(MatchStatus.WAITING)) {
 			return messages.getString("statusWaiting");
-		}else if(paintballInstance.getEstado().equals(MatchStatus.COMENZANDO)) {
+		}else if(paintballInstance.getEstado().equals(MatchStatus.STARTING)) {
 			int tiempo = paintballInstance.getTiempo();
 			return messages.getString("statusStarting").replace("%time%", OthersUtils.getTiempo(tiempo));
-		}else if(paintballInstance.getEstado().equals(MatchStatus.TERMINANDO)) {
+		}else if(paintballInstance.getEstado().equals(MatchStatus.ENDING)) {
 			int tiempo = paintballInstance.getTiempo();
 			return messages.getString("statusFinishing").replace("%time%", OthersUtils.getTiempo(tiempo));
 		}else {
