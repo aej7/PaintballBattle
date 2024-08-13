@@ -31,27 +31,28 @@ import pb.ajneb97.api.ExpansionPaintballBattle;
 import pb.ajneb97.api.Hat;
 import pb.ajneb97.api.PaintballAPI;
 import pb.ajneb97.api.Perk;
-import pb.ajneb97.database.ConexionDatabase;
-import pb.ajneb97.database.JugadorDatos;
-import pb.ajneb97.database.MySQL;
-import pb.ajneb97.juego.EstadoPartida;
-import pb.ajneb97.juego.JugadorPaintball;
-import pb.ajneb97.juego.Partida;
-import pb.ajneb97.juego.PartidaEditando;
-import pb.ajneb97.managers.Actualizacion;
-import pb.ajneb97.managers.CartelesAdmin;
-import pb.ajneb97.managers.CartelesListener;
-import pb.ajneb97.managers.Checks;
-import pb.ajneb97.managers.CooldownKillstreaksActionbar;
-import pb.ajneb97.managers.InventarioAdmin;
-import pb.ajneb97.managers.InventarioHats;
-import pb.ajneb97.managers.InventarioShop;
-import pb.ajneb97.managers.PartidaListener;
-import pb.ajneb97.managers.PartidaListenerNew;
-import pb.ajneb97.managers.PartidaManager;
-import pb.ajneb97.managers.ScoreboardAdmin;
-import pb.ajneb97.managers.TopHologram;
-import pb.ajneb97.managers.TopHologramAdmin;
+import pb.ajneb97.configuration.PlayerConfig;
+import pb.ajneb97.database.DatabaseConnection;
+import pb.ajneb97.database.Player;
+import pb.ajneb97.database.MySql;
+import pb.ajneb97.enums.MatchStatus;
+import pb.ajneb97.logic.PaintballPlayer;
+import pb.ajneb97.logic.PaintballInstance;
+import pb.ajneb97.logic.PaintballInstanceEdit;
+import pb.ajneb97.eventhandlers.OnPlayerJoinEventHandler;
+import pb.ajneb97.admin.SignAdmin;
+import pb.ajneb97.eventhandlers.SignInteractEventHandler;
+import pb.ajneb97.configuration.Checks;
+import pb.ajneb97.logic.CooldownKillstreaksActionbar;
+import pb.ajneb97.admin.InventoryAdmin;
+import pb.ajneb97.logic.InventarioHats;
+import pb.ajneb97.eventhandlers.InventoryInteractEventHandler;
+import pb.ajneb97.eventhandlers.PlayerActionsEventHandler;
+import pb.ajneb97.eventhandlers.MatchEventHandlerNew;
+import pb.ajneb97.logic.PartidaManager;
+import pb.ajneb97.admin.ScoreboardAdmin;
+import pb.ajneb97.logic.TopHologram;
+import pb.ajneb97.admin.TopHologramAdmin;
 
 
 public class PaintballBattle extends JavaPlugin {
@@ -59,16 +60,16 @@ public class PaintballBattle extends JavaPlugin {
 	PluginDescriptionFile pdfFile = getDescription();
 	public String version = pdfFile.getVersion();
 	public static String prefix = ChatColor.translateAlternateColorCodes('&', "&8[&b&lPaintball Battle&8] ");
-	private ArrayList<Partida> partidas;
+	private ArrayList<PaintballInstance> paintballInstances;
 	private FileConfiguration arenas = null;
 	private File arenasFile = null;
 	private FileConfiguration messages = null;
 	private File messagesFile = null;
 	private FileConfiguration shop = null;
 	private File shopFile = null;
-	private PartidaEditando partidaEditando;
+	private PaintballInstanceEdit paintballInstanceEdit;
 	private ArrayList<PlayerConfig> configPlayers;
-	private ArrayList<JugadorDatos> jugadoresDatos;
+	private ArrayList<Player> jugadoresDatos;
 	private ArrayList<TopHologram> topHologramas;
 	private FileConfiguration holograms = null;
 	private File hologramsFile = null;
@@ -80,16 +81,16 @@ public class PaintballBattle extends JavaPlugin {
 	public String rutaConfig;
 	
 	private ScoreboardAdmin scoreboardTask;
-	private CartelesAdmin cartelesTask;
+	private SignAdmin cartelesTask;
 	private TopHologramAdmin hologramasTask;
 	
-	private ConexionDatabase conexionDatabase;
+	private DatabaseConnection databaseConnection;
 	
 	
 	@SuppressWarnings("unused")
 	public void onEnable(){
 	   configPlayers = new ArrayList<PlayerConfig>();
-	   jugadoresDatos = new ArrayList<JugadorDatos>();
+	   jugadoresDatos = new ArrayList<Player>();
 	   topHologramas = new ArrayList<TopHologram>();
 	   registerEvents();
 	   registerArenas();
@@ -106,13 +107,13 @@ public class PaintballBattle extends JavaPlugin {
 	   cargarJugadores();
 	   setupEconomy();
 	   
-	   if(MySQL.isEnabled(getConfig())){
-		   conexionDatabase = new ConexionDatabase(getConfig());
+	   if(MySql.isEnabled(getConfig())){
+		   databaseConnection = new DatabaseConnection(getConfig());
 	   }
 	   
 	   scoreboardTask = new ScoreboardAdmin(this);
 	   scoreboardTask.crearScoreboards();
-	   cartelesTask = new CartelesAdmin(this);
+	   cartelesTask = new SignAdmin(this);
 	   cartelesTask.actualizarCarteles();
 	   CooldownKillstreaksActionbar c = new CooldownKillstreaksActionbar(this);
 	   c.crearActionbars();
@@ -133,10 +134,10 @@ public class PaintballBattle extends JavaPlugin {
 	}
 
 	public void onDisable(){
-		if(partidas != null) {
-			for(int i=0;i<partidas.size();i++) {
-				if(!partidas.get(i).getEstado().equals(EstadoPartida.DESACTIVADA)) {
-					PartidaManager.finalizarPartida(partidas.get(i),this,true,null);
+		if(paintballInstances != null) {
+			for(int i = 0; i< paintballInstances.size(); i++) {
+				if(!paintballInstances.get(i).getEstado().equals(MatchStatus.DESACTIVADA)) {
+					PartidaManager.finalizarPartida(paintballInstances.get(i),this,true,null);
 				}
 			}
 		}
@@ -157,7 +158,7 @@ public class PaintballBattle extends JavaPlugin {
 	public void reloadSigns() {
 		int taskID = cartelesTask.getTaskID();
 		Bukkit.getScheduler().cancelTask(taskID);
-		cartelesTask = new CartelesAdmin(this);
+		cartelesTask = new SignAdmin(this);
 		cartelesTask.actualizarCarteles();
 	}
 	
@@ -168,20 +169,20 @@ public class PaintballBattle extends JavaPlugin {
 		hologramasTask.actualizarHologramas();
 	}
 	
-	public void setPartidaEditando(PartidaEditando p) {
-		this.partidaEditando = p;
+	public void setPartidaEditando(PaintballInstanceEdit p) {
+		this.paintballInstanceEdit = p;
 	}
 	
 	public void removerPartidaEditando() {
-		this.partidaEditando = null;
+		this.paintballInstanceEdit = null;
 	}
 	
-	public PartidaEditando getPartidaEditando() {
-		return this.partidaEditando;
+	public PaintballInstanceEdit getPartidaEditando() {
+		return this.paintballInstanceEdit;
 	}
 	
-	public ConexionDatabase getConexionDatabase() {
-		return this.conexionDatabase;
+	public DatabaseConnection getConexionDatabase() {
+		return this.databaseConnection;
 	}	
 	
 	private boolean setupEconomy() {
@@ -202,60 +203,60 @@ public class PaintballBattle extends JavaPlugin {
 	
 	public void registerEvents(){
 		PluginManager pm = getServer().getPluginManager();
-		pm.registerEvents(new PartidaListener(this), this);
+		pm.registerEvents(new PlayerActionsEventHandler(this), this);
 		if(!Bukkit.getVersion().contains("1.8")) {
-			pm.registerEvents(new PartidaListenerNew(this), this);
+			pm.registerEvents(new MatchEventHandlerNew(this), this);
 		}
-		pm.registerEvents(new CartelesListener(this), this);
-		pm.registerEvents(new InventarioAdmin(this), this);
-		pm.registerEvents(new InventarioShop(this), this);
+		pm.registerEvents(new SignInteractEventHandler(this), this);
+		pm.registerEvents(new InventoryAdmin(this), this);
+		pm.registerEvents(new InventoryInteractEventHandler(this), this);
 		pm.registerEvents(new InventarioHats(this), this);
-		pm.registerEvents(new Actualizacion(this), this);
+		pm.registerEvents(new OnPlayerJoinEventHandler(this), this);
 	}
 	
 	public void registerCommands(){
 		this.getCommand("paintball").setExecutor(new Comando(this));
 	}
 	
-	public Partida getPartidaJugador(String jugador) {
-		for(int i=0;i<partidas.size();i++) {
-			ArrayList<JugadorPaintball> jugadores = partidas.get(i).getJugadores();
+	public PaintballInstance getPartidaJugador(String jugador) {
+		for(int i = 0; i< paintballInstances.size(); i++) {
+			ArrayList<PaintballPlayer> jugadores = paintballInstances.get(i).getJugadores();
 			for(int c=0;c<jugadores.size();c++) {
 				if(jugadores.get(c).getJugador().getName().equals(jugador)) {
-					return partidas.get(i);
+					return paintballInstances.get(i);
 				}
 			}
 		}
 		return null;
 	}
 	
-	public ArrayList<Partida> getPartidas() {
-		return this.partidas;
+	public ArrayList<PaintballInstance> getPartidas() {
+		return this.paintballInstances;
 	}
 	
-	public Partida getPartida(String nombre) {
-		for(int i=0;i<partidas.size();i++) {
-			if(partidas.get(i).getNombre().equals(nombre)) {
-				return partidas.get(i);
+	public PaintballInstance getPartida(String nombre) {
+		for(int i = 0; i< paintballInstances.size(); i++) {
+			if(paintballInstances.get(i).getNombre().equals(nombre)) {
+				return paintballInstances.get(i);
 			}
 		}
 		return null;
 	}
 	
-	public void agregarPartida(Partida partida) {
-		this.partidas.add(partida);
+	public void agregarPartida(PaintballInstance paintballInstance) {
+		this.paintballInstances.add(paintballInstance);
 	}
 	
 	public void removerPartida(String nombre) {
-		for(int i=0;i<partidas.size();i++) {
-			if(partidas.get(i).getNombre().equals(nombre)) {
-				partidas.remove(i);
+		for(int i = 0; i< paintballInstances.size(); i++) {
+			if(paintballInstances.get(i).getNombre().equals(nombre)) {
+				paintballInstances.remove(i);
 			}
 		}
 	}
 	
 	public void cargarPartidas() {
-		  this.partidas = new ArrayList<Partida>();
+		  this.paintballInstances = new ArrayList<PaintballInstance>();
 		  FileConfiguration arenas = getArenas();
 		  if(arenas.contains("Arenas")) {
 			  for(String key : arenas.getConfigurationSection("Arenas").getKeys(false)) {
@@ -302,27 +303,27 @@ public class PaintballBattle extends JavaPlugin {
 					  lSpawnTeam2 = new Location(Bukkit.getWorld(worldSpawnTeam2),xSpawnTeam2,ySpawnTeam2,zSpawnTeam2,yawSpawnTeam2,pitchSpawnTeam2);
 				  }
 				  
-				  Partida partida = new Partida(key,time,nombreTeam1,nombreTeam2,vidas);
+				  PaintballInstance paintballInstance = new PaintballInstance(key,time,nombreTeam1,nombreTeam2,vidas);
 				  if(nombreTeam1.equalsIgnoreCase("random")) {
-					  partida.getTeam1().setRandom(true);
+					  paintballInstance.getTeam1().setRandom(true);
 				  }
 				  if(nombreTeam2.equalsIgnoreCase("random")) {
-					  partida.getTeam2().setRandom(true);
+					  paintballInstance.getTeam2().setRandom(true);
 				  }
-				  partida.modificarTeams(getConfig());
-				  partida.setCantidadMaximaJugadores(max_players);
-				  partida.setCantidadMinimaJugadores(min_players);
-				  partida.setLobby(lLobby);
-				  partida.getTeam1().setSpawn(lSpawnTeam1);
-				  partida.getTeam2().setSpawn(lSpawnTeam2);
+				  paintballInstance.modificarTeams(getConfig());
+				  paintballInstance.setCantidadMaximaJugadores(max_players);
+				  paintballInstance.setCantidadMinimaJugadores(min_players);
+				  paintballInstance.setLobby(lLobby);
+				  paintballInstance.getTeam1().setSpawn(lSpawnTeam1);
+				  paintballInstance.getTeam2().setSpawn(lSpawnTeam2);
 				  String enabled = arenas.getString("Arenas."+key+".enabled");
 				  if(enabled.equals("true")) {
-					  partida.setEstado(EstadoPartida.ESPERANDO);
+					  paintballInstance.setEstado(MatchStatus.ESPERANDO);
 				  }else {
-					  partida.setEstado(EstadoPartida.DESACTIVADA);
+					  paintballInstance.setEstado(MatchStatus.DESACTIVADA);
 				  }
 				  
-				  this.partidas.add(partida);
+				  this.paintballInstances.add(paintballInstance);
 			  }
 		  }
 		  
@@ -331,7 +332,7 @@ public class PaintballBattle extends JavaPlugin {
 	public void guardarPartidas() {
 		  FileConfiguration arenas = getArenas();
 		  arenas.set("Arenas", null);
-		  for(Partida p : this.partidas) {
+		  for(PaintballInstance p : this.paintballInstances) {
 			  String nombre = p.getNombre();
 			  arenas.set("Arenas."+nombre+".min_players", p.getCantidadMinimaJugadores()+"");
 			  arenas.set("Arenas."+nombre+".max_players", p.getCantidadMaximaJugadores()+"");
@@ -378,7 +379,7 @@ public class PaintballBattle extends JavaPlugin {
 				  arenas.set("Arenas."+nombre+".Team2.name", p.getTeam2().getTipo()); 
 			  }
 			  
-			  if(p.getEstado().equals(EstadoPartida.DESACTIVADA)) {
+			  if(p.getEstado().equals(MatchStatus.DESACTIVADA)) {
 				  arenas.set("Arenas."+nombre+".enabled", "false");
 			  }else {
 				  arenas.set("Arenas."+nombre+".enabled", "true");
@@ -595,7 +596,7 @@ public class PaintballBattle extends JavaPlugin {
 		}
 	
 		public void cargarJugadores() {
-			if(!MySQL.isEnabled(getConfig())) {
+			if(!MySql.isEnabled(getConfig())) {
 				for(PlayerConfig playerConfig : configPlayers) {
 					FileConfiguration players = playerConfig.getConfig();
 					String jugador = players.getString("name");
@@ -640,14 +641,14 @@ public class PaintballBattle extends JavaPlugin {
 					}
 					
 						
-					this.agregarJugadorDatos(new JugadorDatos(jugador,playerConfig.getPath().replace(".yml", ""),wins,loses,ties,kills,coins,perks,hats));
+					this.agregarJugadorDatos(new Player(jugador,playerConfig.getPath().replace(".yml", ""),wins,loses,ties,kills,coins,perks,hats));
 				}
 			}
 		}
 		
 		public void guardarJugadores() {
-			if(!MySQL.isEnabled(getConfig())) {
-				for(JugadorDatos j : jugadoresDatos) {
+			if(!MySql.isEnabled(getConfig())) {
+				for(Player j : jugadoresDatos) {
 					String jugador = j.getName();
 					PlayerConfig playerConfig = getPlayerConfig(j.getUUID()+".yml");
 					FileConfiguration players = playerConfig.getConfig();
@@ -676,12 +677,12 @@ public class PaintballBattle extends JavaPlugin {
 			}
 		}
 		
-		public void agregarJugadorDatos(JugadorDatos jugador) {
+		public void agregarJugadorDatos(Player jugador) {
 			jugadoresDatos.add(jugador);
 		}
 		
-		public JugadorDatos getJugador(String jugador) {
-			for(JugadorDatos j : jugadoresDatos) {
+		public Player getJugador(String jugador) {
+			for(Player j : jugadoresDatos) {
 				if(j != null && j.getName() != null && j.getName().equals(jugador)) {
 					return j;
 				}
@@ -689,7 +690,7 @@ public class PaintballBattle extends JavaPlugin {
 			return null;
 		}
 		
-		public ArrayList<JugadorDatos> getJugadores(){
+		public ArrayList<Player> getJugadores(){
 			return this.jugadoresDatos;
 		}
 		

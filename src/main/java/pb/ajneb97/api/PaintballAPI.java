@@ -3,14 +3,12 @@ package pb.ajneb97.api;
 import java.util.ArrayList;
 
 import org.bukkit.configuration.file.FileConfiguration;
-import org.bukkit.entity.Player;
 
 import pb.ajneb97.PaintballBattle;
-import pb.ajneb97.database.JugadorDatos;
-import pb.ajneb97.database.MySQL;
-import pb.ajneb97.juego.EstadoPartida;
-import pb.ajneb97.juego.JugadorPaintballDatos;
-import pb.ajneb97.juego.Partida;
+import pb.ajneb97.database.Player;
+import pb.ajneb97.database.MySql;
+import pb.ajneb97.enums.MatchStatus;
+import pb.ajneb97.logic.PaintballInstance;
 
 public class PaintballAPI {
 
@@ -33,181 +31,181 @@ public class PaintballAPI {
 //		}
 //	}
 	
-	public static int getCoins(Player player) {
-		if(!MySQL.isEnabled(plugin.getConfig())) {
-			JugadorDatos j = plugin.getJugador(player.getName());
+	public static int getCoins(org.bukkit.entity.Player player) {
+		if(!MySql.isEnabled(plugin.getConfig())) {
+			Player j = plugin.getJugador(player.getName());
 			if(j != null) {
 				return j.getCoins();
 			}else {
 				return 0;
 			}
 		}else {
-			return MySQL.getStatsTotales(plugin, player.getName(),"Coins");
+			return MySql.getStatsTotales(plugin, player.getName(),"Coins");
 		}
 	}
 	
-	public static void addCoins(Player player,int coins) {
-		if(!MySQL.isEnabled(plugin.getConfig())) {
-			JugadorDatos j = plugin.getJugador(player.getName());
+	public static void addCoins(org.bukkit.entity.Player player, int coins) {
+		if(!MySql.isEnabled(plugin.getConfig())) {
+			Player j = plugin.getJugador(player.getName());
 			if(j != null) {
 				j.aumentarCoins(coins);
 			}
 		}else {
-			MySQL.agregarCoinsJugadorAsync(plugin, player.getName(), coins);
+			MySql.agregarCoinsJugadorAsync(plugin, player.getName(), coins);
 		}
 	}
 	
-	public static void removeCoins(Player player,int coins) {
-		if(!MySQL.isEnabled(plugin.getConfig())) {
-			JugadorDatos j = plugin.getJugador(player.getName());
+	public static void removeCoins(org.bukkit.entity.Player player, int coins) {
+		if(!MySql.isEnabled(plugin.getConfig())) {
+			Player j = plugin.getJugador(player.getName());
 			if(j != null) {
 				j.disminuirCoins(coins);
 			}
 		}else {
-			MySQL.removerCoinsJugadorAsync(plugin, player.getName(), coins);
+			MySql.removerCoinsJugadorAsync(plugin, player.getName(), coins);
 		}
 	}
 	
-	public static int getWins(Player player) {
-		if(!MySQL.isEnabled(plugin.getConfig())) {
-			JugadorDatos j = plugin.getJugador(player.getName());
+	public static int getWins(org.bukkit.entity.Player player) {
+		if(!MySql.isEnabled(plugin.getConfig())) {
+			Player j = plugin.getJugador(player.getName());
 			if(j != null) {
 				return j.getWins();
 			}else {
 				return 0;
 			}
 		}else {
-			return MySQL.getStatsTotales(plugin, player.getName(),"Win");
+			return MySql.getStatsTotales(plugin, player.getName(),"Win");
 		}
 		
 	}
 	
-	public static int getLoses(Player player) {
-		if(!MySQL.isEnabled(plugin.getConfig())) {
-			JugadorDatos j = plugin.getJugador(player.getName());
+	public static int getLoses(org.bukkit.entity.Player player) {
+		if(!MySql.isEnabled(plugin.getConfig())) {
+			Player j = plugin.getJugador(player.getName());
 			if(j != null) {
 				return j.getLoses();
 			}else {
 				return 0;
 			}
 		}else {
-			return MySQL.getStatsTotales(plugin, player.getName(),"Lose");
+			return MySql.getStatsTotales(plugin, player.getName(),"Lose");
 		}
 		
 	}
 	
-	public static int getTies(Player player) {
-		if(!MySQL.isEnabled(plugin.getConfig())) {
-			JugadorDatos j = plugin.getJugador(player.getName());
+	public static int getTies(org.bukkit.entity.Player player) {
+		if(!MySql.isEnabled(plugin.getConfig())) {
+			Player j = plugin.getJugador(player.getName());
 			if(j != null) {
 				return j.getTies();
 			}else {
 				return 0;
 			}
 		}else {
-			return MySQL.getStatsTotales(plugin, player.getName(),"Tie");
+			return MySql.getStatsTotales(plugin, player.getName(),"Tie");
 		}
 	}
 	
-	public static int getKills(Player player) {
-		if(!MySQL.isEnabled(plugin.getConfig())) {
-			JugadorDatos j = plugin.getJugador(player.getName());
+	public static int getKills(org.bukkit.entity.Player player) {
+		if(!MySql.isEnabled(plugin.getConfig())) {
+			Player j = plugin.getJugador(player.getName());
 			if(j != null) {
 				return j.getKills();
 			}else {
 				return 0;
 			}
 		}else {
-			return MySQL.getStatsTotales(plugin, player.getName(),"Kills");
+			return MySql.getStatsTotales(plugin, player.getName(),"Kills");
 		}
 		
 	}
 	
-	public static int getPerkLevel(Player player,String perk) {
-		if(!MySQL.isEnabled(plugin.getConfig())) {
-			JugadorDatos j = plugin.getJugador(player.getName());
+	public static int getPerkLevel(org.bukkit.entity.Player player, String perk) {
+		if(!MySql.isEnabled(plugin.getConfig())) {
+			Player j = plugin.getJugador(player.getName());
 			if(j != null) {
 				return j.getNivelPerk(perk);
 			}else {
 				return 0;
 			}
 		}else {
-			return MySQL.getNivelPerk(plugin, player.getName(), perk);
+			return MySql.getNivelPerk(plugin, player.getName(), perk);
 		}
 	}
 	
-	public static boolean hasHat(Player player,String hat) {
-		if(!MySQL.isEnabled(plugin.getConfig())) {
-			JugadorDatos j = plugin.getJugador(player.getName());
+	public static boolean hasHat(org.bukkit.entity.Player player, String hat) {
+		if(!MySql.isEnabled(plugin.getConfig())) {
+			Player j = plugin.getJugador(player.getName());
 			if(j != null) {
 				return j.tieneHat(hat);
 			}else {
 				return false;
 			}
 		}else {
-			return MySQL.jugadorTieneHat(plugin, player.getName(), hat);
+			return MySql.jugadorTieneHat(plugin, player.getName(), hat);
 		}
 	}
 	
-	public static boolean hasHatSelected(Player player,String hat) {
-		if(!MySQL.isEnabled(plugin.getConfig())) {
-			JugadorDatos j = plugin.getJugador(player.getName());
+	public static boolean hasHatSelected(org.bukkit.entity.Player player, String hat) {
+		if(!MySql.isEnabled(plugin.getConfig())) {
+			Player j = plugin.getJugador(player.getName());
 			if(j != null) {
 				return j.tieneHatSeleccionado(hat);
 			}else {
 				return false;
 			}
 		}else {
-			return MySQL.jugadorTieneHatSeleccionado(plugin, player.getName(), hat);
+			return MySql.jugadorTieneHatSeleccionado(plugin, player.getName(), hat);
 		}
 	}
 	
-	public static ArrayList<Perk> getPerks(Player player) {
-		if(!MySQL.isEnabled(plugin.getConfig())) {
-			JugadorDatos j = plugin.getJugador(player.getName());
+	public static ArrayList<Perk> getPerks(org.bukkit.entity.Player player) {
+		if(!MySql.isEnabled(plugin.getConfig())) {
+			Player j = plugin.getJugador(player.getName());
 			if(j != null) {
 				return j.getPerks();
 			}else {
 				return new ArrayList<Perk>();
 			}
 		}else {
-			return MySQL.getPerksJugador(plugin, player.getName());
+			return MySql.getPerksJugador(plugin, player.getName());
 		}
 	}
 	
-	public static ArrayList<Hat> getHats(Player player) {
-		if(!MySQL.isEnabled(plugin.getConfig())) {
-			JugadorDatos j = plugin.getJugador(player.getName());
+	public static ArrayList<Hat> getHats(org.bukkit.entity.Player player) {
+		if(!MySql.isEnabled(plugin.getConfig())) {
+			Player j = plugin.getJugador(player.getName());
 			if(j != null && j.getHats() != null) {
 				return j.getHats();
 			}else {
 				return new ArrayList<Hat>();
 			}
 		}else {
-			return MySQL.getHatsJugador(plugin, player.getName());
+			return MySql.getHatsJugador(plugin, player.getName());
 		}
 	}
 	
 	public static int getPlayersArena(String arena) {
-		Partida partida = plugin.getPartida(arena);
-		if(partida != null) {
-			return partida.getCantidadActualJugadores();
+		PaintballInstance paintballInstance = plugin.getPartida(arena);
+		if(paintballInstance != null) {
+			return paintballInstance.getCantidadActualJugadores();
 		}else {
 			return 0;
 		}
 	}
 	
 	public static String getStatusArena(String arena) {
-		Partida partida = plugin.getPartida(arena);
+		PaintballInstance paintballInstance = plugin.getPartida(arena);
 		FileConfiguration messages = plugin.getMessages();
-		if(partida != null) {
-			if(partida.getEstado().equals(EstadoPartida.COMENZANDO)) {
+		if(paintballInstance != null) {
+			if(paintballInstance.getEstado().equals(MatchStatus.COMENZANDO)) {
 				return messages.getString("signStatusStarting");
-			}else if(partida.getEstado().equals(EstadoPartida.ESPERANDO)) {
+			}else if(paintballInstance.getEstado().equals(MatchStatus.ESPERANDO)) {
 				return messages.getString("signStatusWaiting");
-			}else if(partida.getEstado().equals(EstadoPartida.JUGANDO)) {
+			}else if(paintballInstance.getEstado().equals(MatchStatus.JUGANDO)) {
 				return messages.getString("signStatusIngame");
-			}else if(partida.getEstado().equals(EstadoPartida.TERMINANDO)) {
+			}else if(paintballInstance.getEstado().equals(MatchStatus.TERMINANDO)) {
 				return messages.getString("signStatusFinishing");
 			}else {
 				return messages.getString("signStatusDisabled");

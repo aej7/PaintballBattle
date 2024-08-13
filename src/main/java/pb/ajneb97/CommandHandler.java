@@ -9,23 +9,22 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.FileConfiguration;
-import org.bukkit.entity.Player;
 
 import net.md_5.bungee.api.ChatColor;
 import org.jetbrains.annotations.NotNull;
 import pb.ajneb97.api.Hat;
 import pb.ajneb97.api.Perk;
-import pb.ajneb97.database.JugadorDatos;
-import pb.ajneb97.database.MySQL;
-import pb.ajneb97.juego.EstadoPartida;
-import pb.ajneb97.juego.Partida;
-import pb.ajneb97.juego.PartidaEditando;
-import pb.ajneb97.managers.Checks;
-import pb.ajneb97.managers.InventarioAdmin;
-import pb.ajneb97.managers.InventarioShop;
-import pb.ajneb97.managers.PartidaManager;
-import pb.ajneb97.managers.TopHologram;
-import pb.ajneb97.utils.UtilidadesOtros;
+import pb.ajneb97.database.Player;
+import pb.ajneb97.database.MySql;
+import pb.ajneb97.enums.MatchStatus;
+import pb.ajneb97.logic.PaintballInstance;
+import pb.ajneb97.logic.PaintballInstanceEdit;
+import pb.ajneb97.configuration.Checks;
+import pb.ajneb97.admin.InventoryAdmin;
+import pb.ajneb97.eventhandlers.InventoryInteractEventHandler;
+import pb.ajneb97.logic.PartidaManager;
+import pb.ajneb97.logic.TopHologram;
+import pb.ajneb97.utils.OthersUtils;
 
 public class CommandHandler implements CommandExecutor {
 	
@@ -52,7 +51,7 @@ public class CommandHandler implements CommandExecutor {
 		sender.sendMessage(ChatColor.translateAlternateColorCodes('&', message));
 	}
 
-	private void handleCreateArenaCommand(Player player, String[] args) {
+	private void handleCreateArenaCommand(org.bukkit.entity.Player player, String[] args) {
 		if (args.length < 2) {
 			sendMessage(player, plugin.getMessages().getString("commandCreateErrorUse"));
 		}
@@ -68,15 +67,15 @@ public class CommandHandler implements CommandExecutor {
 			sendMessage(player, plugin.getMessages().getString("noMainLobby"));
 		}
 
-		String equipo1 = "";
-		String equipo2 = "";
+		String team1 = "";
+		String team2 = "";
 		int i = 0;
 
 		for (String key : Objects.requireNonNull(config.getConfigurationSection("teams")).getKeys(false)) {
 			if (i == 0) {
-				equipo1 = key;
+				team1 = key;
 			} else {
-				equipo2 = key;
+				team2 = key;
 				break;
 			}
 
@@ -87,7 +86,7 @@ public class CommandHandler implements CommandExecutor {
 	public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, String[] args){
 		FileConfiguration messages = plugin.getMessages();
 		String prefix = ChatColor.translateAlternateColorCodes('&', Objects.requireNonNull(messages.getString("prefix"))) + " ";
-	   if (!(sender instanceof Player)) {
+	   if (!(sender instanceof org.bukkit.entity.Player)) {
 		   if	(args.length >= 1) {
 			   if	(args[0].equalsIgnoreCase("givecoins")) {
 				   giveCoins(sender, args, messages, prefix);
@@ -99,7 +98,7 @@ public class CommandHandler implements CommandExecutor {
 		   return false;   	
 	   }
 
-	   Player player = (Player) sender;
+	   org.bukkit.entity.Player player = (org.bukkit.entity.Player) sender;
 	   if(args.length >= 1) {
 		   if(args[0].equalsIgnoreCase("create")) {
 			   if(player.isOp() || player.hasPermission("paintball.admin")) {
@@ -124,8 +123,8 @@ public class CommandHandler implements CommandExecutor {
 							   i++;
 						   }
 						   
-						   Partida partida = new Partida(args[1],Integer.valueOf(config.getString("arena_time_default")),equipo1,equipo2,Integer.valueOf(config.getString("team_starting_lives_default")));
-						   plugin.agregarPartida(partida);
+						   PaintballInstance paintballInstance = new PaintballInstance(args[1],Integer.valueOf(config.getString("arena_time_default")),equipo1,equipo2,Integer.valueOf(config.getString("team_starting_lives_default")));
+						   plugin.agregarPartida(paintballInstance);
 						   player.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("arenaCreated").replace("%name%", args[1])));
 						   player.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("arenaCreatedExtraInfo").replace("%name%", args[1])));
 					   } else {
@@ -189,17 +188,17 @@ public class CommandHandler implements CommandExecutor {
 				   return false;
 			   }
 			   if(args.length >= 2) {
-				   Partida partida = plugin.getPartida(args[1]);
-				   if(partida != null) {
-					   if(partida.estaActivada()) {
+				   PaintballInstance paintballInstance = plugin.getPartida(args[1]);
+				   if(paintballInstance != null) {
+					   if(paintballInstance.estaActivada()) {
 						   if(plugin.getPartidaJugador(player.getName()) == null) {
-							   if(!partida.estaIniciada()) {
-								   if(!partida.estaLlena()) {
-									   if(!UtilidadesOtros.pasaConfigInventario(player, plugin.getConfig())) {
+							   if(!paintballInstance.estaIniciada()) {
+								   if(!paintballInstance.estaLlena()) {
+									   if(!OthersUtils.pasaConfigInventario(player, plugin.getConfig())) {
 										   player.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("errorClearInventory")));
 										   return true;
 									   }
-									   PartidaManager.jugadorEntra(partida, player,plugin);
+									   PartidaManager.jugadorEntra(paintballInstance, player,plugin);
 								   }else {
 									   player.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("arenaIsFull")));
 								   }
@@ -221,20 +220,20 @@ public class CommandHandler implements CommandExecutor {
 		   }else if(args[0].equalsIgnoreCase("joinrandom")) {
 			   // /paintball joinrandom
 			   if(plugin.getPartidaJugador(player.getName()) == null) {
-				    Partida partidaNueva = PartidaManager.getPartidaDisponible(plugin);
-					if(partidaNueva == null) {
+				    PaintballInstance paintballInstanceNueva = PartidaManager.getPartidaDisponible(plugin);
+					if(paintballInstanceNueva == null) {
 						player.sendMessage(ChatColor.translateAlternateColorCodes('&', messages.getString("noArenasAvailable")));
 					}else {
-						PartidaManager.jugadorEntra(partidaNueva, player, plugin);
+						PartidaManager.jugadorEntra(paintballInstanceNueva, player, plugin);
 					}
 			   }else {
 				   player.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("alreadyInArena")));
 			   }
 		   }else if(args[0].equalsIgnoreCase("leave")) {
 			   // /paintball leave
-			   Partida partida = plugin.getPartidaJugador(player.getName());
-			   if(partida != null) {  
-				   PartidaManager.jugadorSale(partida, player, false, plugin, false);;
+			   PaintballInstance paintballInstance = plugin.getPartidaJugador(player.getName());
+			   if(paintballInstance != null) {
+				   PartidaManager.jugadorSale(paintballInstance, player, false, plugin, false);;
 			   }else {
 				   player.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("notInAGame")));
 			   }
@@ -243,31 +242,31 @@ public class CommandHandler implements CommandExecutor {
 			   if(!Checks.checkTodo(plugin, player)) {
 				   return false;
 			   }
-			   InventarioShop.crearInventarioPrincipal(player, plugin);
+			   InventoryInteractEventHandler.crearInventarioPrincipal(player, plugin);
 		   }else if(args[0].equalsIgnoreCase("enable")) {
 			   // /paintball enable <arena>
 			   //Para activar una arena todo debe estar definido
 			   if(player.isOp() || player.hasPermission("paintball.admin")) {
 				   if(args.length >= 2) {
-					   Partida partida = plugin.getPartida(args[1]);
-					   if(partida != null) {
-						   if(partida.estaActivada()) {
+					   PaintballInstance paintballInstance = plugin.getPartida(args[1]);
+					   if(paintballInstance != null) {
+						   if(paintballInstance.estaActivada()) {
 							   player.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("arenaAlreadyEnabled")));
 						   }else {
-							   if(partida.getLobby() == null) {
+							   if(paintballInstance.getLobby() == null) {
 								   player.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("enableArenaLobbyError")));
 								   return true;
 							   }
-							   if(partida.getTeam1().getSpawn() == null) {
+							   if(paintballInstance.getTeam1().getSpawn() == null) {
 								   player.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("enableArenaSpawnError").replace("%number%", "1")));
 								   return true;
 							   }
-							   if(partida.getTeam2().getSpawn() == null) {
+							   if(paintballInstance.getTeam2().getSpawn() == null) {
 								   player.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("enableArenaSpawnError").replace("%number%", "2")));
 								   return true;
 							   }
 							   
-							   partida.setEstado(EstadoPartida.ESPERANDO);
+							   paintballInstance.setEstado(MatchStatus.ESPERANDO);
 							   player.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("arenaEnabled").replace("%name%", args[1])));
 						   }
 					   }else {
@@ -283,12 +282,12 @@ public class CommandHandler implements CommandExecutor {
 			   // /paintball disable <arena>
 			   if(player.isOp() || player.hasPermission("paintball.admin")) {
 				   if(args.length >= 2) {
-					   Partida partida = plugin.getPartida(args[1]);
-					   if(partida != null) {
-						   if(!partida.estaActivada()) {
+					   PaintballInstance paintballInstance = plugin.getPartida(args[1]);
+					   if(paintballInstance != null) {
+						   if(!paintballInstance.estaActivada()) {
 							   player.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("arenaAlreadyDisabled")));
 						   }else {
-							   partida.setEstado(EstadoPartida.DESACTIVADA);
+							   paintballInstance.setEstado(MatchStatus.DESACTIVADA);
 							   player.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("arenaDisabled").replace("%name%", args[1])));
 						   }
 					   }else {
@@ -307,13 +306,13 @@ public class CommandHandler implements CommandExecutor {
 					   return false;
 				   }
 				   if(args.length >= 2) {
-					   Partida partida = plugin.getPartida(args[1]);
-					   if(partida != null) {
-						   if(!partida.estaActivada()) {
-							   PartidaEditando p = plugin.getPartidaEditando();
+					   PaintballInstance paintballInstance = plugin.getPartida(args[1]);
+					   if(paintballInstance != null) {
+						   if(!paintballInstance.estaActivada()) {
+							   PaintballInstanceEdit p = plugin.getPartidaEditando();
 							   if(p == null) {
 								   
-								   InventarioAdmin.crearInventario(player,partida,plugin);
+								   InventoryAdmin.crearInventario(player, paintballInstance,plugin);
 							   }else {
 								   player.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("arenaModifyingError")));
 							   }
@@ -345,7 +344,7 @@ public class CommandHandler implements CommandExecutor {
 								   period = args[3];
 							   }
 							   if(period.equalsIgnoreCase("global") || period.equalsIgnoreCase("monthly") || period.equalsIgnoreCase("weekly")) {
-								   if(!MySQL.isEnabled(plugin.getConfig()) && (period.equalsIgnoreCase("monthly") || period.equalsIgnoreCase("weekly"))) {
+								   if(!MySql.isEnabled(plugin.getConfig()) && (period.equalsIgnoreCase("monthly") || period.equalsIgnoreCase("weekly"))) {
 									   player.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("topHologramPeriodSQLError")));
 									   return true;
 								   }
@@ -424,18 +423,18 @@ public class CommandHandler implements CommandExecutor {
 			   try {
 				   int amount = Integer.valueOf(args[2]);
 				   //Si el jugador no esta en la base de datos, o en un archivo, DEBE estar conectado para darle coins.
-				   if(MySQL.isEnabled(plugin.getConfig())) {
-					   if(MySQL.jugadorExiste(plugin, player)) {
-						   MySQL.agregarCoinsJugadorAsync(plugin, player, amount);
+				   if(MySql.isEnabled(plugin.getConfig())) {
+					   if(MySql.jugadorExiste(plugin, player)) {
+						   MySql.agregarCoinsJugadorAsync(plugin, player, amount);
 						   sender.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("giveCoinsMessage").replace("%player%", player).replace("%amount%", amount+"")));
-						   Player p = Bukkit.getPlayer(player);
+						   org.bukkit.entity.Player p = Bukkit.getPlayer(player);
 						   if(p != null) {
 							   p.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("receiveCoinsMessage").replace("%amount%", amount+""))); 
 						   } 
 					   }else {
-						   Player p = Bukkit.getPlayer(player);
+						   org.bukkit.entity.Player p = Bukkit.getPlayer(player);
 						   if(p != null) {
-							   MySQL.crearJugadorPartidaAsync(plugin, p.getUniqueId().toString(), p.getName(), "", 0, 0, 0, 0, amount, 1);
+							   MySql.crearJugadorPartidaAsync(plugin, p.getUniqueId().toString(), p.getName(), "", 0, 0, 0, 0, amount, 1);
 							   sender.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("giveCoinsMessage").replace("%player%", player).replace("%amount%", amount+"")));
 							   p.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("receiveCoinsMessage").replace("%amount%", amount+"")));
 						   }else {
@@ -443,13 +442,13 @@ public class CommandHandler implements CommandExecutor {
 						   }
 					   }
 				   }else {
-					   Player p = Bukkit.getPlayer(player);
+					   org.bukkit.entity.Player p = Bukkit.getPlayer(player);
 					   if(p != null) {
 						   plugin.registerPlayer(p.getUniqueId().toString()+".yml");
 						   if(plugin.getJugador(p.getName()) == null) {
-								plugin.agregarJugadorDatos(new JugadorDatos(p.getName(),p.getUniqueId().toString(),0,0,0,0,0,new ArrayList<Perk>(),new ArrayList<Hat>()));
+								plugin.agregarJugadorDatos(new Player(p.getName(),p.getUniqueId().toString(),0,0,0,0,0,new ArrayList<Perk>(),new ArrayList<Hat>()));
 						   }
-						   JugadorDatos jDatos = plugin.getJugador(p.getName());
+						   Player jDatos = plugin.getJugador(p.getName());
 						   jDatos.aumentarCoins(amount);
 						   sender.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("giveCoinsMessage").replace("%player%", player).replace("%amount%", amount+"")));
 						   p.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("receiveCoinsMessage").replace("%amount%", amount+""))); 
@@ -468,7 +467,7 @@ public class CommandHandler implements CommandExecutor {
 		   return true;
 	}
 	
-	public void enviarAyuda(Player jugador) {
+	public void enviarAyuda(org.bukkit.entity.Player jugador) {
 		jugador.sendMessage(ChatColor.translateAlternateColorCodes('&',"&7[ [ &4[&fPaintball Battle&4] &7] ]"));
 		   jugador.sendMessage(ChatColor.translateAlternateColorCodes('&',""));
 		   jugador.sendMessage(ChatColor.translateAlternateColorCodes('&',"&6/paintball create <arena> &8Creates a new arena."));
