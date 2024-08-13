@@ -1,6 +1,8 @@
 package pb.ajneb97.database;
 
-import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import pb.ajneb97.api.Hat;
 import pb.ajneb97.api.Perk;
@@ -8,101 +10,96 @@ import pb.ajneb97.api.Perk;
 public class Player {
 
 	private int wins;
-	private int loses;
+	private int losses;
 	private int ties;
 	private int kills;
 	private int coins;
-	private String name;
-	private String uuid;
-	private ArrayList<Perk> perks;
-	private ArrayList<Hat> hats;
+	private final String name;
+	private final String uuid;
+	private final Map<String, Perk> perks;
+	private final Map<String, Hat> hats;
 	
-	public Player(String name, String uuid, int wins, int loses, int ties, int kills, int coins, ArrayList<Perk> perks, ArrayList<Hat> hats) {
+	public Player(String name, String uuid, int wins, int losses, int ties, int kills, int coins, List<Perk> perkList, List<Hat> hatList) {
 		this.wins = wins;
-		this.loses = loses;
+		this.losses = losses;
 		this.ties = ties;
 		this.kills = kills;
 		this.coins = coins;
 		this.name = name;
 		this.uuid = uuid;
-		this.perks = perks;
-		this.hats = hats;
+		perks = new HashMap<>();
+		hats = new HashMap<>();
+
+		for (Perk perk : perkList) {
+			perks.put(perk.getName(), perk);
+		}
+
+		for (Hat hat : hatList) {
+			hats.put(hat.getName(), hat);
+		}
 	}
 
-	public ArrayList<Hat> getHats(){
-		return this.hats;
+	public List<Hat> getHats(){
+		return List.copyOf(hats.values());
 	}
 	
-	public void agregarHat(String hat) {
-		hats.add(new Hat(hat,false));
-	}
-	
-	public boolean tieneHat(String hat) {
-		for(int i=0;i<hats.size();i++) {
-			if(hats.get(i).getName().equals(hat)) {
-				return true;
-			}
-		}
-		return false;
-	}
-	
-	public boolean tieneHatSeleccionado(String hat) {
-		for(int i=0;i<hats.size();i++) {
-			if(hats.get(i).getName().equals(hat) && hats.get(i).isSelected()) {
-				return true;
-			}
-		}
-		return false;
-	}
-	
-	public void deseleccionarHats() {
-		for(int i=0;i<hats.size();i++) {
-			hats.get(i).setSelected(false);
+	public void addHat(String hatName) {
+		if (!hats.containsKey(hatName)) {
+			hats.put(hatName, new Hat(hatName, false));
 		}
 	}
 	
-	public void seleccionarHat(String hat) {
-		for(int i=0;i<hats.size();i++) {
-			hats.get(i).setSelected(false);
-			if(hats.get(i).getName().equals(hat)) {
-				hats.get(i).setSelected(true);
-			}
+	public boolean hasHat(String hatName) {
+    return hats.containsKey(hatName);
+	}
+	
+	public boolean hasHatEquipped(String hatName) {
+    Hat hat = hats.get(hatName);
+		return hat != null && hat.isSelected();
+	}
+	
+	public void unequipHat() {
+    hats.values().forEach(hat -> hat.setSelected(false));
+	}
+
+	public void equipHat(String hatName) {
+    hats.values().forEach(hat -> hat.setSelected(hat.getName().equals(hatName)));
+	}
+	
+	public List<Perk> getPerks(){
+		return List.copyOf(perks.values());
+	}
+	
+	public void setPerk(String perkName, int level) {
+    Perk perk = perks.get(perkName);
+
+		if (perk != null) {
+			perk.setLevel(level);
+		} else {
+			perks.put(perkName, new Perk(perkName, level));
 		}
 	}
 	
-	public ArrayList<Perk> getPerks(){
-		return this.perks;
-	}
-	
-	public void setPerk(String perk,int level) {
-		for(int i=0;i<perks.size();i++) {
-			if(perks.get(i).getName().equals(perk)) {
-				perks.get(i).setLevel(level);
-				return;
-			}
+	public int getPerkLevel(String perkName) {
+    Perk perk = perks.get(perkName);
+
+		if (perk != null) {
+			return perk.getNivel();
+		} else {
+			return 0;
 		}
-		perks.add(new Perk(perk,level));
-	}
-	
-	public int getNivelPerk(String perk) {
-		for(int i=0;i<perks.size();i++) {
-			if(perks.get(i).getName().equals(perk)) {
-				return perks.get(i).getNivel();
-			}
-		}
-		return 0;
 	}
 	
 	public String getUUID() {
-		return this.uuid;
+		return uuid;
 	}
 
 	public int getWins() {
 		return wins;
 	}
 
-	public int getLoses() {
-		return loses;
+	public int getLosses() {
+		return losses;
 	}
 
 	public int getTies() {
@@ -121,27 +118,27 @@ public class Player {
 		return name;
 	}
 	
-	public void aumentarWins() {
-		this.wins++;
+	public void increaseWinAmount() {
+		wins++;
 	}
 	
-	public void aumentarLoses() {
-		this.loses++;
+	public void increaseLossAmount() {
+		losses++;
 	}
 	
-	public void aumentarTies() {
-		this.ties++;
+	public void increaseTieAmount() {
+		ties++;
 	}
 	
-	public void aumentarCoins(int coins) {
-		this.coins = this.coins+coins;
+	public void increaseCoinsByAmount(int amount) {
+		coins += amount;
 	}
 	
-	public void disminuirCoins(int coins) {
-		this.coins = this.coins-coins;
+	public void decreaseCoinsByAmount(int amount) {
+		coins += amount;
 	}
 	
-	public void aumentarKills(int kills) {
-		this.kills = this.kills+kills;
+	public void increaseKillsByAmount(int amount) {
+		kills += amount;
 	}
 }

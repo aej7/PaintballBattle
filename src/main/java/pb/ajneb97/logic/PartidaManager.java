@@ -604,7 +604,7 @@ public class PartidaManager {
 					Player player = MySql.getJugador(plugin, j.getJugador().getName());
 					int kills = j.getAsesinatos()+player.getKills();
 					int wins = player.getWins()+win;
-					int loses = player.getLoses()+lose;
+					int loses = player.getLosses()+lose;
 					int ties = player.getTies()+tie;
 					MySql.actualizarJugadorPartidaAsync(plugin, j.getJugador().getUniqueId().toString(), j.getJugador().getName(), wins, loses, ties, kills);
 				}				
@@ -617,17 +617,17 @@ public class PartidaManager {
 				}
 				Player jugador = plugin.getJugador(j.getJugador().getName());
 				if(paintballInstance.getEquipoJugador(j.getJugador().getName()).equals(ganador)) {
-					jugador.aumentarWins();
+					jugador.increaseWinAmount();
 					TitleAPI.sendTitle(j.getJugador(), 10, 40, 10, messages.getString("winnerTitleMessage"), "");
 				}else if(ganador == null) {
-					jugador.aumentarTies();
+					jugador.increaseTieAmount();
 					TitleAPI.sendTitle(j.getJugador(), 10, 40, 10, messages.getString("tieTitleMessage"), "");
 				}else {
-					jugador.aumentarLoses();
+					jugador.increaseLossAmount();
 					TitleAPI.sendTitle(j.getJugador(), 10, 40, 10, messages.getString("loserTitleMessage"), "");
 				}
 				
-				jugador.aumentarKills(j.getAsesinatos());
+				jugador.increaseKillsByAmount(j.getAsesinatos());
 			}
 			j.getJugador().closeInventory();
 			j.getJugador().getInventory().clear();

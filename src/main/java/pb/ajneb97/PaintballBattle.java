@@ -656,7 +656,7 @@ public class PaintballBattle extends JavaPlugin {
 					players.set("kills", j.getKills());
 					players.set("wins", j.getWins());
 					players.set("ties", j.getTies());
-					players.set("loses", j.getLoses());
+					players.set("loses", j.getLosses());
 					players.set("coins", j.getCoins());
 					
 					List<String> listaPerks = new ArrayList<String>();

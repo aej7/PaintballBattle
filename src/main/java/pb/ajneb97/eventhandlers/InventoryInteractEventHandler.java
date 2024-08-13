@@ -433,7 +433,7 @@ public class InventoryInteractEventHandler implements Listener{
 											plugin.agregarJugadorDatos(new Player(jugador.getName(),jugador.getUniqueId().toString(),0,0,0,0,0,new ArrayList<Perk>(),new ArrayList<Hat>()));
 										}
 										Player jDatos = plugin.getJugador(jugador.getName());
-										jDatos.agregarHat(key);
+										jDatos.addHat(key);
 									}
 									jugador.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("hatBought").replace("%name%", shop.getString("hats_items."+key+".name")))); 
 									String[] separadosSound = config.getString("shopUnlockSound").split(";");

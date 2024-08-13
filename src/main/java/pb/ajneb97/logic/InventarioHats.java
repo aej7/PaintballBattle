@@ -98,7 +98,7 @@ public class InventarioHats implements Listener{
 								MySql.deseleccionarHats(plugin, jugador.getName());
 							}else {
 								Player jDatos = plugin.getJugador(jugador.getName());
-								jDatos.deseleccionarHats();
+								jDatos.unequipHat();
 							}
 							jugador.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("hatRemoved")));
 							Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
@@ -122,7 +122,7 @@ public class InventarioHats implements Listener{
 									MySql.seleccionarHatAsync(plugin, jugador.getName(), h.getName());
 								}else {
 									Player jDatos = plugin.getJugador(jugador.getName());
-									jDatos.seleccionarHat(h.getName());
+									jDatos.equipHat(h.getName());
 								}
 								jugador.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("hatSelected").replace("%name%", config.getString("hats_items."+h.getName()+".name"))));
 								Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {

@@ -48,7 +48,7 @@ public class PaintballAPI {
 		if(!MySql.isEnabled(plugin.getConfig())) {
 			Player j = plugin.getJugador(player.getName());
 			if(j != null) {
-				j.aumentarCoins(coins);
+				j.increaseCoinsByAmount(coins);
 			}
 		}else {
 			MySql.agregarCoinsJugadorAsync(plugin, player.getName(), coins);
@@ -59,7 +59,7 @@ public class PaintballAPI {
 		if(!MySql.isEnabled(plugin.getConfig())) {
 			Player j = plugin.getJugador(player.getName());
 			if(j != null) {
-				j.disminuirCoins(coins);
+				j.decreaseCoinsByAmount(coins);
 			}
 		}else {
 			MySql.removerCoinsJugadorAsync(plugin, player.getName(), coins);
@@ -84,7 +84,7 @@ public class PaintballAPI {
 		if(!MySql.isEnabled(plugin.getConfig())) {
 			Player j = plugin.getJugador(player.getName());
 			if(j != null) {
-				return j.getLoses();
+				return j.getLosses();
 			}else {
 				return 0;
 			}
@@ -125,7 +125,7 @@ public class PaintballAPI {
 		if(!MySql.isEnabled(plugin.getConfig())) {
 			Player j = plugin.getJugador(player.getName());
 			if(j != null) {
-				return j.getNivelPerk(perk);
+				return j.getPerkLevel(perk);
 			}else {
 				return 0;
 			}
@@ -138,7 +138,7 @@ public class PaintballAPI {
 		if(!MySql.isEnabled(plugin.getConfig())) {
 			Player j = plugin.getJugador(player.getName());
 			if(j != null) {
-				return j.tieneHat(hat);
+				return j.hasHat(hat);
 			}else {
 				return false;
 			}
@@ -151,7 +151,7 @@ public class PaintballAPI {
 		if(!MySql.isEnabled(plugin.getConfig())) {
 			Player j = plugin.getJugador(player.getName());
 			if(j != null) {
-				return j.tieneHatSeleccionado(hat);
+				return j.hasHatEquipped(hat);
 			}else {
 				return false;
 			}

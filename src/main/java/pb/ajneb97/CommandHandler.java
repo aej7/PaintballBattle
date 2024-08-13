@@ -449,7 +449,7 @@ public class CommandHandler implements CommandExecutor {
 								plugin.agregarJugadorDatos(new Player(p.getName(),p.getUniqueId().toString(),0,0,0,0,0,new ArrayList<Perk>(),new ArrayList<Hat>()));
 						   }
 						   Player jDatos = plugin.getJugador(p.getName());
-						   jDatos.aumentarCoins(amount);
+						   jDatos.increaseCoinsByAmount(amount);
 						   sender.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("giveCoinsMessage").replace("%player%", player).replace("%amount%", amount+"")));
 						   p.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("receiveCoinsMessage").replace("%amount%", amount+""))); 
 					   }else {
