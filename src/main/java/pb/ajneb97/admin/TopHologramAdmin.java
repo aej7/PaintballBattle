@@ -20,7 +20,7 @@ public class TopHologramAdmin {
 		return this.taskID;
 	}
 	
-	public void actualizarHologramas() {
+	public void updateHolograms() {
 		FileConfiguration config = plugin.getConfig();
 		long ticks = Long.valueOf(config.getString("top_hologram_update_time"))*20;
 	    BukkitScheduler scheduler = Bukkit.getServer().getScheduler();
@@ -32,7 +32,7 @@ public class TopHologramAdmin {
 	}
 
 	protected void ejecutarActualizarHologramas() {
-		ArrayList<TopHologram> hologramas = plugin.getTopHologramas();
+		ArrayList<TopHologram> hologramas = plugin.getTopHolograms();
 		for(int i=0;i<hologramas.size();i++) {
 			hologramas.get(i).actualizar(plugin);
 			

@@ -97,7 +97,7 @@ public class InventarioHats implements Listener{
 							if(MySql.isEnabled(config)) {
 								MySql.deseleccionarHats(plugin, jugador.getName());
 							}else {
-								Player jDatos = plugin.getJugador(jugador.getName());
+								Player jDatos = plugin.getPlayer(jugador.getName());
 								jDatos.unequipHat();
 							}
 							jugador.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("hatRemoved")));
@@ -121,7 +121,7 @@ public class InventarioHats implements Listener{
 								if(MySql.isEnabled(config)) {
 									MySql.seleccionarHatAsync(plugin, jugador.getName(), h.getName());
 								}else {
-									Player jDatos = plugin.getJugador(jugador.getName());
+									Player jDatos = plugin.getPlayer(jugador.getName());
 									jDatos.equipHat(h.getName());
 								}
 								jugador.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("hatSelected").replace("%name%", config.getString("hats_items."+h.getName()+".name"))));

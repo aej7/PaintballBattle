@@ -16,10 +16,10 @@ public class Player {
 	private int coins;
 	private final String name;
 	private final String uuid;
-	private final Map<String, Perk> perks;
-	private final Map<String, Hat> hats;
+	private final Map<String, Perk> namesAndLevelsOfPerks;
+	private final Map<String, Hat> namesAndLevelsOfHats;
 	
-	public Player(String name, String uuid, int wins, int losses, int ties, int kills, int coins, List<Perk> perkList, List<Hat> hatList) {
+	public Player(String name, String uuid, int wins, int losses, int ties, int kills, int coins, List<Perk> perks, List<Hat> hats) {
 		this.wins = wins;
 		this.losses = losses;
 		this.ties = ties;
@@ -27,64 +27,64 @@ public class Player {
 		this.coins = coins;
 		this.name = name;
 		this.uuid = uuid;
-		perks = new HashMap<>();
-		hats = new HashMap<>();
+		namesAndLevelsOfPerks = new HashMap<>();
+		namesAndLevelsOfHats = new HashMap<>();
 
-		for (Perk perk : perkList) {
-			perks.put(perk.getName(), perk);
+		for (Perk perk : perks) {
+			namesAndLevelsOfPerks.put(perk.getName() + ";" + perk.getLevel(), perk);
 		}
 
-		for (Hat hat : hatList) {
-			hats.put(hat.getName(), hat);
+		for (Hat hat : hats) {
+			namesAndLevelsOfHats.put(hat.getName() + ";" + hat.isSelected(), hat);
 		}
 	}
 
-	public List<Hat> getHats(){
-		return List.copyOf(hats.values());
+	public List<Hat> getNamesAndLevelsOfHats() {
+		return List.copyOf(namesAndLevelsOfHats.values());
 	}
 	
 	public void addHat(String hatName) {
-		if (!hats.containsKey(hatName)) {
-			hats.put(hatName, new Hat(hatName, false));
+		if (!namesAndLevelsOfHats.containsKey(hatName)) {
+			namesAndLevelsOfHats.put(hatName, new Hat(hatName, false));
 		}
 	}
 	
 	public boolean hasHat(String hatName) {
-    return hats.containsKey(hatName);
+    return namesAndLevelsOfHats.containsKey(hatName);
 	}
 	
 	public boolean hasHatEquipped(String hatName) {
-    Hat hat = hats.get(hatName);
+    Hat hat = namesAndLevelsOfHats.get(hatName);
 		return hat != null && hat.isSelected();
 	}
 	
 	public void unequipHat() {
-    hats.values().forEach(hat -> hat.setSelected(false));
+    namesAndLevelsOfHats.values().forEach(hat -> hat.setSelected(false));
 	}
 
 	public void equipHat(String hatName) {
-    hats.values().forEach(hat -> hat.setSelected(hat.getName().equals(hatName)));
+    namesAndLevelsOfHats.values().forEach(hat -> hat.setSelected(hat.getName().equals(hatName)));
 	}
 	
-	public List<Perk> getPerks(){
-		return List.copyOf(perks.values());
+	public List<Perk> getNamesAndLevelsOfPerks() {
+		return List.copyOf(namesAndLevelsOfPerks.values());
 	}
 	
 	public void setPerk(String perkName, int level) {
-    Perk perk = perks.get(perkName);
+    Perk perk = namesAndLevelsOfPerks.get(perkName);
 
 		if (perk != null) {
 			perk.setLevel(level);
 		} else {
-			perks.put(perkName, new Perk(perkName, level));
+			namesAndLevelsOfPerks.put(perkName, new Perk(perkName, level));
 		}
 	}
 	
 	public int getPerkLevel(String perkName) {
-    Perk perk = perks.get(perkName);
+    Perk perk = namesAndLevelsOfPerks.get(perkName);
 
 		if (perk != null) {
-			return perk.getNivel();
+			return perk.getLevel();
 		} else {
 			return 0;
 		}

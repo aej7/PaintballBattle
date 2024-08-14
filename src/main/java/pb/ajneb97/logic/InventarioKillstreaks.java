@@ -23,13 +23,13 @@ public class InventarioKillstreaks{
 		this.plugin = plugin;
 	}
 	
-	public void actualizarInventario(final Player jugador,final PaintballInstance paintballInstance) {
+	public void actualizarInventario(final Player jugador,final PaintballMatch paintballMatch) {
 		BukkitScheduler sh = Bukkit.getServer().getScheduler();
 		final FileConfiguration config = plugin.getConfig();
 		final FileConfiguration messages = plugin.getMessages();
 		taskID = sh.scheduleSyncRepeatingTask(plugin, new Runnable() {
 			public void run() {
-				if(!update(jugador,config,messages, paintballInstance)) {
+				if(!update(jugador,config,messages, paintballMatch)) {
 					Bukkit.getScheduler().cancelTask(taskID);
 					return;
 				}
@@ -37,14 +37,14 @@ public class InventarioKillstreaks{
 		}, 0L, 20L);
 	}
 	
-	protected boolean update(Player jugador, FileConfiguration config, FileConfiguration messages, PaintballInstance paintballInstance) {
+	protected boolean update(Player jugador, FileConfiguration config, FileConfiguration messages, PaintballMatch paintballMatch) {
 		String pathInventory = ChatColor.translateAlternateColorCodes('&', ChatColor.translateAlternateColorCodes('&', config.getString("killstreaks_inventory_title")));
 		String pathInventoryM = ChatColor.stripColor(pathInventory);
 		Inventory inv = jugador.getOpenInventory().getTopInventory();
-		if(paintballInstance == null) {
+		if(paintballMatch == null) {
 			return false;
 		}
-		PaintballPlayer j = paintballInstance.getJugador(jugador.getName());
+		PaintballPlayer j = paintballMatch.getJugador(jugador.getName());
 		if(j == null) {
 			return false;
 		}

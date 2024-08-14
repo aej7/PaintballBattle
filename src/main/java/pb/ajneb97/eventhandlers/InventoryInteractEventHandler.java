@@ -272,10 +272,10 @@ public class InventoryInteractEventHandler implements Listener{
 											MySql.setPerkJugadorAsync(plugin, jugador.getUniqueId().toString(), jugador.getName(), perk, nivel+1);
 										}else {
 											plugin.registerPlayer(jugador.getUniqueId().toString()+".yml");
-											if(plugin.getJugador(jugador.getName()) == null) {
-												plugin.agregarJugadorDatos(new Player(jugador.getName(),jugador.getUniqueId().toString(),0,0,0,0,0,new ArrayList<Perk>(),new ArrayList<Hat>()));
+											if(plugin.getPlayer(jugador.getName()) == null) {
+												plugin.addPlayer(new Player(jugador.getName(),jugador.getUniqueId().toString(),0,0,0,0,0,new ArrayList<Perk>(),new ArrayList<Hat>()));
 											}
-											Player jDatos = plugin.getJugador(jugador.getName());
+											Player jDatos = plugin.getPlayer(jugador.getName());
 											jDatos.setPerk(perk, nivel+1);
 										}
 										jugador.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("perkUnlocked").replace("%name%", separados[2]))); 
@@ -429,10 +429,10 @@ public class InventoryInteractEventHandler implements Listener{
 										MySql.agregarJugadorHatAsync(plugin, jugador.getUniqueId().toString(), jugador.getName(), key);
 									}else {
 										plugin.registerPlayer(jugador.getUniqueId().toString()+".yml");
-										if(plugin.getJugador(jugador.getName()) == null) {
-											plugin.agregarJugadorDatos(new Player(jugador.getName(),jugador.getUniqueId().toString(),0,0,0,0,0,new ArrayList<Perk>(),new ArrayList<Hat>()));
+										if(plugin.getPlayer(jugador.getName()) == null) {
+											plugin.addPlayer(new Player(jugador.getName(),jugador.getUniqueId().toString(),0,0,0,0,0,new ArrayList<Perk>(),new ArrayList<Hat>()));
 										}
-										Player jDatos = plugin.getJugador(jugador.getName());
+										Player jDatos = plugin.getPlayer(jugador.getName());
 										jDatos.addHat(key);
 									}
 									jugador.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("hatBought").replace("%name%", shop.getString("hats_items."+key+".name")))); 

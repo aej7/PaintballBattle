@@ -13,7 +13,7 @@ import org.bukkit.scheduler.BukkitScheduler;
 
 import pb.ajneb97.PaintballBattle;
 import pb.ajneb97.enums.MatchStatus;
-import pb.ajneb97.logic.PaintballInstance;
+import pb.ajneb97.logic.PaintballMatch;
 
 public class SignAdmin {
 	
@@ -27,7 +27,7 @@ public class SignAdmin {
 		return this.taskID;
 	}
 	
-	public void actualizarCarteles() {
+	public void updateSigns() {
 	    BukkitScheduler scheduler = Bukkit.getServer().getScheduler();
  	    taskID = scheduler.scheduleSyncRepeatingTask(plugin, new Runnable() {
             public void run() { 
@@ -41,8 +41,8 @@ public class SignAdmin {
 		FileConfiguration messages = plugin.getMessages();
 		if(config.contains("Signs")) {
 			for(String arena : config.getConfigurationSection("Signs").getKeys(false)) {
-				PaintballInstance paintballInstance = plugin.getPartida(arena);
-				if(paintballInstance != null) {
+				PaintballMatch paintballMatch = plugin.getMatch(arena);
+				if(paintballMatch != null) {
 					List<String> listaCarteles = new ArrayList<String>();
 					if(config.contains("Signs."+arena)) {
 						listaCarteles = config.getStringList("Signs."+arena);
@@ -64,22 +64,22 @@ public class SignAdmin {
 							if(block.getType().name().contains("SIGN")) {
 								Sign sign = (Sign) block.getState();
 								String estado = "";
-								if(paintballInstance.getEstado().equals(MatchStatus.PLAYING)) {
+								if(paintballMatch.getEstado().equals(MatchStatus.PLAYING)) {
 									estado = messages.getString("signStatusIngame");
-								}else if(paintballInstance.getEstado().equals(MatchStatus.STARTING)) {
+								}else if(paintballMatch.getEstado().equals(MatchStatus.STARTING)) {
 									estado = messages.getString("signStatusStarting");
-								}else if(paintballInstance.getEstado().equals(MatchStatus.WAITING)) {
+								}else if(paintballMatch.getEstado().equals(MatchStatus.WAITING)) {
 									estado = messages.getString("signStatusWaiting");
-								}else if(paintballInstance.getEstado().equals(MatchStatus.OFF)) {
+								}else if(paintballMatch.getEstado().equals(MatchStatus.OFF)) {
 									estado = messages.getString("signStatusDisabled");
-								}else if(paintballInstance.getEstado().equals(MatchStatus.ENDING)) {
+								}else if(paintballMatch.getEstado().equals(MatchStatus.ENDING)) {
 									estado = messages.getString("signStatusFinishing");
 								}
 								
 								List<String> lista = messages.getStringList("signFormat");
 								for(int c=0;c<lista.size();c++) {
-									sign.setLine(c, ChatColor.translateAlternateColorCodes('&', lista.get(c).replace("%arena%", arena).replace("%current_players%", paintballInstance.getCantidadActualJugadores()+"")
-											.replace("%max_players%", paintballInstance.getCantidadMaximaJugadores()+"").replace("%status%", estado)));
+									sign.setLine(c, ChatColor.translateAlternateColorCodes('&', lista.get(c).replace("%arena%", arena).replace("%current_players%", paintballMatch.getCantidadActualJugadores()+"")
+											.replace("%max_players%", paintballMatch.getCantidadMaximaJugadores()+"").replace("%status%", estado)));
 								}
 
 								sign.update();

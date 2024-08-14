@@ -9,7 +9,7 @@ import java.util.Random;
 
 
 
-public class PaintballInstance {
+public class PaintballMatch {
 
 	private Team team1;
 	private Team team2;
@@ -24,7 +24,7 @@ public class PaintballInstance {
 	private int vidasIniciales;
 	private boolean enNuke;
 	
-	public PaintballInstance(String nombre, int tiempoMaximo, String equipo1, String equipo2, int vidasIniciales) {
+	public PaintballMatch(String nombre, int tiempoMaximo, String equipo1, String equipo2, int vidasIniciales) {
 		//por defecto
 		this.team1 = new Team(equipo1);
 		this.team2 = new Team(equipo2);
@@ -79,7 +79,7 @@ public class PaintballInstance {
 		return this.tiempo;
 	}
 	
-	public String getNombre() {
+	public String getNumber() {
 		return this.nombre;
 	}
 	
@@ -101,7 +101,7 @@ public class PaintballInstance {
 		}	
 	}
 	
-	public ArrayList<PaintballPlayer> getJugadores(){
+	public ArrayList<PaintballPlayer> getPlayers(){
 		ArrayList<PaintballPlayer> jugadores = new ArrayList<PaintballPlayer>();
 		
 		ArrayList<PaintballPlayer> jugadoresTeam1 = team1.getJugadores();
@@ -117,9 +117,9 @@ public class PaintballInstance {
 	}
 	
 	public PaintballPlayer getJugador(String jugador) {
-		for(int i=0;i<getJugadores().size();i++) {
-			if(getJugadores().get(i).getJugador().getName().equals(jugador)) {
-				return getJugadores().get(i);
+		for(int i = 0; i< getPlayers().size(); i++) {
+			if(getPlayers().get(i).getJugador().getName().equals(jugador)) {
+				return getPlayers().get(i);
 			}
 		}
 		return null;
@@ -174,7 +174,7 @@ public class PaintballInstance {
 		return this.estado;
 	}
 	
-	public void setEstado(MatchStatus estado) {
+	public void setState(MatchStatus estado) {
 		this.estado = estado;
 	}
 	
@@ -231,8 +231,8 @@ public class PaintballInstance {
 	
 	public ArrayList<PaintballPlayer> getJugadoresKills() {
 		ArrayList<PaintballPlayer> nuevo = new ArrayList<PaintballPlayer>();
-		for(int i=0;i<getJugadores().size();i++) {
-			nuevo.add(getJugadores().get(i));
+		for(int i = 0; i< getPlayers().size(); i++) {
+			nuevo.add(getPlayers().get(i));
 		}
 		
 		for(int i=0;i<nuevo.size();i++) {
@@ -257,7 +257,7 @@ public class PaintballInstance {
 		}
 		if(equipo.equals(this.team1.getTipo())) {
 			int cantidadPreferenciaTeam1 = 0;
-			for(PaintballPlayer j : this.getJugadores()) {
+			for(PaintballPlayer j : this.getPlayers()) {
 				if(j.getPreferenciaTeam() != null && j.getPreferenciaTeam().equals(this.team1.getTipo())) {
 					cantidadPreferenciaTeam1++;
 				}
@@ -273,7 +273,7 @@ public class PaintballInstance {
 			}
 		}else {
 			int cantidadPreferenciaTeam2 = 0;
-			for(PaintballPlayer j : this.getJugadores()) {
+			for(PaintballPlayer j : this.getPlayers()) {
 				if(j.getPreferenciaTeam() != null &&  j.getPreferenciaTeam().equals(this.team2.getTipo())) {
 					cantidadPreferenciaTeam2++;
 				}

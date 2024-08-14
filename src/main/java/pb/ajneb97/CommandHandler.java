@@ -17,8 +17,8 @@ import pb.ajneb97.api.Perk;
 import pb.ajneb97.database.Player;
 import pb.ajneb97.database.MySql;
 import pb.ajneb97.enums.MatchStatus;
-import pb.ajneb97.logic.PaintballInstance;
-import pb.ajneb97.logic.PaintballInstanceEdit;
+import pb.ajneb97.logic.PaintballMatch;
+import pb.ajneb97.logic.PaintballMatchEdit;
 import pb.ajneb97.configuration.Checks;
 import pb.ajneb97.admin.InventoryAdmin;
 import pb.ajneb97.eventhandlers.InventoryInteractEventHandler;
@@ -57,7 +57,7 @@ public class CommandHandler implements CommandExecutor {
 		}
 
 		String arenaName = args[1];
-		if (plugin.getPartida(arenaName) != null) {
+		if (plugin.getMatch(arenaName) != null) {
 			sendMessage(player, plugin.getMessages().getString("arenaAlreadyExists"));
 			return;
 		}
@@ -103,7 +103,7 @@ public class CommandHandler implements CommandExecutor {
 		   if(args[0].equalsIgnoreCase("create")) {
 			   if(player.isOp() || player.hasPermission("paintball.admin")) {
 				   if(args.length >= 2) {
-					   if(plugin.getPartida(args[1]) == null) {
+					   if(plugin.getMatch(args[1]) == null) {
 						   FileConfiguration config = plugin.getConfig();
 						   if(!config.contains("MainLobby")) {
 							   player.sendMessage(prefix + ChatColor.translateAlternateColorCodes('&', messages.getString("noMainLobby")));
@@ -123,8 +123,8 @@ public class CommandHandler implements CommandExecutor {
 							   i++;
 						   }
 						   
-						   PaintballInstance paintballInstance = new PaintballInstance(args[1],Integer.valueOf(config.getString("arena_time_default")),equipo1,equipo2,Integer.valueOf(config.getString("team_starting_lives_default")));
-						   plugin.agregarPartida(paintballInstance);
+						   PaintballMatch paintballMatch = new PaintballMatch(args[1],Integer.valueOf(config.getString("arena_time_default")),equipo1,equipo2,Integer.valueOf(config.getString("team_starting_lives_default")));
+						   plugin.addPaintballMatch(paintballMatch);
 						   player.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("arenaCreated").replace("%name%", args[1])));
 						   player.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("arenaCreatedExtraInfo").replace("%name%", args[1])));
 					   } else {
@@ -140,8 +140,8 @@ public class CommandHandler implements CommandExecutor {
 			   // /paintball delete <nombre>
 			   if(player.isOp() || player.hasPermission("paintball.admin")) {
 				   if(args.length >= 2) {
-					   if(plugin.getPartida(args[1]) != null) {
-						   plugin.removerPartida(args[1]);
+					   if(plugin.getMatch(args[1]) != null) {
+						   plugin.removePaintballMatch(args[1]);
 						   player.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("arenaDeleted").replace("%name%", args[1])));
 					   }else {
 						   player.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("arenaDoesNotExists")));
@@ -188,17 +188,17 @@ public class CommandHandler implements CommandExecutor {
 				   return false;
 			   }
 			   if(args.length >= 2) {
-				   PaintballInstance paintballInstance = plugin.getPartida(args[1]);
-				   if(paintballInstance != null) {
-					   if(paintballInstance.estaActivada()) {
-						   if(plugin.getPartidaJugador(player.getName()) == null) {
-							   if(!paintballInstance.estaIniciada()) {
-								   if(!paintballInstance.estaLlena()) {
+				   PaintballMatch paintballMatch = plugin.getMatch(args[1]);
+				   if(paintballMatch != null) {
+					   if(paintballMatch.estaActivada()) {
+						   if(plugin.getPlayersMatch(player.getName()) == null) {
+							   if(!paintballMatch.estaIniciada()) {
+								   if(!paintballMatch.estaLlena()) {
 									   if(!OthersUtils.pasaConfigInventario(player, plugin.getConfig())) {
 										   player.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("errorClearInventory")));
 										   return true;
 									   }
-									   PartidaManager.jugadorEntra(paintballInstance, player,plugin);
+									   PartidaManager.jugadorEntra(paintballMatch, player,plugin);
 								   }else {
 									   player.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("arenaIsFull")));
 								   }
@@ -219,21 +219,21 @@ public class CommandHandler implements CommandExecutor {
 			   }
 		   }else if(args[0].equalsIgnoreCase("joinrandom")) {
 			   // /paintball joinrandom
-			   if(plugin.getPartidaJugador(player.getName()) == null) {
-				    PaintballInstance paintballInstanceNueva = PartidaManager.getPartidaDisponible(plugin);
-					if(paintballInstanceNueva == null) {
+			   if(plugin.getPlayersMatch(player.getName()) == null) {
+				    PaintballMatch paintballMatchNueva = PartidaManager.getPartidaDisponible(plugin);
+					if(paintballMatchNueva == null) {
 						player.sendMessage(ChatColor.translateAlternateColorCodes('&', messages.getString("noArenasAvailable")));
 					}else {
-						PartidaManager.jugadorEntra(paintballInstanceNueva, player, plugin);
+						PartidaManager.jugadorEntra(paintballMatchNueva, player, plugin);
 					}
 			   }else {
 				   player.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("alreadyInArena")));
 			   }
 		   }else if(args[0].equalsIgnoreCase("leave")) {
 			   // /paintball leave
-			   PaintballInstance paintballInstance = plugin.getPartidaJugador(player.getName());
-			   if(paintballInstance != null) {
-				   PartidaManager.jugadorSale(paintballInstance, player, false, plugin, false);;
+			   PaintballMatch paintballMatch = plugin.getPlayersMatch(player.getName());
+			   if(paintballMatch != null) {
+				   PartidaManager.jugadorSale(paintballMatch, player, false, plugin, false);;
 			   }else {
 				   player.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("notInAGame")));
 			   }
@@ -248,25 +248,25 @@ public class CommandHandler implements CommandExecutor {
 			   //Para activar una arena todo debe estar definido
 			   if(player.isOp() || player.hasPermission("paintball.admin")) {
 				   if(args.length >= 2) {
-					   PaintballInstance paintballInstance = plugin.getPartida(args[1]);
-					   if(paintballInstance != null) {
-						   if(paintballInstance.estaActivada()) {
+					   PaintballMatch paintballMatch = plugin.getMatch(args[1]);
+					   if(paintballMatch != null) {
+						   if(paintballMatch.estaActivada()) {
 							   player.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("arenaAlreadyEnabled")));
 						   }else {
-							   if(paintballInstance.getLobby() == null) {
+							   if(paintballMatch.getLobby() == null) {
 								   player.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("enableArenaLobbyError")));
 								   return true;
 							   }
-							   if(paintballInstance.getTeam1().getSpawn() == null) {
+							   if(paintballMatch.getTeam1().getSpawn() == null) {
 								   player.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("enableArenaSpawnError").replace("%number%", "1")));
 								   return true;
 							   }
-							   if(paintballInstance.getTeam2().getSpawn() == null) {
+							   if(paintballMatch.getTeam2().getSpawn() == null) {
 								   player.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("enableArenaSpawnError").replace("%number%", "2")));
 								   return true;
 							   }
 							   
-							   paintballInstance.setEstado(MatchStatus.WAITING);
+							   paintballMatch.setState(MatchStatus.WAITING);
 							   player.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("arenaEnabled").replace("%name%", args[1])));
 						   }
 					   }else {
@@ -282,12 +282,12 @@ public class CommandHandler implements CommandExecutor {
 			   // /paintball disable <arena>
 			   if(player.isOp() || player.hasPermission("paintball.admin")) {
 				   if(args.length >= 2) {
-					   PaintballInstance paintballInstance = plugin.getPartida(args[1]);
-					   if(paintballInstance != null) {
-						   if(!paintballInstance.estaActivada()) {
+					   PaintballMatch paintballMatch = plugin.getMatch(args[1]);
+					   if(paintballMatch != null) {
+						   if(!paintballMatch.estaActivada()) {
 							   player.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("arenaAlreadyDisabled")));
 						   }else {
-							   paintballInstance.setEstado(MatchStatus.OFF);
+							   paintballMatch.setState(MatchStatus.OFF);
 							   player.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("arenaDisabled").replace("%name%", args[1])));
 						   }
 					   }else {
@@ -306,13 +306,13 @@ public class CommandHandler implements CommandExecutor {
 					   return false;
 				   }
 				   if(args.length >= 2) {
-					   PaintballInstance paintballInstance = plugin.getPartida(args[1]);
-					   if(paintballInstance != null) {
-						   if(!paintballInstance.estaActivada()) {
-							   PaintballInstanceEdit p = plugin.getPartidaEditando();
+					   PaintballMatch paintballMatch = plugin.getMatch(args[1]);
+					   if(paintballMatch != null) {
+						   if(!paintballMatch.estaActivada()) {
+							   PaintballMatchEdit p = plugin.getPaintballMatchEdit();
 							   if(p == null) {
 								   
-								   InventoryAdmin.crearInventario(player, paintballInstance,plugin);
+								   InventoryAdmin.crearInventario(player, paintballMatch,plugin);
 							   }else {
 								   player.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("arenaModifyingError")));
 							   }
@@ -445,10 +445,10 @@ public class CommandHandler implements CommandExecutor {
 					   org.bukkit.entity.Player p = Bukkit.getPlayer(player);
 					   if(p != null) {
 						   plugin.registerPlayer(p.getUniqueId().toString()+".yml");
-						   if(plugin.getJugador(p.getName()) == null) {
-								plugin.agregarJugadorDatos(new Player(p.getName(),p.getUniqueId().toString(),0,0,0,0,0,new ArrayList<Perk>(),new ArrayList<Hat>()));
+						   if(plugin.getPlayer(p.getName()) == null) {
+								plugin.addPlayer(new Player(p.getName(),p.getUniqueId().toString(),0,0,0,0,0,new ArrayList<Perk>(),new ArrayList<Hat>()));
 						   }
-						   Player jDatos = plugin.getJugador(p.getName());
+						   Player jDatos = plugin.getPlayer(p.getName());
 						   jDatos.increaseCoinsByAmount(amount);
 						   sender.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("giveCoinsMessage").replace("%player%", player).replace("%amount%", amount+"")));
 						   p.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("receiveCoinsMessage").replace("%amount%", amount+""))); 

@@ -14,22 +14,22 @@ public class CooldownHats {
 	int taskID;
 	int tiempo;
 	private PaintballPlayer jugador;
-	private PaintballInstance paintballInstance;
+	private PaintballMatch paintballMatch;
 	private PaintballBattle plugin;
 	public CooldownHats(PaintballBattle plugin){		
 		this.plugin = plugin;		
 	}
 	
-	public void cooldownHat(final PaintballPlayer jugador, final PaintballInstance paintballInstance, int tiempo){
+	public void cooldownHat(final PaintballPlayer jugador, final PaintballMatch paintballMatch, int tiempo){
 		this.jugador = jugador;
 		this.tiempo = tiempo;
-		this.paintballInstance = paintballInstance;
+		this.paintballMatch = paintballMatch;
 		BukkitScheduler scheduler = Bukkit.getServer().getScheduler();
  	    taskID = scheduler.scheduleSyncRepeatingTask(plugin, new Runnable() {
 		public void run(){
 			if(!ejecutarCooldownHat()){
 				FileConfiguration messages = plugin.getMessages();
-				if(!paintballInstance.getEstado().equals(MatchStatus.ENDING)) {
+				if(!paintballMatch.getEstado().equals(MatchStatus.ENDING)) {
 					jugador.getJugador().sendMessage(ChatColor.translateAlternateColorCodes('&', messages.getString("hatCooldownFinished")));
 				}
 				
@@ -41,7 +41,7 @@ public class CooldownHats {
 	}
 
 	protected boolean ejecutarCooldownHat() {
-		if(paintballInstance != null && paintballInstance.getEstado().equals(MatchStatus.PLAYING)) {
+		if(paintballMatch != null && paintballMatch.getEstado().equals(MatchStatus.PLAYING)) {
 			if(tiempo <= 0) {
 				jugador.setEfectoHatEnCooldown(false);
 				return false;
@@ -56,10 +56,10 @@ public class CooldownHats {
 		}
 	}
 	
-	public void durationHat(final PaintballPlayer jugador, final PaintballInstance paintballInstance, int tiempo){
+	public void durationHat(final PaintballPlayer jugador, final PaintballMatch paintballMatch, int tiempo){
 		this.jugador = jugador;
 		this.tiempo = tiempo;
-		this.paintballInstance = paintballInstance;
+		this.paintballMatch = paintballMatch;
 		BukkitScheduler scheduler = Bukkit.getServer().getScheduler();
  	    taskID = scheduler.scheduleSyncRepeatingTask(plugin, new Runnable() {
 		public void run(){
@@ -72,7 +72,7 @@ public class CooldownHats {
 	}
 	
 	protected boolean ejecutarDurationHat() {
-		if(paintballInstance != null && paintballInstance.getEstado().equals(MatchStatus.PLAYING)) {
+		if(paintballMatch != null && paintballMatch.getEstado().equals(MatchStatus.PLAYING)) {
 			if(tiempo <= 0) {
 				jugador.setEfectoHatActivado(false);
 				return false;

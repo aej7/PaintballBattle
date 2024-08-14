@@ -19,7 +19,7 @@ public class CooldownKillstreaksActionbar {
 		this.plugin = plugin;		
 	}
 	
-	public void crearActionbars() {
+	public void createActionbars() {
 	    BukkitScheduler scheduler = Bukkit.getServer().getScheduler();
 	    final FileConfiguration messages = plugin.getMessages();
     	final FileConfiguration config = plugin.getConfig();
@@ -33,9 +33,9 @@ public class CooldownKillstreaksActionbar {
 	}
 	
 	protected void actualizarActionbars(final Player player,final FileConfiguration messages,final FileConfiguration config) {
-		PaintballInstance paintballInstance = plugin.getPartidaJugador(player.getName());
-		if(paintballInstance != null) {
-			PaintballPlayer jugador = paintballInstance.getJugador(player.getName());
+		PaintballMatch paintballMatch = plugin.getPlayersMatch(player.getName());
+		if(paintballMatch != null) {
+			PaintballPlayer jugador = paintballMatch.getJugador(player.getName());
 			Killstreak ultima = jugador.getUltimaKillstreak();
 			if(ultima != null) {
 				String name = config.getString("killstreaks_items."+ultima.getTipo()+".name");

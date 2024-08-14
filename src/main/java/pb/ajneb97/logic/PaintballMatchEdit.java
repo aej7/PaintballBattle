@@ -2,14 +2,14 @@ package pb.ajneb97.logic;
 
 import org.bukkit.entity.Player;
 
-public class PaintballInstanceEdit {
+public class PaintballMatchEdit {
 
 	private Player jugador;
-	private PaintballInstance paintballInstance;
+	private PaintballMatch paintballMatch;
 	private String paso;
-	public PaintballInstanceEdit(Player jugador, PaintballInstance paintballInstance) {
+	public PaintballMatchEdit(Player jugador, PaintballMatch paintballMatch) {
 		this.jugador = jugador;
-		this.paintballInstance = paintballInstance;
+		this.paintballMatch = paintballMatch;
 		this.paso = "";
 	}
 	public Player getJugador() {
@@ -18,11 +18,11 @@ public class PaintballInstanceEdit {
 	public void setJugador(Player jugador) {
 		this.jugador = jugador;
 	}
-	public PaintballInstance getPartida() {
-		return paintballInstance;
+	public PaintballMatch getPartida() {
+		return paintballMatch;
 	}
-	public void setPartida(PaintballInstance paintballInstance) {
-		this.paintballInstance = paintballInstance;
+	public void setPartida(PaintballMatch paintballMatch) {
+		this.paintballMatch = paintballMatch;
 	}
 	public void setPaso(String paso) {
 		this.paso = paso;

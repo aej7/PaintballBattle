@@ -14,6 +14,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -27,6 +28,7 @@ import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import net.milkbowl.vault.economy.Economy;
+import org.jetbrains.annotations.Nullable;
 import pb.ajneb97.api.ExpansionPaintballBattle;
 import pb.ajneb97.api.Hat;
 import pb.ajneb97.api.PaintballAPI;
@@ -37,8 +39,8 @@ import pb.ajneb97.database.Player;
 import pb.ajneb97.database.MySql;
 import pb.ajneb97.enums.MatchStatus;
 import pb.ajneb97.logic.PaintballPlayer;
-import pb.ajneb97.logic.PaintballInstance;
-import pb.ajneb97.logic.PaintballInstanceEdit;
+import pb.ajneb97.logic.PaintballMatch;
+import pb.ajneb97.logic.PaintballMatchEdit;
 import pb.ajneb97.eventhandlers.OnPlayerJoinEventHandler;
 import pb.ajneb97.admin.SignAdmin;
 import pb.ajneb97.eventhandlers.SignInteractEventHandler;
@@ -57,41 +59,40 @@ import pb.ajneb97.admin.TopHologramAdmin;
 
 public class PaintballBattle extends JavaPlugin {
   
-	PluginDescriptionFile pdfFile = getDescription();
-	public String version = pdfFile.getVersion();
+	PluginDescriptionFile pluginDescriptionFile = getDescription();
+	public String version = pluginDescriptionFile.getVersion();
 	public static String prefix = ChatColor.translateAlternateColorCodes('&', "&8[&b&lPaintball Battle&8] ");
-	private ArrayList<PaintballInstance> paintballInstances;
+	private List<PaintballMatch> paintballMatches;
 	private FileConfiguration arenas = null;
 	private File arenasFile = null;
 	private FileConfiguration messages = null;
 	private File messagesFile = null;
 	private FileConfiguration shop = null;
 	private File shopFile = null;
-	private PaintballInstanceEdit paintballInstanceEdit;
-	private ArrayList<PlayerConfig> configPlayers;
-	private ArrayList<Player> jugadoresDatos;
-	private ArrayList<TopHologram> topHologramas;
+	private PaintballMatchEdit paintballMatchEdit;
+	private List<PlayerConfig> playerConfigs;
+	private List<Player> players;
+	private List<TopHologram> topHolograms;
 	private FileConfiguration holograms = null;
 	private File hologramsFile = null;
-	private static Economy econ = null;	
-	public boolean primeraVez = false;
-	public String latestversion;
+	private static Economy economy = null;
+	public boolean firstTime = false;
+	public String latestVersion;
 	
-	public String rutaMessages;
-	public String rutaConfig;
+	public String messagesPath;
+	public String configPath;
 	
-	private ScoreboardAdmin scoreboardTask;
-	private SignAdmin cartelesTask;
-	private TopHologramAdmin hologramasTask;
+	private ScoreboardAdmin scoreboardAdmin;
+	private SignAdmin signAdmin;
+	private TopHologramAdmin topHologramAdmin;
 	
 	private DatabaseConnection databaseConnection;
-	
-	
+
 	@SuppressWarnings("unused")
 	public void onEnable(){
-	   configPlayers = new ArrayList<PlayerConfig>();
-	   jugadoresDatos = new ArrayList<Player>();
-	   topHologramas = new ArrayList<TopHologram>();
+	   playerConfigs = new ArrayList<>();
+	   players = new ArrayList<>();
+	   topHolograms = new ArrayList<>();
 	   registerEvents();
 	   registerArenas();
 	   registerConfig();
@@ -100,10 +101,9 @@ public class PaintballBattle extends JavaPlugin {
 	   createPlayersFolder();
 	   registerPlayers();
 	   registerShop();
-	   cargarPartidas();
+	   registerPaintballMatches();
 	   registerCommands();
 	   checkMessagesUpdate();
-	   
 	   cargarJugadores();
 	   setupEconomy();
 	   
@@ -111,94 +111,93 @@ public class PaintballBattle extends JavaPlugin {
 		   databaseConnection = new DatabaseConnection(getConfig());
 	   }
 	   
-	   scoreboardTask = new ScoreboardAdmin(this);
-	   scoreboardTask.crearScoreboards();
-	   cartelesTask = new SignAdmin(this);
-	   cartelesTask.actualizarCarteles();
-	   CooldownKillstreaksActionbar c = new CooldownKillstreaksActionbar(this);
-	   c.crearActionbars();
+	   scoreboardAdmin = new ScoreboardAdmin(this);
+	   scoreboardAdmin.crearScoreboards();
+	   signAdmin = new SignAdmin(this);
+	   signAdmin.updateSigns();
+	   CooldownKillstreaksActionbar cooldownKillstreaksActionbar = new CooldownKillstreaksActionbar(this);
+	   cooldownKillstreaksActionbar.createActionbars();
 	   
 	   cargarTopHologramas();
-	   hologramasTask = new TopHologramAdmin(this);
-	   hologramasTask.actualizarHologramas();
+	   topHologramAdmin = new TopHologramAdmin(this);
+	   topHologramAdmin.updateHolograms();
 	   
 	   PaintballAPI api = new PaintballAPI(this);
 	   if(Bukkit.getPluginManager().getPlugin("PlaceholderAPI") != null){
 		   new ExpansionPaintballBattle(this).register();
 	   }
 	   
-	   Checks.checkearYModificar(this, primeraVez);
+	   Checks.checkearYModificar(this, firstTime);
 	   Bukkit.getConsoleSender().sendMessage(prefix+ChatColor.YELLOW + "Has been enabled! " + ChatColor.WHITE + "Version: " + version);
 	   Bukkit.getConsoleSender().sendMessage(prefix+ChatColor.YELLOW + "Thanks for using my plugin!  " + ChatColor.WHITE + "~Ajneb97");
 	   updateChecker();
 	}
 
 	public void onDisable(){
-		if(paintballInstances != null) {
-			for(int i = 0; i< paintballInstances.size(); i++) {
-				if(!paintballInstances.get(i).getEstado().equals(MatchStatus.OFF)) {
-					PartidaManager.finalizarPartida(paintballInstances.get(i),this,true,null);
-				}
-			}
+		if(paintballMatches != null) {
+      for (PaintballMatch paintballMatch : paintballMatches) {
+        if (!paintballMatch.getEstado().equals(MatchStatus.OFF)) {
+          PartidaManager.finalizarPartida(paintballMatch, this, true, null);
+        }
+      }
 		}
-		guardarPartidas();
-		guardarJugadores();
+		saveMatches();
+		savePlayers();
 		guardarTopHologramas();
 		
 		Bukkit.getConsoleSender().sendMessage(prefix+ChatColor.YELLOW + "Has been disabled! " + ChatColor.WHITE + "Version: " + version);
 	}
 	
 	public void reloadScoreboard() {
-		int taskID = scoreboardTask.getTaskID();
+		int taskID = scoreboardAdmin.getTaskID();
 		Bukkit.getScheduler().cancelTask(taskID);
-		scoreboardTask = new ScoreboardAdmin(this);
-		scoreboardTask.crearScoreboards();
+		scoreboardAdmin = new ScoreboardAdmin(this);
+		scoreboardAdmin.crearScoreboards();
 	}
 	
 	public void reloadSigns() {
-		int taskID = cartelesTask.getTaskID();
+		int taskID = signAdmin.getTaskID();
 		Bukkit.getScheduler().cancelTask(taskID);
-		cartelesTask = new SignAdmin(this);
-		cartelesTask.actualizarCarteles();
+		signAdmin = new SignAdmin(this);
+		signAdmin.updateSigns();
 	}
 	
 	public void reloadHolograms() {
-		int taskID = hologramasTask.getTaskID();
+		int taskID = topHologramAdmin.getTaskID();
 		Bukkit.getScheduler().cancelTask(taskID);
-		hologramasTask = new TopHologramAdmin(this);
-		hologramasTask.actualizarHologramas();
+		topHologramAdmin = new TopHologramAdmin(this);
+		topHologramAdmin.updateHolograms();
 	}
 	
-	public void setPartidaEditando(PaintballInstanceEdit p) {
-		this.paintballInstanceEdit = p;
+	public void setPartidaEditando(PaintballMatchEdit p) {
+		this.paintballMatchEdit = p;
 	}
 	
 	public void removerPartidaEditando() {
-		this.paintballInstanceEdit = null;
+		this.paintballMatchEdit = null;
 	}
 	
-	public PaintballInstanceEdit getPartidaEditando() {
-		return this.paintballInstanceEdit;
+	public PaintballMatchEdit getPaintballMatchEdit() {
+		return this.paintballMatchEdit;
 	}
 	
-	public DatabaseConnection getConexionDatabase() {
+	public DatabaseConnection getDatabaseConnection() {
 		return this.databaseConnection;
 	}	
 	
-	private boolean setupEconomy() {
+	private void setupEconomy() {
 		  if (getServer().getPluginManager().getPlugin("Vault") == null) {
-	          return false;
+	          return;
 	      }
 	      RegisteredServiceProvider<Economy> rsp = getServer().getServicesManager().getRegistration(Economy.class);
 	      if (rsp == null) {
-	          return false;
+	          return;
 	      }
-	      econ = rsp.getProvider();
-	      return econ != null;
-	  }
+	      economy = rsp.getProvider();
+	}
 	  
 	public Economy getEconomy(){	
-		return econ;
+		return economy;
 	}
 	
 	public void registerEvents(){
@@ -215,125 +214,127 @@ public class PaintballBattle extends JavaPlugin {
 	}
 	
 	public void registerCommands(){
-		this.getCommand("paintball").setExecutor(new Comando(this));
+		Objects.requireNonNull(this.getCommand("paintball")).setExecutor(new CommandHandler(this));
 	}
 	
-	public PaintballInstance getPartidaJugador(String jugador) {
-		for(int i = 0; i< paintballInstances.size(); i++) {
-			ArrayList<PaintballPlayer> jugadores = paintballInstances.get(i).getJugadores();
-			for(int c=0;c<jugadores.size();c++) {
-				if(jugadores.get(c).getJugador().getName().equals(jugador)) {
-					return paintballInstances.get(i);
-				}
-			}
-		}
+	public PaintballMatch getPlayersMatch(String playerName) {
+    for (PaintballMatch paintballMatch : paintballMatches) {
+      ArrayList<PaintballPlayer> players = paintballMatch.getPlayers();
+      for (PaintballPlayer player : players) {
+        if (player.getJugador().getName().equals(playerName)) {
+          return paintballMatch;
+        }
+      }
+    }
 		return null;
 	}
 	
-	public ArrayList<PaintballInstance> getPartidas() {
-		return this.paintballInstances;
+	public List<PaintballMatch> getPaintballMatches() {
+		return this.paintballMatches;
 	}
 	
-	public PaintballInstance getPartida(String nombre) {
-		for(int i = 0; i< paintballInstances.size(); i++) {
-			if(paintballInstances.get(i).getNombre().equals(nombre)) {
-				return paintballInstances.get(i);
-			}
-		}
+	public PaintballMatch getMatch(String number) {
+    for (PaintballMatch paintballMatch : paintballMatches) {
+      if (paintballMatch.getNumber().equals(number)) {
+        return paintballMatch;
+      }
+    }
 		return null;
 	}
 	
-	public void agregarPartida(PaintballInstance paintballInstance) {
-		this.paintballInstances.add(paintballInstance);
+	public void addPaintballMatch(PaintballMatch paintballMatch) {
+		this.paintballMatches.add(paintballMatch);
 	}
 	
-	public void removerPartida(String nombre) {
-		for(int i = 0; i< paintballInstances.size(); i++) {
-			if(paintballInstances.get(i).getNombre().equals(nombre)) {
-				paintballInstances.remove(i);
+	public void removePaintballMatch(String number) {
+		for(int i = 0; i < paintballMatches.size(); i++) {
+			if(paintballMatches.get(i).getNumber().equals(number)) {
+				paintballMatches.remove(i);
 			}
 		}
 	}
 	
-	public void cargarPartidas() {
-		  this.paintballInstances = new ArrayList<PaintballInstance>();
-		  FileConfiguration arenas = getArenas();
-		  if(arenas.contains("Arenas")) {
-			  for(String key : arenas.getConfigurationSection("Arenas").getKeys(false)) {
-				  int min_players = Integer.valueOf(arenas.getString("Arenas."+key+".min_players"));
-				  int max_players = Integer.valueOf(arenas.getString("Arenas."+key+".max_players"));
-				  int time = Integer.valueOf(arenas.getString("Arenas."+key+".time"));
-				  int vidas = Integer.valueOf(arenas.getString("Arenas."+key+".lives"));
-				  
-				  Location lLobby = null;
-				  if(arenas.contains("Arenas."+key+".Lobby")) {
-					  double xLobby = Double.valueOf(arenas.getString("Arenas."+key+".Lobby.x"));
-					  double yLobby = Double.valueOf(arenas.getString("Arenas."+key+".Lobby.y"));
-					  double zLobby = Double.valueOf(arenas.getString("Arenas."+key+".Lobby.z"));
-					  String worldLobby = arenas.getString("Arenas."+key+".Lobby.world");
-					  float pitchLobby = Float.valueOf(arenas.getString("Arenas."+key+".Lobby.pitch"));
-					  float yawLobby = Float.valueOf(arenas.getString("Arenas."+key+".Lobby.yaw"));
-					  lLobby = new Location(Bukkit.getWorld(worldLobby),xLobby,yLobby,zLobby,yawLobby,pitchLobby);
+	public void registerPaintballMatches() {
+		  this.paintballMatches = new ArrayList<PaintballMatch>();
+		  FileConfiguration arenasConfig = getArenas();
+		  if(arenasConfig.contains("Arenas")) {
+			  for(String key : Objects.requireNonNull(arenasConfig.getConfigurationSection("Arenas")).getKeys(false)) {
+					String arenasWithKeySection = arenasConfig.getString(String.format("Arenas.%s.", key));
+					int minPlayers = Integer.parseInt(arenasConfig.getString(arenasWithKeySection + "min_players"));
+				  int maxPlayers = Integer.parseInt(arenasConfig.getString(arenasWithKeySection + "max_players"));
+				  int time = Integer.parseInt(arenasConfig.getString(arenasWithKeySection + "time"));
+				  int lives = Integer.parseInt(arenasConfig.getString(arenasWithKeySection + "lives"));
+
+					//TODO continue under with same optimization
+				  Location lobby = null;
+				  if(arenasConfig.contains(arenasWithKeySection + "Lobby")) {
+						String lobbyWithKeySection = arenasWithKeySection + "Lobby.";
+					  double lobbyX = Double.parseDouble(lobbyWithKeySection + "x");
+					  double lobbyY = Double.parseDouble(lobbyWithKeySection + "y");
+					  double lobbyZ = Double.parseDouble(lobbyWithKeySection + "z");
+					  String lobbyWorld = lobbyWithKeySection + "world";
+					  float lobbyPitch = Float.parseFloat(lobbyWithKeySection + "pitch");
+					  float lobbyYaw = Float.parseFloat(lobbyWithKeySection + "yaw");
+					  lobby = new Location(Bukkit.getWorld(lobbyWorld), lobbyX, lobbyY, lobbyZ, lobbyYaw, lobbyPitch);
+				  }
+
+				  String team1 = Objects.requireNonNull(arenasConfig.getString("Arenas." + key + ".Team1.name"));
+				  Location spawnTeam1 = null;
+				  if(arenasConfig.contains("Arenas." + key + ".Team1.Spawn")) {
+						String team1SpawnWithKeySection = arenasWithKeySection + "Team1.Spawn.";
+					  double spawnTeam1PosX = Double.parseDouble(team1SpawnWithKeySection + "x");
+					  double spawnTeam1PosY = Double.parseDouble(team1SpawnWithKeySection + "y");
+					  double spawnTeam1PosZ = Double.parseDouble(team1SpawnWithKeySection + "z");
+					  String spawnTeam1World = team1SpawnWithKeySection + "world";
+					  float spawnTeam1Pitch = Float.parseFloat(team1SpawnWithKeySection + "pitch");
+					  float spawnTeam1Yaw = Float.parseFloat(team1SpawnWithKeySection + "yaw");
+            spawnTeam1 = new Location(Bukkit.getWorld(spawnTeam1World), spawnTeam1PosX, spawnTeam1PosY, spawnTeam1PosZ, spawnTeam1Yaw, spawnTeam1Pitch);
+				  }
+
+				  String team2 = Objects.requireNonNull(arenasConfig.getString("Arenas."+key+".Team2.name"));
+				  Location spawnTeam2 = null;
+				  if(arenasConfig.contains("Arenas."+key+".Team2.Spawn")) {
+						String team2SpawnWithKeySection = arenasWithKeySection + "Team2.Spawn.";
+						double spawnTeam2PosX = Double.parseDouble(team2SpawnWithKeySection + "x");
+						double spawnTeam2PosY = Double.parseDouble(team2SpawnWithKeySection + "y");
+						double spawnTeam2PosZ = Double.parseDouble(team2SpawnWithKeySection + "z");
+						String spawnTeam2World = team2SpawnWithKeySection + "world";
+						float spawnTeam2Pitch = Float.parseFloat(team2SpawnWithKeySection + "pitch");
+						float spawnTeam2Yaw = Float.parseFloat(team2SpawnWithKeySection + "yaw");
+						spawnTeam2 = new Location(Bukkit.getWorld(spawnTeam2World), spawnTeam2PosX, spawnTeam2PosY, spawnTeam2PosZ, spawnTeam2Yaw, spawnTeam2Pitch);
 				  }
 				  
-				  
-				  String nombreTeam1 = arenas.getString("Arenas."+key+".Team1.name");
-				  
-				  Location lSpawnTeam1 = null;
-				  if(arenas.contains("Arenas."+key+".Team1.Spawn")) {
-					  double xSpawnTeam1 = Double.valueOf(arenas.getString("Arenas."+key+".Team1.Spawn.x"));
-					  double ySpawnTeam1 = Double.valueOf(arenas.getString("Arenas."+key+".Team1.Spawn.y"));
-					  double zSpawnTeam1 = Double.valueOf(arenas.getString("Arenas."+key+".Team1.Spawn.z"));
-					  String worldSpawnTeam1 = arenas.getString("Arenas."+key+".Team1.Spawn.world");
-					  float pitchSpawnTeam1 = Float.valueOf(arenas.getString("Arenas."+key+".Team1.Spawn.pitch"));
-					  float yawSpawnTeam1 = Float.valueOf(arenas.getString("Arenas."+key+".Team1.Spawn.yaw"));
-					  lSpawnTeam1 = new Location(Bukkit.getWorld(worldSpawnTeam1),xSpawnTeam1,ySpawnTeam1,zSpawnTeam1,yawSpawnTeam1,pitchSpawnTeam1);
+				  PaintballMatch paintballMatch = new PaintballMatch(key,time,team1,team2,lives);
+				  if(team1.equalsIgnoreCase("random")) {
+					  paintballMatch.getTeam1().setRandom(true);
 				  }
-				  
-				  
-				  String nombreTeam2 = arenas.getString("Arenas."+key+".Team2.name");
-				  Location lSpawnTeam2 = null;
-				  if(arenas.contains("Arenas."+key+".Team2.Spawn")) {
-					  double xSpawnTeam2 = Double.valueOf(arenas.getString("Arenas."+key+".Team2.Spawn.x"));
-					  double ySpawnTeam2 = Double.valueOf(arenas.getString("Arenas."+key+".Team2.Spawn.y"));
-					  double zSpawnTeam2 = Double.valueOf(arenas.getString("Arenas."+key+".Team2.Spawn.z"));
-					  String worldSpawnTeam2 = arenas.getString("Arenas."+key+".Team2.Spawn.world");
-					  float pitchSpawnTeam2 = Float.valueOf(arenas.getString("Arenas."+key+".Team2.Spawn.pitch"));
-					  float yawSpawnTeam2 = Float.valueOf(arenas.getString("Arenas."+key+".Team2.Spawn.yaw"));
-					  lSpawnTeam2 = new Location(Bukkit.getWorld(worldSpawnTeam2),xSpawnTeam2,ySpawnTeam2,zSpawnTeam2,yawSpawnTeam2,pitchSpawnTeam2);
+				  if(team2.equalsIgnoreCase("random")) {
+					  paintballMatch.getTeam2().setRandom(true);
 				  }
-				  
-				  PaintballInstance paintballInstance = new PaintballInstance(key,time,nombreTeam1,nombreTeam2,vidas);
-				  if(nombreTeam1.equalsIgnoreCase("random")) {
-					  paintballInstance.getTeam1().setRandom(true);
-				  }
-				  if(nombreTeam2.equalsIgnoreCase("random")) {
-					  paintballInstance.getTeam2().setRandom(true);
-				  }
-				  paintballInstance.modificarTeams(getConfig());
-				  paintballInstance.setCantidadMaximaJugadores(max_players);
-				  paintballInstance.setCantidadMinimaJugadores(min_players);
-				  paintballInstance.setLobby(lLobby);
-				  paintballInstance.getTeam1().setSpawn(lSpawnTeam1);
-				  paintballInstance.getTeam2().setSpawn(lSpawnTeam2);
-				  String enabled = arenas.getString("Arenas."+key+".enabled");
+				  paintballMatch.modificarTeams(getConfig());
+				  paintballMatch.setCantidadMaximaJugadores(maxPlayers);
+				  paintballMatch.setCantidadMinimaJugadores(minPlayers);
+				  paintballMatch.setLobby(lobby);
+				  paintballMatch.getTeam1().setSpawn(spawnTeam1);
+				  paintballMatch.getTeam2().setSpawn(spawnTeam2);
+				  String enabled = arenasConfig.getString("Arenas." + key + ".enabled");
 				  if(enabled.equals("true")) {
-					  paintballInstance.setEstado(MatchStatus.WAITING);
-				  }else {
-					  paintballInstance.setEstado(MatchStatus.OFF);
+					  paintballMatch.setState(MatchStatus.WAITING);
+				  } else {
+					  paintballMatch.setState(MatchStatus.OFF);
 				  }
 				  
-				  this.paintballInstances.add(paintballInstance);
+				  this.paintballMatches.add(paintballMatch);
 			  }
 		  }
 		  
 	  }
 	
-	public void guardarPartidas() {
+	public void saveMatches() {
 		  FileConfiguration arenas = getArenas();
 		  arenas.set("Arenas", null);
-		  for(PaintballInstance p : this.paintballInstances) {
-			  String nombre = p.getNombre();
+		  for(PaintballMatch p : this.paintballMatches) {
+			  String nombre = p.getNumber();
 			  arenas.set("Arenas."+nombre+".min_players", p.getCantidadMinimaJugadores()+"");
 			  arenas.set("Arenas."+nombre+".max_players", p.getCantidadMaximaJugadores()+"");
 			  arenas.set("Arenas."+nombre+".time", p.getTiempoMaximo()+"");
@@ -430,9 +431,9 @@ public class PaintballBattle extends JavaPlugin {
 	  
 	  public void registerConfig(){	
 			File config = new File(this.getDataFolder(), "config.yml");
-			rutaConfig = config.getPath();
+			configPath = config.getPath();
 		    if(!config.exists()){
-		    	this.primeraVez = true;
+		    	this.firstTime = true;
 		    	this.getConfig().options().copyDefaults(true);
 				saveConfig();  
 		    }
@@ -480,7 +481,7 @@ public class PaintballBattle extends JavaPlugin {
 	  
 	  public void registerMessages(){
 		  messagesFile = new File(this.getDataFolder(), "messages.yml");
-		  rutaMessages = messagesFile.getPath();
+		  messagesPath = messagesFile.getPath();
 			if(!messagesFile.exists()){
 				this.getMessages().options().copyDefaults(true);
 				saveMessages();
@@ -531,12 +532,6 @@ public class PaintballBattle extends JavaPlugin {
 	        }
 		}
 		
-		public void savePlayers() {
-			for(int i=0;i<configPlayers.size();i++) {
-				configPlayers.get(i).savePlayerConfig();
-			}
-		}
-		
 		public void registerPlayers(){
 			String path = this.getDataFolder() + File.separator + "players";
 			File folder = new File(path);
@@ -546,18 +541,18 @@ public class PaintballBattle extends JavaPlugin {
 			        String pathName = listOfFiles[i].getName();
 			        PlayerConfig config = new PlayerConfig(pathName,this);
 			        config.registerPlayerConfig();
-			        configPlayers.add(config);
+			        playerConfigs.add(config);
 			    }
 			}
 		}
 		
-		public ArrayList<PlayerConfig> getConfigPlayers(){
-			return this.configPlayers;
+		public ArrayList<PlayerConfig> getPlayerConfigs(){
+			return this.playerConfigs;
 		}
 		
 		public boolean archivoYaRegistrado(String pathName) {
-			for(int i=0;i<configPlayers.size();i++) {
-				if(configPlayers.get(i).getPath().equals(pathName)) {
+			for(int i = 0; i< playerConfigs.size(); i++) {
+				if(playerConfigs.get(i).getPath().equals(pathName)) {
 					return true;
 				}
 			}
@@ -565,22 +560,22 @@ public class PaintballBattle extends JavaPlugin {
 		}
 		
 		public PlayerConfig getPlayerConfig(String pathName) {
-			for(int i=0;i<configPlayers.size();i++) {
-				if(configPlayers.get(i).getPath().equals(pathName)) {
-					return configPlayers.get(i);
+			for(int i = 0; i< playerConfigs.size(); i++) {
+				if(playerConfigs.get(i).getPath().equals(pathName)) {
+					return playerConfigs.get(i);
 				}
 			}
 			return null;
 		}
 		public ArrayList<PlayerConfig> getPlayerConfigs() {
-			return this.configPlayers;
+			return this.playerConfigs;
 		}
 		
 		public boolean registerPlayer(String pathName) {
 			if(!archivoYaRegistrado(pathName)) {
 				PlayerConfig config = new PlayerConfig(pathName,this);
 		        config.registerPlayerConfig();
-		        configPlayers.add(config);
+		        playerConfigs.add(config);
 		        return true;
 			}else {
 				return false;
@@ -588,16 +583,16 @@ public class PaintballBattle extends JavaPlugin {
 		}
 		
 		public void removerConfigPlayer(String path) {
-			for(int i=0;i<configPlayers.size();i++) {
-				if(configPlayers.get(i).getPath().equals(path)) {
-					configPlayers.remove(i);
+			for(int i = 0; i< playerConfigs.size(); i++) {
+				if(playerConfigs.get(i).getPath().equals(path)) {
+					playerConfigs.remove(i);
 				}
 			}
 		}
 	
 		public void cargarJugadores() {
 			if(!MySql.isEnabled(getConfig())) {
-				for(PlayerConfig playerConfig : configPlayers) {
+				for(PlayerConfig playerConfig : playerConfigs) {
 					FileConfiguration players = playerConfig.getConfig();
 					String jugador = players.getString("name");
 					int kills = 0;
@@ -633,65 +628,61 @@ public class PaintballBattle extends JavaPlugin {
 					ArrayList<Hat> hats = new ArrayList<Hat>();
 					if(players.contains("hats")) {
 						List<String> listaHats = players.getStringList("hats");
-						for(int i=0;i<listaHats.size();i++) {
-							String[] separados = listaHats.get(i).split(";");
-							Hat h = new Hat(separados[0],Boolean.valueOf(separados[1]));
-							hats.add(h);
-						}
+            for (String listaHat : listaHats) {
+              String[] separados = listaHat.split(";");
+              Hat h = new Hat(separados[0], Boolean.valueOf(separados[1]));
+              hats.add(h);
+            }
 					}
 					
 						
-					this.agregarJugadorDatos(new Player(jugador,playerConfig.getPath().replace(".yml", ""),wins,loses,ties,kills,coins,perks,hats));
+					this.addPlayer(new Player(jugador,playerConfig.getPath().replace(".yml", ""),wins,loses,ties,kills,coins,perks,hats));
 				}
 			}
 		}
 		
-		public void guardarJugadores() {
+		public void savePlayers() {
 			if(!MySql.isEnabled(getConfig())) {
-				for(Player j : jugadoresDatos) {
-					String jugador = j.getName();
-					PlayerConfig playerConfig = getPlayerConfig(j.getUUID()+".yml");
-					FileConfiguration players = playerConfig.getConfig();
-					players.set("name", jugador);
-					players.set("kills", j.getKills());
-					players.set("wins", j.getWins());
-					players.set("ties", j.getTies());
-					players.set("loses", j.getLosses());
-					players.set("coins", j.getCoins());
-					
-					List<String> listaPerks = new ArrayList<String>();
-					ArrayList<Perk> perks = j.getPerks();
-					for(Perk p : perks) {
-						listaPerks.add(p.getName()+";"+p.getNivel());
-					}
-					players.set("perks", listaPerks);
-					
-					List<String> listaHats = new ArrayList<String>();
-					ArrayList<Hat> hats = j.getHats();
-					for(Hat h : hats) {
-						listaHats.add(h.getName()+";"+h.isSelected());
-					}
-					players.set("hats", listaHats);
+				for(Player player : players) {
+					String playerName = player.getName();
+					PlayerConfig playerConfig = getPlayerConfig(player.getUUID()+".yml");
+					FileConfiguration config = playerConfig.getConfig();
+
+					config.set("name", playerName);
+					config.set("kills", player.getKills());
+					config.set("wins", player.getWins());
+					config.set("ties", player.getTies());
+					config.set("losses", player.getLosses());
+					config.set("coins", player.getCoins());
+					config.set("perks", player.getNamesAndLevelsOfPerks());
+					config.set("hats", player.getNamesAndLevelsOfHats());
 				}
-				savePlayers();
+
+				try {
+					for (PlayerConfig playerConfig : playerConfigs) {
+						playerConfig.savePlayerConfig();
+					}
+				} catch (Exception e) {
+					//TODO error logging if save fails
+				}
 			}
 		}
 		
-		public void agregarJugadorDatos(Player jugador) {
-			jugadoresDatos.add(jugador);
+		public void addPlayer(Player player) {
+			players.add(player);
 		}
 		
-		public Player getJugador(String jugador) {
-			for(Player j : jugadoresDatos) {
-				if(j != null && j.getName() != null && j.getName().equals(jugador)) {
-					return j;
+		public Player getPlayer(String playerName) {
+			for(Player player : players) {
+				if(player != null && player.getName() != null && player.getName().equals(playerName)) {
+					return player;
 				}
 			}
 			return null;
 		}
 		
 		public ArrayList<Player> getJugadores(){
-			return this.jugadoresDatos;
+			return this.players;
 		}
 		
 		public void registerHolograms(){
@@ -735,14 +726,14 @@ public class PaintballBattle extends JavaPlugin {
 			}
 		  
 		  public void agregarTopHolograma(TopHologram topHologram) {
-				this.topHologramas.add(topHologram);
+				this.topHolograms.add(topHologram);
 			}
 			
 			public boolean eliminarTopHologama(String nombre) {
-				for(int i=0;i<topHologramas.size();i++) {
-					if(topHologramas.get(i).getName().equals(nombre)) {
-						topHologramas.get(i).removeHologram();
-						topHologramas.remove(i);
+				for(int i = 0; i< topHolograms.size(); i++) {
+					if(topHolograms.get(i).getName().equals(nombre)) {
+						topHolograms.get(i).removeHologram();
+						topHolograms.remove(i);
 						return true;
 					}
 				}
@@ -750,9 +741,9 @@ public class PaintballBattle extends JavaPlugin {
 			}
 			
 			public TopHologram getTopHologram(String nombre) {
-				for(int i=0;i<topHologramas.size();i++) {
-					if(topHologramas.get(i).getName().equals(nombre)) {
-						return topHologramas.get(i);
+				for(int i = 0; i< topHolograms.size(); i++) {
+					if(topHolograms.get(i).getName().equals(nombre)) {
+						return topHolograms.get(i);
 					}
 				}
 				return null;
@@ -761,15 +752,15 @@ public class PaintballBattle extends JavaPlugin {
 			public void guardarTopHologramas() {
 				FileConfiguration holograms = getHolograms();
 				holograms.set("Holograms", null);
-				for(int i=0;i<topHologramas.size();i++) {
-					Location l = topHologramas.get(i).getHologram().getPosition().toLocation();
-					String name = topHologramas.get(i).getName();
-					String type = topHologramas.get(i).getType();
-					String period = topHologramas.get(i).getPeriod();
+				for(int i = 0; i< topHolograms.size(); i++) {
+					Location l = topHolograms.get(i).getHologram().getPosition().toLocation();
+					String name = topHolograms.get(i).getName();
+					String type = topHolograms.get(i).getType();
+					String period = topHolograms.get(i).getPeriod();
 					holograms.set("Holograms."+name+".type", type);
 					holograms.set("Holograms."+name+".period", period);
 					holograms.set("Holograms."+name+".x", l.getX()+"");
-					holograms.set("Holograms."+name+".y", topHologramas.get(i).getyOriginal()+"");
+					holograms.set("Holograms."+name+".y", topHolograms.get(i).getyOriginal()+"");
 					holograms.set("Holograms."+name+".z", l.getZ()+"");
 					holograms.set("Holograms."+name+".world", l.getWorld().getName());
 				}
@@ -797,8 +788,8 @@ public class PaintballBattle extends JavaPlugin {
 				}
 			}
 			
-			public ArrayList<TopHologram> getTopHologramas(){
-				return this.topHologramas;
+			public ArrayList<TopHologram> getTopHolograms(){
+				return this.topHolograms;
 			}
 			
 			public void updateChecker(){
@@ -809,11 +800,11 @@ public class PaintballBattle extends JavaPlugin {
 			          int timed_out = 1250;
 			          con.setConnectTimeout(timed_out);
 			          con.setReadTimeout(timed_out);
-			          latestversion = new BufferedReader(new InputStreamReader(con.getInputStream())).readLine();
-			          if (latestversion.length() <= 7) {
-			        	  if(!version.equals(latestversion)){
+			          latestVersion = new BufferedReader(new InputStreamReader(con.getInputStream())).readLine();
+			          if (latestVersion.length() <= 7) {
+			        	  if(!version.equals(latestVersion)){
 			        		  Bukkit.getConsoleSender().sendMessage(ChatColor.RED +"There is a new version available. "+ChatColor.YELLOW+
-			        				  "("+ChatColor.GRAY+latestversion+ChatColor.YELLOW+")");
+			        				  "("+ChatColor.GRAY+ latestVersion +ChatColor.YELLOW+")");
 			        		  Bukkit.getConsoleSender().sendMessage(ChatColor.RED+"You can download it at: "+ChatColor.WHITE+"https://www.spigotmc.org/resources/76676/");  
 			        	  }      	  
 			          }
@@ -823,8 +814,8 @@ public class PaintballBattle extends JavaPlugin {
 			  }
 			
 			public void checkMessagesUpdate(){
-				  Path archivo = Paths.get(rutaMessages);
-				  Path archivoConfig = Paths.get(rutaConfig);
+				  Path archivo = Paths.get(messagesPath);
+				  Path archivoConfig = Paths.get(configPath);
 				  try{
 					  String texto = new String(Files.readAllBytes(archivo));
 					  String textoConfig = new String(Files.readAllBytes(archivoConfig));
