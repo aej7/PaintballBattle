@@ -210,7 +210,7 @@ public class PlayerActionsEventHandler implements Listener{
 					FileConfiguration config = plugin.getConfig();
 					if(jugador.getInventory().getHeldItemSlot() == 8 && (event.getAction().equals(Action.RIGHT_CLICK_AIR) || event.getAction().equals(Action.RIGHT_CLICK_BLOCK))) {
 						if(config.getString("killstreaks_item_enabled").equals("true")) {
-							if(paintballMatch.getEstado().equals(MatchStatus.PLAYING)) {
+							if(paintballMatch.getState().equals(MatchStatus.PLAYING)) {
 								event.setCancelled(true);
 								Inventory inv = Bukkit.createInventory(null, 18, ChatColor.translateAlternateColorCodes('&', config.getString("killstreaks_inventory_title")));
 								jugador.openInventory(inv);
@@ -230,7 +230,7 @@ public class PlayerActionsEventHandler implements Listener{
 		if(event.isSneaking()) {
 			Player jugador = event.getPlayer();
 			PaintballMatch paintballMatch = plugin.getPlayersMatch(jugador.getName());
-			if(paintballMatch != null && paintballMatch.getEstado().equals(MatchStatus.PLAYING)) {
+			if(paintballMatch != null && paintballMatch.getState().equals(MatchStatus.PLAYING)) {
 				FileConfiguration messages = plugin.getMessages();
 				PaintballPlayer j = paintballMatch.getJugador(jugador.getName());
 				String hat = j.getSelectedHat();
@@ -453,7 +453,7 @@ public class PlayerActionsEventHandler implements Listener{
 				Player jugadorAtacante = (Player) shooter;
 				PaintballMatch paintballMatch = plugin.getPlayersMatch(jugadorAtacante.getName());
 				if(paintballMatch != null) {
-					if(paintballMatch.getEstado().equals(MatchStatus.PLAYING)) {
+					if(paintballMatch.getState().equals(MatchStatus.PLAYING)) {
 						
 						event.setCancelled(true);
 						

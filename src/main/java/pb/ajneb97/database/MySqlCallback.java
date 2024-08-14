@@ -1,8 +1,8 @@
 package pb.ajneb97.database;
 
-import java.util.ArrayList;
+import java.util.List;
 
 public interface MySqlCallback {
 
-	public void alTerminar(ArrayList<String> playersList);
+	public void onCompletion(List<String> playersList);
 }

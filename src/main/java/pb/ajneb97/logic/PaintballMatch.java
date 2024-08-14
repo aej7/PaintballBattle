@@ -170,7 +170,7 @@ public class PaintballMatch {
 		return this.cantidadActualJugadores;
 	}
 	
-	public MatchStatus getEstado() {
+	public MatchStatus getState() {
 		return this.estado;
 	}
 	
@@ -290,7 +290,7 @@ public class PaintballMatch {
 		return true;
 	}
 	
-	public void modificarTeams(FileConfiguration config) {
+	public void modifyTeams(FileConfiguration config) {
 		Team team1 = this.team1;
 		Team team2 = this.team2;
 		String nTeam1 = team1.getTipo();

@@ -95,7 +95,7 @@ public class PartidaManager {
 		}
 		
 		if(paintballMatch.getCantidadActualJugadores() >= paintballMatch.getCantidadMinimaJugadores()
-				&& paintballMatch.getEstado().equals(MatchStatus.WAITING)) {
+				&& paintballMatch.getState().equals(MatchStatus.WAITING)) {
 			cooldownIniciarPartida(paintballMatch,plugin);
 		}
 	}
@@ -154,12 +154,12 @@ public class PartidaManager {
 		
 		if(!cerrandoServer) {
 			if(paintballMatch.getCantidadActualJugadores() < paintballMatch.getCantidadMinimaJugadores()
-					&& paintballMatch.getEstado().equals(MatchStatus.STARTING)){
+					&& paintballMatch.getState().equals(MatchStatus.STARTING)){
 				paintballMatch.setState(MatchStatus.WAITING);
-			}else if(paintballMatch.getCantidadActualJugadores() <= 1 && (paintballMatch.getEstado().equals(MatchStatus.PLAYING))) {
+			}else if(paintballMatch.getCantidadActualJugadores() <= 1 && (paintballMatch.getState().equals(MatchStatus.PLAYING))) {
 				//fase finalizacion
 				PartidaManager.iniciarFaseFinalizacion(paintballMatch, plugin);
-			}else if((paintballMatch.getTeam1().getCantidadJugadores() == 0 || paintballMatch.getTeam2().getCantidadJugadores() == 0) && paintballMatch.getEstado().equals(MatchStatus.PLAYING)) {
+			}else if((paintballMatch.getTeam1().getCantidadJugadores() == 0 || paintballMatch.getTeam2().getCantidadJugadores() == 0) && paintballMatch.getState().equals(MatchStatus.PLAYING)) {
 				//fase finalizacion
 				PartidaManager.iniciarFaseFinalizacion(paintballMatch, plugin);
 			}
@@ -726,7 +726,7 @@ public class PartidaManager {
 		paintballMatch.getTeam1().setVidas(0);
 		paintballMatch.getTeam2().setVidas(0);
 		paintballMatch.setEnNuke(false);
-		paintballMatch.modificarTeams(config);
+		paintballMatch.modifyTeams(config);
 		
 		paintballMatch.setState(MatchStatus.WAITING);
 	}
@@ -894,8 +894,8 @@ public class PartidaManager {
 		ArrayList<PaintballMatch> paintballMatches = plugin.getPaintballMatches();
 		ArrayList<PaintballMatch> disponibles = new ArrayList<PaintballMatch>();
 		for(int i = 0; i< paintballMatches.size(); i++) {
-			if(paintballMatches.get(i).getEstado().equals(MatchStatus.WAITING) ||
-					paintballMatches.get(i).getEstado().equals(MatchStatus.STARTING)) {
+			if(paintballMatches.get(i).getState().equals(MatchStatus.WAITING) ||
+					paintballMatches.get(i).getState().equals(MatchStatus.STARTING)) {
 				if(!paintballMatches.get(i).estaLlena()) {
 					disponibles.add(paintballMatches.get(i));
 				}

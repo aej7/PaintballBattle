@@ -40,7 +40,7 @@ public class CommandHandler implements CommandExecutor {
 		plugin.reloadShop();
 		plugin.reloadSigns();
 		plugin.reloadScoreboard();
-		plugin.reloadHolograms();
+		plugin.recargarHologramas();
 	}
 
 	private boolean hasAdminPermission(CommandSender sender) {
@@ -160,7 +160,7 @@ public class CommandHandler implements CommandExecutor {
 				   plugin.reloadShop();
 				   plugin.reloadSigns();
 				   plugin.reloadScoreboard();
-				   plugin.reloadHolograms();
+				   plugin.recargarHologramas();
 				   player.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("configReloaded")));
 			   }else {
 				   player.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("noPermissions")));
@@ -349,7 +349,7 @@ public class CommandHandler implements CommandExecutor {
 									   return true;
 								   }
 								   TopHologram hologram = new TopHologram(args[1],args[2],player.getLocation(),plugin,period);
-								   plugin.agregarTopHolograma(hologram);
+								   plugin.addTopHologram(hologram);
 								   hologram.spawnHologram(plugin);
 								   player.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("topHologramCreated")));
 							   }else {
@@ -377,7 +377,7 @@ public class CommandHandler implements CommandExecutor {
 				   if(args.length >= 2) {
 					   TopHologram topHologram = plugin.getTopHologram(args[1]);
 					   if(topHologram != null) {
-						   plugin.eliminarTopHologama(args[1]);
+						   plugin.removeTopHologram(args[1]);
 						   player.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("topHologramRemoved")));
 					   }else {
 						   player.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("topHologramDoesNotExists")));

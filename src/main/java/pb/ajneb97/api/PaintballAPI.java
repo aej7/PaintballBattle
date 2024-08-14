@@ -199,13 +199,13 @@ public class PaintballAPI {
 		PaintballMatch paintballMatch = plugin.getMatch(arena);
 		FileConfiguration messages = plugin.getMessages();
 		if(paintballMatch != null) {
-			if(paintballMatch.getEstado().equals(MatchStatus.STARTING)) {
+			if(paintballMatch.getState().equals(MatchStatus.STARTING)) {
 				return messages.getString("signStatusStarting");
-			}else if(paintballMatch.getEstado().equals(MatchStatus.WAITING)) {
+			}else if(paintballMatch.getState().equals(MatchStatus.WAITING)) {
 				return messages.getString("signStatusWaiting");
-			}else if(paintballMatch.getEstado().equals(MatchStatus.PLAYING)) {
+			}else if(paintballMatch.getState().equals(MatchStatus.PLAYING)) {
 				return messages.getString("signStatusIngame");
-			}else if(paintballMatch.getEstado().equals(MatchStatus.ENDING)) {
+			}else if(paintballMatch.getState().equals(MatchStatus.ENDING)) {
 				return messages.getString("signStatusFinishing");
 			}else {
 				return messages.getString("signStatusDisabled");

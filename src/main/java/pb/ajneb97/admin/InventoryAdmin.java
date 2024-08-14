@@ -358,7 +358,7 @@ public class InventoryAdmin implements Listener{
 					}else {
 						partida.getPartida().getTeam1().setRandom(false);
 					}
-					partida.getPartida().modificarTeams(config);
+					partida.getPartida().modifyTeams(config);
 					Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
 						@Override
 						public void run() {
@@ -379,7 +379,7 @@ public class InventoryAdmin implements Listener{
 					}else {
 						partida.getPartida().getTeam2().setRandom(false);
 					}
-					partida.getPartida().modificarTeams(config);
+					partida.getPartida().modifyTeams(config);
 					Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
 						@Override
 						public void run() {

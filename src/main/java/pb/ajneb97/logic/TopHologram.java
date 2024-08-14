@@ -28,7 +28,7 @@ public class TopHologram {
 	private String name;
 	private String type; 
 	private Hologram hologram;
-	private double yOriginal;
+	private final double y;
 	private String period; //global,montly,weekly
 	//Si el period es monthly: 
 	//Se comprueba mediante los millis que MES y AÑO es. Se obtienen los millis de cada registro en mysql
@@ -39,9 +39,9 @@ public class TopHologram {
 		this.type = type;
 		this.name = name;
 		this.period = period;
-		this.yOriginal = location.getY();
+		this.y = location.getY();
 		Location nuevaLoc = location.clone();
-		nuevaLoc.setY(nuevaLoc.getY()+ HologramsUtils.determinarY(nuevaLoc, HologramsUtils.getCantidadLineasHolograma(plugin))+1.4);
+		nuevaLoc.setY(nuevaLoc.getY()+ HologramsUtils.getY(nuevaLoc, HologramsUtils.getNumberOfHologramLines(plugin))+1.4);
 		/* Change in HologramsDisplay API usage
 		this.hologram = HologramsAPI.createHologram(plugin, nuevaLoc);
 		 */
@@ -52,8 +52,8 @@ public class TopHologram {
 		return this.period;
 	}
 	
-	public double getyOriginal() {
-		return yOriginal;
+	public double getY() {
+		return y;
 	}
 
 	public void removeHologram() {
@@ -66,7 +66,7 @@ public class TopHologram {
 		
 		FileConfiguration messages = plugin.getMessages();
 		FileConfiguration config = plugin.getConfig();
-		final int topPlayersMax = Integer.valueOf(config.getString("top_hologram_number_of_players"));
+		final int topPlayersMax = Integer.parseInt(config.getString("top_hologram_number_of_players"));
 		List<String> lineas = messages.getStringList("topHologramFormat");
 		/* Change in HologramsDisplay API usage
 		VisibilityManager visibility = hologram.getVisibilityManager();
@@ -94,52 +94,46 @@ public class TopHologram {
 			String linea = lineas.get(i).replace("%type%",typeName).replace("%period%", periodName);
 			if(linea.contains("%scoreboard_lines%")) {
 				if(MySql.isEnabled(config) && !period.equals("global")) {
-					HologramsUtils.getTopPlayersSQL(plugin, type, period, new MySqlCallback() {
-						@Override
-						public void alTerminar(ArrayList<String> playersList) {
-							// TODO Auto-generated method stub
-							for(int c=0;c<topPlayersMax;c++) {
-								int num = c+1;
-								try {
-									String[] separados = playersList.get(c).split(";");
-									/* Change in HologramsDisplay API usage
-									hologram.appendTextLine(ChatColor.translateAlternateColorCodes('&', lineaMessage.replace("%position%", num+"")
-											.replace("%name%", separados[0]).replace("%points%", separados[1])));
-									 */
-									hologram.getLines().appendText(ChatColor.translateAlternateColorCodes('&', lineaMessage.replace("%position%", num+"")
-											.replace("%name%", separados[0]).replace("%points%", separados[1])));
-								} catch(Exception e) {
-									break;
-								}
-							}
-							//long millisDespues = System.currentTimeMillis();
-							//long espera = millisDespues-millisAntes;
+					HologramsUtils.getTopPlayersFromDatabase(plugin, type, period, playersList -> {
+            // TODO Auto-generated method stub
+            for(int c=0;c<topPlayersMax;c++) {
+              int num = c+1;
+              try {
+                String[] separados = playersList.get(c).split(";");
+                /* Change in HologramsDisplay API usage
+                hologram.appendTextLine(ChatColor.translateAlternateColorCodes('&', lineaMessage.replace("%position%", num+"")
+                    .replace("%name%", separados[0]).replace("%points%", separados[1])));
+                 */
+                hologram.getLines().appendText(ChatColor.translateAlternateColorCodes('&', lineaMessage.replace("%position%", num+"")
+                    .replace("%name%", separados[0]).replace("%points%", separados[1])));
+              } catch(Exception e) {
+                break;
+              }
+            }
+            //long millisDespues = System.currentTimeMillis();
+            //long espera = millisDespues-millisAntes;
 //							Bukkit.getConsoleSender().sendMessage("MySQL: Datos obtenidos para "+type+" "+period+ " en: "+espera+" ms");
-						}
-					});
+          });
 				} else {
-					HologramsUtils.getTopPlayers(plugin,plugin.getJugadores(), type,new MySqlCallback() {
-						@Override
-						public void alTerminar(ArrayList<String> playersList) {
-							for(int c=0;c<topPlayersMax;c++) {
-								int num = c+1;
-								try {
-									String[] separados = playersList.get(c).split(";");
-									/* Change in HologramsDisplay API usage
-									hologram.appendTextLine(ChatColor.translateAlternateColorCodes('&', lineaMessage.replace("%position%", num+"")
-											.replace("%name%", separados[0]).replace("%points%", separados[1])));
-									 */
-									hologram.getLines().appendText(ChatColor.translateAlternateColorCodes('&', lineaMessage.replace("%position%", num+"")
-											.replace("%name%", separados[0]).replace("%points%", separados[1])));
-								} catch(Exception e) {
-									break;
-								}
-							}
-							//long millisDespues = System.currentTimeMillis();
-							//long espera = millisDespues-millisAntes;
+					HologramsUtils.getTopPlayers(plugin,plugin.getJugadores(), type, (MySqlCallback) playersList -> {
+            for(int c=0;c<topPlayersMax;c++) {
+              int num = c+1;
+              try {
+                String[] separados = playersList.get(c).split(";");
+                /* Change in HologramsDisplay API usage
+                hologram.appendTextLine(ChatColor.translateAlternateColorCodes('&', lineaMessage.replace("%position%", num+"")
+                    .replace("%name%", separados[0]).replace("%points%", separados[1])));
+                 */
+                hologram.getLines().appendText(ChatColor.translateAlternateColorCodes('&', lineaMessage.replace("%position%", num+"")
+                    .replace("%name%", separados[0]).replace("%points%", separados[1])));
+              } catch(Exception e) {
+                break;
+              }
+            }
+            //long millisDespues = System.currentTimeMillis();
+            //long espera = millisDespues-millisAntes;
 //							Bukkit.getConsoleSender().sendMessage("MySQL: Datos obtenidos para "+type+" "+period+ " en: "+espera+" ms");
-						}
-					});
+          });
 				}
 
 			} else {
@@ -151,12 +145,12 @@ public class TopHologram {
 		}
 	}
 	
-	public void actualizar(PaintballBattle plugin) {
+	public void update(PaintballBattle plugin) {
 		Location loc = this.hologram.getPosition().toLocation().clone();
 		removeHologram();
-		loc.setY(yOriginal);
+		loc.setY(y);
 		Location nuevaLoc = loc.clone();
-		nuevaLoc.setY(nuevaLoc.getY()+ HologramsUtils.determinarY(nuevaLoc, HologramsUtils.getCantidadLineasHolograma(plugin))+1.4);
+		nuevaLoc.setY(nuevaLoc.getY()+ HologramsUtils.getY(nuevaLoc, HologramsUtils.getNumberOfHologramLines(plugin))+1.4);
 		this.hologram = HolographicDisplaysAPI.get(plugin).createHologram(nuevaLoc);
 		spawnHologram(plugin);
 	}

@@ -27,7 +27,7 @@ public class SignAdmin {
 		return this.taskID;
 	}
 	
-	public void updateSigns() {
+	public void reloadSigns() {
 	    BukkitScheduler scheduler = Bukkit.getServer().getScheduler();
  	    taskID = scheduler.scheduleSyncRepeatingTask(plugin, new Runnable() {
             public void run() { 
@@ -64,15 +64,15 @@ public class SignAdmin {
 							if(block.getType().name().contains("SIGN")) {
 								Sign sign = (Sign) block.getState();
 								String estado = "";
-								if(paintballMatch.getEstado().equals(MatchStatus.PLAYING)) {
+								if(paintballMatch.getState().equals(MatchStatus.PLAYING)) {
 									estado = messages.getString("signStatusIngame");
-								}else if(paintballMatch.getEstado().equals(MatchStatus.STARTING)) {
+								}else if(paintballMatch.getState().equals(MatchStatus.STARTING)) {
 									estado = messages.getString("signStatusStarting");
-								}else if(paintballMatch.getEstado().equals(MatchStatus.WAITING)) {
+								}else if(paintballMatch.getState().equals(MatchStatus.WAITING)) {
 									estado = messages.getString("signStatusWaiting");
-								}else if(paintballMatch.getEstado().equals(MatchStatus.OFF)) {
+								}else if(paintballMatch.getState().equals(MatchStatus.OFF)) {
 									estado = messages.getString("signStatusDisabled");
-								}else if(paintballMatch.getEstado().equals(MatchStatus.ENDING)) {
+								}else if(paintballMatch.getState().equals(MatchStatus.ENDING)) {
 									estado = messages.getString("signStatusFinishing");
 								}
 								

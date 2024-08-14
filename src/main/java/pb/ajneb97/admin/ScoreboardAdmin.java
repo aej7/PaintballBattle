@@ -35,7 +35,7 @@ public class ScoreboardAdmin {
 		return this.taskID;
 	}
 	
-	public void crearScoreboards() {
+	public void reloadScoreboards() {
 	    BukkitScheduler scheduler = Bukkit.getServer().getScheduler();
 	    final FileConfiguration messages = plugin.getMessages();
     	final FileConfiguration config = plugin.getConfig();
@@ -85,12 +85,12 @@ public class ScoreboardAdmin {
 	
 	private String getEstado(PaintballMatch paintballMatch, FileConfiguration messages) {
 		//Remplazar variables del %time%
-		if(paintballMatch.getEstado().equals(MatchStatus.WAITING)) {
+		if(paintballMatch.getState().equals(MatchStatus.WAITING)) {
 			return messages.getString("statusWaiting");
-		}else if(paintballMatch.getEstado().equals(MatchStatus.STARTING)) {
+		}else if(paintballMatch.getState().equals(MatchStatus.STARTING)) {
 			int tiempo = paintballMatch.getTiempo();
 			return messages.getString("statusStarting").replace("%time%", OthersUtils.getTiempo(tiempo));
-		}else if(paintballMatch.getEstado().equals(MatchStatus.ENDING)) {
+		}else if(paintballMatch.getState().equals(MatchStatus.ENDING)) {
 			int tiempo = paintballMatch.getTiempo();
 			return messages.getString("statusFinishing").replace("%time%", OthersUtils.getTiempo(tiempo));
 		}else {
