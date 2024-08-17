@@ -2,7 +2,7 @@ package pb.ajneb97.logic;
 
 import org.bukkit.Location;
 import org.bukkit.configuration.file.FileConfiguration;
-import pb.ajneb97.enums.MatchStatus;
+import pb.ajneb97.enums.MatchState;
 
 import java.util.ArrayList;
 import java.util.Random;
@@ -11,128 +11,122 @@ import java.util.Random;
 
 public class PaintballMatch {
 
-	private Team team1;
-	private Team team2;
-	private String nombre;
-	private int cantidadMaximaJugadores;
-	private int cantidadMinimaJugadores;
-	private int cantidadActualJugadores;
-	private MatchStatus estado;
+	private final Team team1;
+	private final Team team2;
+	private final String matchNumber;
+	private int maximumPlayerAmount;
+	private int minimumPlayerAmount;
+	private int playerAmount;
+	private MatchState matchState;
 	private Location lobby;
-	private int tiempo;
-	private int tiempoMaximo;
-	private int vidasIniciales;
-	private boolean enNuke;
+	private int time;
+	private int maximumTime;
+	private int initialLives;
+	private boolean isNuke;
 	
-	public PaintballMatch(String nombre, int tiempoMaximo, String equipo1, String equipo2, int vidasIniciales) {
+	public PaintballMatch(String matchNumber, int maximumTime, String team1, String team2, int initialLives) {
 		//por defecto
-		this.team1 = new Team(equipo1);
-		this.team2 = new Team(equipo2);
-		this.nombre = nombre;
-		this.cantidadMaximaJugadores = 16;
-		this.cantidadMinimaJugadores = 4;
-		this.cantidadActualJugadores = 0;
-		this.estado = MatchStatus.OFF;
-		this.tiempo = 0;
-		this.tiempoMaximo = tiempoMaximo;
-		this.vidasIniciales = vidasIniciales;
-		this.enNuke = false;
+		this.team1 = new Team(team1);
+		this.team2 = new Team(team2);
+		this.matchNumber = matchNumber;
+		this.maximumPlayerAmount = 16;
+		this.minimumPlayerAmount = 4;
+		this.playerAmount = 0;
+		this.matchState = MatchState.OFF;
+		this.time = 0;
+		this.maximumTime = maximumTime;
+		this.initialLives = initialLives;
+		this.isNuke = false;
 	}
 	
-	public boolean isEnNuke() {
-		return enNuke;
+	public boolean isNuke() {
+		return isNuke;
 	}
 
-	public void setEnNuke(boolean enNuke) {
-		this.enNuke = enNuke;
+	public void setNuke(boolean isNuke) {
+		this.isNuke = isNuke;
 	}
 
-	public void setVidasIniciales(int cantidad) {
-		this.vidasIniciales = cantidad;
+	public void setInitialLives(int amount) {
+		this.initialLives = amount;
 	}
 	
-	public int getVidasIniciales() {
-		return this.vidasIniciales;
+	public int getInitialLives() {
+		return this.initialLives;
 	}
 	
-	public void setTiempoMaximo(int tiempo) {
-		this.tiempoMaximo = tiempo;
+	public void setMaximumTime(int time) {
+		this.maximumTime = time;
 	}
 	
-	public int getTiempoMaximo() {
-		return this.tiempoMaximo;
+	public int getMaximumTime() {
+		return this.maximumTime;
 	}
 	
-	public void disminuirTiempo() {
-		this.tiempo--;
+	public void decreaseTime() {
+		this.time--;
 	}
 	
-	public void aumentarTiempo() {
-		this.tiempo++;
+	public void increaseTime() {
+		this.time++;
 	}
 	
-	public void setTiempo(int tiempo) {
-		this.tiempo = tiempo;
+	public void setTime(int time) {
+		this.time = time;
 	}
 	
-	public int getTiempo() {
-		return this.tiempo;
+	public int getTime() {
+		return this.time;
 	}
 	
-	public String getNumber() {
-		return this.nombre;
+	public String getMatchNumber() {
+		return this.matchNumber;
 	}
 	
-	public void agregarJugador(PaintballPlayer player) {
+	public void addPlayer(PaintballPlayer player) {
 		//ANTES DE INICIAR LA PARTIDA TODOS ESTAN EN EL TEAM 1 Y LUEGO SE REPARTEN LOS DEMAS AL TEAM 2
-		if(team1.agregarJugador(player)) {
-			this.cantidadActualJugadores++;
+		if(team1.addPlayer(player)) {
+			this.playerAmount++;
 		}	
 	}
 	
-	public void repartirJugadorTeam2(PaintballPlayer player) {
-		this.team1.removerJugador(player.getJugador().getName());
-		this.team2.agregarJugador(player);
+	public void changePlayerToTeam2(PaintballPlayer player) {
+		this.team1.removePlayer(player.getJugador().getName());
+		this.team2.addPlayer(player);
 	}
 	
-	public void removerJugador(String player) {
-		if(team1.removerJugador(player) || team2.removerJugador(player)) {
-			this.cantidadActualJugadores--;
+	public void removePlayer(String player) {
+		if(team1.removePlayer(player) || team2.removePlayer(player)) {
+			this.playerAmount--;
 		}	
 	}
 	
 	public ArrayList<PaintballPlayer> getPlayers(){
-		ArrayList<PaintballPlayer> jugadores = new ArrayList<PaintballPlayer>();
+		ArrayList<PaintballPlayer> players = new ArrayList<PaintballPlayer>();
+
+    players.addAll(team1.getPlayers());
+    players.addAll(team2.getPlayers());
 		
-		ArrayList<PaintballPlayer> jugadoresTeam1 = team1.getJugadores();
-		for(int i=0;i<jugadoresTeam1.size();i++) {
-			jugadores.add(jugadoresTeam1.get(i));
-		}
-		ArrayList<PaintballPlayer> jugadoresTeam2 = team2.getJugadores();
-		for(int i=0;i<jugadoresTeam2.size();i++) {
-			jugadores.add(jugadoresTeam2.get(i));
-		}
-		
-		return jugadores;
+		return players;
 	}
 	
-	public PaintballPlayer getJugador(String jugador) {
-		for(int i = 0; i< getPlayers().size(); i++) {
-			if(getPlayers().get(i).getJugador().getName().equals(jugador)) {
-				return getPlayers().get(i);
+	public PaintballPlayer getPlayer(String playerName) {
+		for (PaintballPlayer player : getPlayers()) {
+			if (player.getJugador().getName().equals(playerName)) {
+				return player;
 			}
 		}
 		return null;
 	}
 	
 	public Team getEquipoJugador(String jugador) {
-		ArrayList<PaintballPlayer> jugadoresTeam1 = team1.getJugadores();
+		ArrayList<PaintballPlayer> jugadoresTeam1 = team1.getPlayers();
 		for(int i=0;i<jugadoresTeam1.size();i++) {
 			if(jugadoresTeam1.get(i).getJugador().getName().equals(jugador)) {
 				return this.team1;
 			}
 		}
-		ArrayList<PaintballPlayer> jugadoresTeam2 = team2.getJugadores();
+		ArrayList<PaintballPlayer> jugadoresTeam2 = team2.getPlayers();
 		for(int i=0;i<jugadoresTeam2.size();i++) {
 			if(jugadoresTeam2.get(i).getJugador().getName().equals(jugador)){
 				return this.team2;
@@ -150,36 +144,36 @@ public class PaintballMatch {
 		return this.team2;
 	}
 	
-	public int getCantidadMaximaJugadores() {
-		return this.cantidadMaximaJugadores;
+	public int getMaximumPlayerAmount() {
+		return this.maximumPlayerAmount;
 	}
 	
-	public void setCantidadMaximaJugadores(int max) {
-		this.cantidadMaximaJugadores = max;
+	public void setMaximumPlayerAmount(int max) {
+		this.maximumPlayerAmount = max;
 	}
 	
-	public int getCantidadMinimaJugadores() {
-		return this.cantidadMinimaJugadores;
+	public int getMinimumPlayerAmount() {
+		return this.minimumPlayerAmount;
 	}
 	
-	public void setCantidadMinimaJugadores(int min) {
-		this.cantidadMinimaJugadores = min;
+	public void setMinimumPlayerAmount(int min) {
+		this.minimumPlayerAmount = min;
 	}
 	
-	public int getCantidadActualJugadores() {
-		return this.cantidadActualJugadores;
+	public int getPlayerAmount() {
+		return this.playerAmount;
 	}
 	
-	public MatchStatus getState() {
-		return this.estado;
+	public MatchState getState() {
+		return this.matchState;
 	}
 	
-	public void setState(MatchStatus estado) {
-		this.estado = estado;
+	public void setState(MatchState estado) {
+		this.matchState = estado;
 	}
 	
 	public boolean estaIniciada() {
-		if(!this.estado.equals(MatchStatus.WAITING) && !this.estado.equals(MatchStatus.STARTING)) {
+		if(!this.matchState.equals(MatchState.WAITING) && !this.matchState.equals(MatchState.STARTING)) {
 			return true;
 		}else {
 			return false;
@@ -187,7 +181,7 @@ public class PaintballMatch {
 	}
 	
 	public boolean estaLlena() {
-		if(this.cantidadActualJugadores == this.cantidadMaximaJugadores) {
+		if(this.playerAmount == this.maximumPlayerAmount) {
 			return true;
 		}else {
 			return false;
@@ -195,7 +189,7 @@ public class PaintballMatch {
 	}
 	
 	public boolean estaActivada() {
-		if(this.estado.equals(MatchStatus.OFF)) {
+		if(this.matchState.equals(MatchState.OFF)) {
 			return false;
 		}else {
 			return true;
@@ -211,10 +205,10 @@ public class PaintballMatch {
 	}
 	
 	public Team getGanador() {
-		if(team1.getJugadores().size() == 0) {
+		if(team1.getPlayers().size() == 0) {
 			return team2;
 		}
-		if(team2.getJugadores().size() == 0) {
+		if(team2.getPlayers().size() == 0) {
 			return team1;
 		}
 		
@@ -250,10 +244,10 @@ public class PaintballMatch {
 	
 	public boolean puedeSeleccionarEquipo(String equipo) {
 		int mitad = 0;
-		if(this.cantidadActualJugadores % 2 != 0) {
-			mitad = ((int)this.cantidadActualJugadores/2) + 1;
+		if(this.playerAmount % 2 != 0) {
+			mitad = ((int)this.playerAmount /2) + 1;
 		}else {
-			mitad = (int)this.cantidadActualJugadores/2;
+			mitad = (int)this.playerAmount /2;
 		}
 		if(equipo.equals(this.team1.getTipo())) {
 			int cantidadPreferenciaTeam1 = 0;
@@ -263,7 +257,7 @@ public class PaintballMatch {
 				}
 			}
 
-			if(this.cantidadActualJugadores == 1) {
+			if(this.playerAmount == 1) {
 				return true;
 			}
 			
@@ -279,7 +273,7 @@ public class PaintballMatch {
 				}
 			}
 			
-			if(this.cantidadActualJugadores == 1) {
+			if(this.playerAmount == 1) {
 				return true;
 			}
 			if(cantidadPreferenciaTeam2 >= mitad) {

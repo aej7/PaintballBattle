@@ -12,7 +12,7 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.scheduler.BukkitScheduler;
 
 import pb.ajneb97.PaintballBattle;
-import pb.ajneb97.enums.MatchStatus;
+import pb.ajneb97.enums.MatchState;
 import pb.ajneb97.logic.PaintballMatch;
 
 public class SignAdmin {
@@ -64,22 +64,22 @@ public class SignAdmin {
 							if(block.getType().name().contains("SIGN")) {
 								Sign sign = (Sign) block.getState();
 								String estado = "";
-								if(paintballMatch.getState().equals(MatchStatus.PLAYING)) {
+								if(paintballMatch.getState().equals(MatchState.PLAYING)) {
 									estado = messages.getString("signStatusIngame");
-								}else if(paintballMatch.getState().equals(MatchStatus.STARTING)) {
+								}else if(paintballMatch.getState().equals(MatchState.STARTING)) {
 									estado = messages.getString("signStatusStarting");
-								}else if(paintballMatch.getState().equals(MatchStatus.WAITING)) {
+								}else if(paintballMatch.getState().equals(MatchState.WAITING)) {
 									estado = messages.getString("signStatusWaiting");
-								}else if(paintballMatch.getState().equals(MatchStatus.OFF)) {
+								}else if(paintballMatch.getState().equals(MatchState.OFF)) {
 									estado = messages.getString("signStatusDisabled");
-								}else if(paintballMatch.getState().equals(MatchStatus.ENDING)) {
+								}else if(paintballMatch.getState().equals(MatchState.ENDING)) {
 									estado = messages.getString("signStatusFinishing");
 								}
 								
 								List<String> lista = messages.getStringList("signFormat");
 								for(int c=0;c<lista.size();c++) {
-									sign.setLine(c, ChatColor.translateAlternateColorCodes('&', lista.get(c).replace("%arena%", arena).replace("%current_players%", paintballMatch.getCantidadActualJugadores()+"")
-											.replace("%max_players%", paintballMatch.getCantidadMaximaJugadores()+"").replace("%status%", estado)));
+									sign.setLine(c, ChatColor.translateAlternateColorCodes('&', lista.get(c).replace("%arena%", arena).replace("%current_players%", paintballMatch.getPlayerAmount()+"")
+											.replace("%max_players%", paintballMatch.getMaximumPlayerAmount()+"").replace("%status%", estado)));
 								}
 
 								sign.update();

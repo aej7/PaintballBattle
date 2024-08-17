@@ -35,7 +35,7 @@ public class CooldownKillstreaksActionbar {
 	protected void actualizarActionbars(final Player player,final FileConfiguration messages,final FileConfiguration config) {
 		PaintballMatch paintballMatch = plugin.getPlayersMatch(player.getName());
 		if(paintballMatch != null) {
-			PaintballPlayer jugador = paintballMatch.getJugador(player.getName());
+			PaintballPlayer jugador = paintballMatch.getPlayer(player.getName());
 			Killstreak ultima = jugador.getUltimaKillstreak();
 			if(ultima != null) {
 				String name = config.getString("killstreaks_items."+ultima.getTipo()+".name");

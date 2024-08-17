@@ -16,7 +16,7 @@ import pb.ajneb97.api.Hat;
 import pb.ajneb97.api.Perk;
 import pb.ajneb97.database.Player;
 import pb.ajneb97.database.MySql;
-import pb.ajneb97.enums.MatchStatus;
+import pb.ajneb97.enums.MatchState;
 import pb.ajneb97.logic.PaintballMatch;
 import pb.ajneb97.logic.PaintballMatchEdit;
 import pb.ajneb97.configuration.Checks;
@@ -266,7 +266,7 @@ public class CommandHandler implements CommandExecutor {
 								   return true;
 							   }
 							   
-							   paintballMatch.setState(MatchStatus.WAITING);
+							   paintballMatch.setState(MatchState.WAITING);
 							   player.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("arenaEnabled").replace("%name%", args[1])));
 						   }
 					   }else {
@@ -287,7 +287,7 @@ public class CommandHandler implements CommandExecutor {
 						   if(!paintballMatch.estaActivada()) {
 							   player.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("arenaAlreadyDisabled")));
 						   }else {
-							   paintballMatch.setState(MatchStatus.OFF);
+							   paintballMatch.setState(MatchState.OFF);
 							   player.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("arenaDisabled").replace("%name%", args[1])));
 						   }
 					   }else {

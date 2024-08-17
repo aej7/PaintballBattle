@@ -52,7 +52,7 @@ import pb.ajneb97.logic.PartidaManager;
 import pb.ajneb97.logic.CooldownSnowballParticle;
 import pb.ajneb97.logic.InventarioHats;
 import pb.ajneb97.logic.Team;
-import pb.ajneb97.enums.MatchStatus;
+import pb.ajneb97.enums.MatchState;
 import pb.ajneb97.logic.PaintballPlayer;
 import pb.ajneb97.logic.Killstreak;
 import pb.ajneb97.logic.PaintballMatch;
@@ -166,7 +166,7 @@ public class PlayerActionsEventHandler implements Listener{
 						if(event.getItem().isSimilar(team1)) {
 							event.setCancelled(true);
 							jugador.updateInventory();
-							PaintballPlayer j = paintballMatch.getJugador(jugador.getName());
+							PaintballPlayer j = paintballMatch.getPlayer(jugador.getName());
 							if(j.getPreferenciaTeam() != null && j.getPreferenciaTeam().equals(paintballMatch.getTeam1().getTipo())) {
 								jugador.sendMessage(ChatColor.translateAlternateColorCodes('&', messages.getString("errorTeamAlreadySelected")));
 								return;
@@ -181,7 +181,7 @@ public class PlayerActionsEventHandler implements Listener{
 						}else if(event.getItem().isSimilar(team2)) {
 							event.setCancelled(true);
 							jugador.updateInventory();
-							PaintballPlayer j = paintballMatch.getJugador(jugador.getName());
+							PaintballPlayer j = paintballMatch.getPlayer(jugador.getName());
 							if(j.getPreferenciaTeam() != null && j.getPreferenciaTeam().equals(paintballMatch.getTeam2().getTipo())) {
 								jugador.sendMessage(ChatColor.translateAlternateColorCodes('&', messages.getString("errorTeamAlreadySelected")));
 								return;
@@ -210,7 +210,7 @@ public class PlayerActionsEventHandler implements Listener{
 					FileConfiguration config = plugin.getConfig();
 					if(jugador.getInventory().getHeldItemSlot() == 8 && (event.getAction().equals(Action.RIGHT_CLICK_AIR) || event.getAction().equals(Action.RIGHT_CLICK_BLOCK))) {
 						if(config.getString("killstreaks_item_enabled").equals("true")) {
-							if(paintballMatch.getState().equals(MatchStatus.PLAYING)) {
+							if(paintballMatch.getState().equals(MatchState.PLAYING)) {
 								event.setCancelled(true);
 								Inventory inv = Bukkit.createInventory(null, 18, ChatColor.translateAlternateColorCodes('&', config.getString("killstreaks_inventory_title")));
 								jugador.openInventory(inv);
@@ -230,9 +230,9 @@ public class PlayerActionsEventHandler implements Listener{
 		if(event.isSneaking()) {
 			Player jugador = event.getPlayer();
 			PaintballMatch paintballMatch = plugin.getPlayersMatch(jugador.getName());
-			if(paintballMatch != null && paintballMatch.getState().equals(MatchStatus.PLAYING)) {
+			if(paintballMatch != null && paintballMatch.getState().equals(MatchState.PLAYING)) {
 				FileConfiguration messages = plugin.getMessages();
-				PaintballPlayer j = paintballMatch.getJugador(jugador.getName());
+				PaintballPlayer j = paintballMatch.getPlayer(jugador.getName());
 				String hat = j.getSelectedHat();
 				if(hat.equals("guardian_hat") || hat.equals("jump_hat")) {
 					if(!j.isEfectoHatEnCooldown()) {
@@ -453,12 +453,12 @@ public class PlayerActionsEventHandler implements Listener{
 				Player jugadorAtacante = (Player) shooter;
 				PaintballMatch paintballMatch = plugin.getPlayersMatch(jugadorAtacante.getName());
 				if(paintballMatch != null) {
-					if(paintballMatch.getState().equals(MatchStatus.PLAYING)) {
+					if(paintballMatch.getState().equals(MatchState.PLAYING)) {
 						
 						event.setCancelled(true);
 						
-						PaintballPlayer j = paintballMatch.getJugador(jugadorAtacante.getName());
-						PaintballPlayer j2 = paintballMatch.getJugador(jugadorDañado.getName());
+						PaintballPlayer j = paintballMatch.getPlayer(jugadorAtacante.getName());
+						PaintballPlayer j2 = paintballMatch.getPlayer(jugadorDañado.getName());
 						
 						if(j2 == null || j2.getKillstreak("fury") != null) {
 							return;
@@ -494,7 +494,7 @@ public class PlayerActionsEventHandler implements Listener{
 				event.setCancelled(true);
 				if(event.getClickedInventory().equals(jugador.getOpenInventory().getTopInventory())) {
 					PaintballMatch paintballMatch = plugin.getPlayersMatch(jugador.getName());
-					PaintballPlayer j = paintballMatch.getJugador(jugador.getName());
+					PaintballPlayer j = paintballMatch.getPlayer(jugador.getName());
 					if(paintballMatch != null) {
 						int slot = event.getSlot();
 						for(String key : config.getConfigurationSection("killstreaks_items").getKeys(false)) {
@@ -512,7 +512,7 @@ public class PlayerActionsEventHandler implements Listener{
 								
 								int cost = Integer.valueOf(config.getString("killstreaks_items."+key+".cost"));
 								if(j.getCoins() >= cost) {
-									if(key.equalsIgnoreCase("nuke") && paintballMatch.isEnNuke()) {
+									if(key.equalsIgnoreCase("nuke") && paintballMatch.isNuke()) {
 										jugador.sendMessage(ChatColor.translateAlternateColorCodes('&', messages.getString("nukeError")));
 										return;
 									}
@@ -586,7 +586,7 @@ public class PlayerActionsEventHandler implements Listener{
 				PaintballMatch paintballMatch = plugin.getPlayersMatch(jugador.getName());
 				if(paintballMatch != null) {
 					event.setCancelled(true);
-					PaintballPlayer player = paintballMatch.getJugador(jugador.getName());
+					PaintballPlayer player = paintballMatch.getPlayer(jugador.getName());
 					
 					if(player.getKillstreak("fury") == null) {
 						if(Bukkit.getVersion().contains("1.13") || Bukkit.getVersion().contains("1.14") || Bukkit.getVersion().contains("1.15")
@@ -673,7 +673,7 @@ public class PlayerActionsEventHandler implements Listener{
 			if(paintballMatch != null) {
 				p.setMetadata("PaintballBattle", new FixedMetadataValue(plugin,"proyectil"));
 				p.setVelocity(p.getVelocity().multiply(1.25));
-				PaintballPlayer player = paintballMatch.getJugador(jugador.getName());
+				PaintballPlayer player = paintballMatch.getPlayer(jugador.getName());
 				Killstreak k = player.getKillstreak("strong_arm");
 				if(k != null) {
 					p.setVelocity(p.getVelocity().multiply(2));

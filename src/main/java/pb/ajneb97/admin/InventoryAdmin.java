@@ -31,7 +31,7 @@ public class InventoryAdmin implements Listener{
 	}
 	
 	public static void crearInventario(Player jugador, PaintballMatch paintballMatch, PaintballBattle plugin) {
-		Inventory inv = Bukkit.createInventory(null, 36, ChatColor.translateAlternateColorCodes('&', "&2Editing Arena: &7"+ paintballMatch.getNumber()));
+		Inventory inv = Bukkit.createInventory(null, 36, ChatColor.translateAlternateColorCodes('&', "&2Editing Arena: &7"+ paintballMatch.getMatchNumber()));
 		ItemStack item = new ItemStack(Material.BEACON,1);
 		ItemMeta meta = item.getItemMeta();
 		meta.setDisplayName(ChatColor.translateAlternateColorCodes('&', "&6&lSet Lobby"));
@@ -101,26 +101,26 @@ public class InventoryAdmin implements Listener{
 		item.setItemMeta(meta);
 		inv.setItem(12, item);
 		
-		item = new ItemStack(Material.GHAST_TEAR, paintballMatch.getCantidadMinimaJugadores());
+		item = new ItemStack(Material.GHAST_TEAR, paintballMatch.getMinimumPlayerAmount());
 		meta = item.getItemMeta();
 		meta.setDisplayName(ChatColor.translateAlternateColorCodes('&', "&6&lSet Min Players"));
 		lore = new ArrayList<String>();
 		lore.add(ChatColor.translateAlternateColorCodes('&', "&7Click to define the arena minimum number"));
 		lore.add(ChatColor.translateAlternateColorCodes('&', "&7of players."));
 		lore.add(ChatColor.translateAlternateColorCodes('&', ""));
-		lore.add(ChatColor.translateAlternateColorCodes('&', "&9Current Value: &7"+ paintballMatch.getCantidadMinimaJugadores()));
+		lore.add(ChatColor.translateAlternateColorCodes('&', "&9Current Value: &7"+ paintballMatch.getMinimumPlayerAmount()));
 		meta.setLore(lore);
 		item.setItemMeta(meta);
 		inv.setItem(13, item);
 		
-		item = new ItemStack(Material.GHAST_TEAR, paintballMatch.getCantidadMaximaJugadores());
+		item = new ItemStack(Material.GHAST_TEAR, paintballMatch.getMaximumPlayerAmount());
 		meta = item.getItemMeta();
 		meta.setDisplayName(ChatColor.translateAlternateColorCodes('&', "&6&lSet Max Players"));
 		lore = new ArrayList<String>();
 		lore.add(ChatColor.translateAlternateColorCodes('&', "&7Click to define the arena maximum number"));
 		lore.add(ChatColor.translateAlternateColorCodes('&', "&7of players."));
 		lore.add(ChatColor.translateAlternateColorCodes('&', ""));
-		lore.add(ChatColor.translateAlternateColorCodes('&', "&9Current Value: &7"+ paintballMatch.getCantidadMaximaJugadores()));
+		lore.add(ChatColor.translateAlternateColorCodes('&', "&9Current Value: &7"+ paintballMatch.getMaximumPlayerAmount()));
 		meta.setLore(lore);
 		item.setItemMeta(meta);
 		inv.setItem(14, item);
@@ -170,7 +170,7 @@ public class InventoryAdmin implements Listener{
 		lore = new ArrayList<String>();
 		lore.add(ChatColor.translateAlternateColorCodes('&', "&7Click to define the arena time in seconds."));
 		lore.add(ChatColor.translateAlternateColorCodes('&', ""));
-		lore.add(ChatColor.translateAlternateColorCodes('&', "&9Current Value: &7"+ paintballMatch.getTiempoMaximo()));
+		lore.add(ChatColor.translateAlternateColorCodes('&', "&9Current Value: &7"+ paintballMatch.getMaximumTime()));
 		meta.setLore(lore);
 		item.setItemMeta(meta);
 		inv.setItem(21, item);
@@ -182,7 +182,7 @@ public class InventoryAdmin implements Listener{
 		lore.add(ChatColor.translateAlternateColorCodes('&', "&7Click to define the starting amount of lives"));
 		lore.add(ChatColor.translateAlternateColorCodes('&', "&7for both teams."));
 		lore.add(ChatColor.translateAlternateColorCodes('&', ""));
-		lore.add(ChatColor.translateAlternateColorCodes('&', "&9Current Value: &7"+ paintballMatch.getVidasIniciales()));
+		lore.add(ChatColor.translateAlternateColorCodes('&', "&9Current Value: &7"+ paintballMatch.getInitialLives()));
 		meta.setLore(lore);
 		item.setItemMeta(meta);
 		inv.setItem(23, item);
@@ -190,7 +190,7 @@ public class InventoryAdmin implements Listener{
 		jugador.openInventory(inv);
 		
 		PaintballMatchEdit p = new PaintballMatchEdit(jugador, paintballMatch);
-		plugin.setPartidaEditando(p);
+		plugin.setPaintballMatchEdit(p);
 	}
 	
 	@EventHandler
@@ -201,7 +201,7 @@ public class InventoryAdmin implements Listener{
 		PaintballMatchEdit partida = plugin.getPaintballMatchEdit();
 		if(partida != null && partida.getJugador().getName().equals(jugador.getName())) {
 			if(ChatColor.stripColor(event.getView().getTitle()).contains(pathInventoryM)){
-				plugin.removerPartidaEditando();
+				plugin.removePaintballMatchEdit();
 			}
 		}
 	}
@@ -211,7 +211,7 @@ public class InventoryAdmin implements Listener{
 		PaintballMatchEdit partida = plugin.getPaintballMatchEdit();
 		Player jugador = event.getPlayer();
 		if(partida != null && partida.getJugador().getName().equals(jugador.getName())) {
-			plugin.removerPartidaEditando();
+			plugin.removePaintballMatchEdit();
 		}
 	}
 	
@@ -239,33 +239,33 @@ public class InventoryAdmin implements Listener{
 						FileConfiguration config = plugin.getConfig();
 						if(slot == 10) {
 							partida.getPartida().setLobby(jugador.getLocation().clone());
-							jugador.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("lobbyDefined").replace("%name%", partida.getPartida().getNumber())));
+							jugador.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("lobbyDefined").replace("%name%", partida.getPartida().getMatchNumber())));
 							InventoryAdmin.crearInventario(jugador, partida.getPartida(),plugin);
 						}else if(slot == 11) {
 							partida.getPartida().getTeam1().setSpawn(jugador.getLocation().clone());
-							jugador.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("spawnTeamDefined").replace("%number%", "1").replace("%name%", partida.getPartida().getNumber())));
+							jugador.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("spawnTeamDefined").replace("%number%", "1").replace("%name%", partida.getPartida().getMatchNumber())));
 							InventoryAdmin.crearInventario(jugador, partida.getPartida(),plugin);
 						}else if(slot == 12) {
 							partida.getPartida().getTeam2().setSpawn(jugador.getLocation().clone());
-							jugador.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("spawnTeamDefined").replace("%number%", "2").replace("%name%", partida.getPartida().getNumber())));
+							jugador.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("spawnTeamDefined").replace("%number%", "2").replace("%name%", partida.getPartida().getMatchNumber())));
 							InventoryAdmin.crearInventario(jugador, partida.getPartida(),plugin);
 						}else if(slot == 13) {
 							jugador.closeInventory();
 							PaintballMatchEdit p = new PaintballMatchEdit(jugador,partida.getPartida());
 							p.setPaso("min");
-							plugin.setPartidaEditando(p);
+							plugin.setPaintballMatchEdit(p);
 							jugador.sendMessage(ChatColor.translateAlternateColorCodes('&', "&aWrite an even number."));
 						}else if(slot == 14) {
 							jugador.closeInventory();
 							PaintballMatchEdit p = new PaintballMatchEdit(jugador,partida.getPartida());
 							p.setPaso("max");
-							plugin.setPartidaEditando(p);
+							plugin.setPaintballMatchEdit(p);
 							jugador.sendMessage(ChatColor.translateAlternateColorCodes('&', "&aWrite an even number."));
 						}else if(slot == 15) {
 							jugador.closeInventory();
 							PaintballMatchEdit p = new PaintballMatchEdit(jugador,partida.getPartida());
 							p.setPaso("team1name");
-							plugin.setPartidaEditando(p);
+							plugin.setPaintballMatchEdit(p);
 							String lista = "";
 							for(String key : config.getConfigurationSection("teams").getKeys(false)) {
 								lista=lista+key+" ";
@@ -275,7 +275,7 @@ public class InventoryAdmin implements Listener{
 							jugador.closeInventory();
 							PaintballMatchEdit p = new PaintballMatchEdit(jugador,partida.getPartida());
 							p.setPaso("team2name");
-							plugin.setPartidaEditando(p);
+							plugin.setPaintballMatchEdit(p);
 							String lista = "";
 							for(String key : config.getConfigurationSection("teams").getKeys(false)) {
 								lista=lista+key+" ";
@@ -285,13 +285,13 @@ public class InventoryAdmin implements Listener{
 							jugador.closeInventory();
 							PaintballMatchEdit p = new PaintballMatchEdit(jugador,partida.getPartida());
 							p.setPaso("time");
-							plugin.setPartidaEditando(p);
+							plugin.setPaintballMatchEdit(p);
 							jugador.sendMessage(ChatColor.translateAlternateColorCodes('&', "&aWrite a number. This will be the arena time in seconds."));
 						}else if(slot == 23) {
 							jugador.closeInventory();
 							PaintballMatchEdit p = new PaintballMatchEdit(jugador,partida.getPartida());
 							p.setPaso("lives");
-							plugin.setPartidaEditando(p);
+							plugin.setPaintballMatchEdit(p);
 							jugador.sendMessage(ChatColor.translateAlternateColorCodes('&', "&aWrite a number. This will be the amount of starting lives for each team."));
 						}
 					}
@@ -315,8 +315,8 @@ public class InventoryAdmin implements Listener{
 				try {
 					int num = Integer.valueOf(message);
 					if(num >= 2 && num % 2 == 0) {
-						jugador.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("minPlayersDefined").replace("%name%", partida.getPartida().getNumber())));
-						partida.getPartida().setCantidadMinimaJugadores(num);
+						jugador.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("minPlayersDefined").replace("%name%", partida.getPartida().getMatchNumber())));
+						partida.getPartida().setMinimumPlayerAmount(num);
 						Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
 							@Override
 							public void run() {
@@ -333,8 +333,8 @@ public class InventoryAdmin implements Listener{
 				try {
 					int num = Integer.valueOf(message);
 					if(num >= 2 && num % 2 == 0) {
-						jugador.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("maxPlayersDefined").replace("%name%", partida.getPartida().getNumber())));
-						partida.getPartida().setCantidadMaximaJugadores(num);
+						jugador.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("maxPlayersDefined").replace("%name%", partida.getPartida().getMatchNumber())));
+						partida.getPartida().setMaximumPlayerAmount(num);
 						Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
 							@Override
 							public void run() {
@@ -351,7 +351,7 @@ public class InventoryAdmin implements Listener{
 				FileConfiguration config = plugin.getConfig();
 
 				if(config.contains("teams."+message) || message.equalsIgnoreCase("random")) {
-					jugador.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("typeDefined").replace("%number%", "1").replace("%name%", partida.getPartida().getNumber())));
+					jugador.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("typeDefined").replace("%number%", "1").replace("%name%", partida.getPartida().getMatchNumber())));
 					partida.getPartida().getTeam1().setTipo(message);
 					if(message.equalsIgnoreCase("random")) {
 						partida.getPartida().getTeam1().setRandom(true);
@@ -372,7 +372,7 @@ public class InventoryAdmin implements Listener{
 				FileConfiguration config = plugin.getConfig();
 				
 				if(config.contains("teams."+message) || message.equalsIgnoreCase("random")) {
-					jugador.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("typeDefined").replace("%number%", "2").replace("%name%", partida.getPartida().getNumber())));
+					jugador.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("typeDefined").replace("%number%", "2").replace("%name%", partida.getPartida().getMatchNumber())));
 					partida.getPartida().getTeam2().setTipo(message);
 					if(message.equalsIgnoreCase("random")) {
 						partida.getPartida().getTeam2().setRandom(true);
@@ -393,8 +393,8 @@ public class InventoryAdmin implements Listener{
 				try {
 					int num = Integer.valueOf(message);
 					if(num > 0) {
-						jugador.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("timeDefined").replace("%name%", partida.getPartida().getNumber())));
-						partida.getPartida().setTiempoMaximo(num);
+						jugador.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("timeDefined").replace("%name%", partida.getPartida().getMatchNumber())));
+						partida.getPartida().setMaximumTime(num);
 						Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
 							@Override
 							public void run() {
@@ -411,8 +411,8 @@ public class InventoryAdmin implements Listener{
 				try {
 					int num = Integer.valueOf(message);
 					if(num > 0) {
-						jugador.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("livesDefined").replace("%name%", partida.getPartida().getNumber())));
-						partida.getPartida().setVidasIniciales(num);
+						jugador.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("livesDefined").replace("%name%", partida.getPartida().getMatchNumber())));
+						partida.getPartida().setInitialLives(num);
 						Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
 							@Override
 							public void run() {

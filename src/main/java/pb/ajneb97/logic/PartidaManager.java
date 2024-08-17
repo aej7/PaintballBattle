@@ -35,7 +35,7 @@ import pb.ajneb97.api.PaintballAPI;
 import pb.ajneb97.api.Perk;
 import pb.ajneb97.database.Player;
 import pb.ajneb97.database.MySql;
-import pb.ajneb97.enums.MatchStatus;
+import pb.ajneb97.enums.MatchState;
 import pb.ajneb97.lib.titleapi.TitleAPI;
 import pb.ajneb97.utils.ItemsUtils;
 import pb.ajneb97.utils.OthersUtils;
@@ -46,11 +46,11 @@ public class PartidaManager {
 	public static void jugadorEntra(PaintballMatch paintballMatch, org.bukkit.entity.Player jugador, PaintballBattle plugin) {
 		PaintballPlayer paintballPlayer = new PaintballPlayer(jugador);
 		FileConfiguration messages = plugin.getMessages();
-		paintballMatch.agregarJugador(paintballPlayer);
+		paintballMatch.addPlayer(paintballPlayer);
 		ArrayList<PaintballPlayer> jugadores = paintballMatch.getPlayers();
 		for(int i=0;i<jugadores.size();i++) {
 			jugadores.get(i).getJugador().sendMessage(ChatColor.translateAlternateColorCodes('&', messages.getString("playerJoin").replace("%player%", jugador.getName())
-					.replace("%current_players%", paintballMatch.getCantidadActualJugadores()+"").replace("%max_players%", paintballMatch.getCantidadMaximaJugadores()+"")));
+					.replace("%current_players%", paintballMatch.getPlayerAmount()+"").replace("%max_players%", paintballMatch.getMaximumPlayerAmount()+"")));
 		}
 		
 		jugador.getInventory().clear();
@@ -94,8 +94,8 @@ public class PartidaManager {
 			jugador.getInventory().setItem(1, item);
 		}
 		
-		if(paintballMatch.getCantidadActualJugadores() >= paintballMatch.getCantidadMinimaJugadores()
-				&& paintballMatch.getState().equals(MatchStatus.WAITING)) {
+		if(paintballMatch.getPlayerAmount() >= paintballMatch.getMinimumPlayerAmount()
+				&& paintballMatch.getState().equals(MatchState.WAITING)) {
 			cooldownIniciarPartida(paintballMatch,plugin);
 		}
 	}
@@ -103,7 +103,7 @@ public class PartidaManager {
 	@SuppressWarnings("deprecation")
 	public static void jugadorSale(PaintballMatch paintballMatch, org.bukkit.entity.Player jugador, boolean finalizaPartida,
 																 PaintballBattle plugin, boolean cerrandoServer) {
-		PaintballPlayer paintballPlayer = paintballMatch.getJugador(jugador.getName());
+		PaintballPlayer paintballPlayer = paintballMatch.getPlayer(jugador.getName());
 		FileConfiguration messages = plugin.getMessages();
 		ItemStack[] inventarioGuardado = paintballPlayer.getGuardados().getInventarioGuardado();
 		ItemStack[] equipamientoGuardado = paintballPlayer.getGuardados().getEquipamientoGuardado();
@@ -116,13 +116,13 @@ public class PartidaManager {
 		boolean allowFligth = paintballPlayer.getGuardados().isAllowFlight();
 		boolean isFlying = paintballPlayer.getGuardados().isFlying();
 
-		paintballMatch.removerJugador(jugador.getName());
+		paintballMatch.removePlayer(jugador.getName());
 		
 		if(!finalizaPartida) {
 			ArrayList<PaintballPlayer> jugadores = paintballMatch.getPlayers();
 			for(int i=0;i<jugadores.size();i++) {
 				jugadores.get(i).getJugador().sendMessage(ChatColor.translateAlternateColorCodes('&', messages.getString("playerLeave").replace("%player%", jugador.getName())
-						.replace("%current_players%", paintballMatch.getCantidadActualJugadores()+"").replace("%max_players%", paintballMatch.getCantidadMaximaJugadores()+"")));
+						.replace("%current_players%", paintballMatch.getPlayerAmount()+"").replace("%max_players%", paintballMatch.getMaximumPlayerAmount()+"")));
 			}
 		}
 		
@@ -153,13 +153,13 @@ public class PartidaManager {
 		jugador.setFlying(isFlying);
 		
 		if(!cerrandoServer) {
-			if(paintballMatch.getCantidadActualJugadores() < paintballMatch.getCantidadMinimaJugadores()
-					&& paintballMatch.getState().equals(MatchStatus.STARTING)){
-				paintballMatch.setState(MatchStatus.WAITING);
-			}else if(paintballMatch.getCantidadActualJugadores() <= 1 && (paintballMatch.getState().equals(MatchStatus.PLAYING))) {
+			if(paintballMatch.getPlayerAmount() < paintballMatch.getMinimumPlayerAmount()
+					&& paintballMatch.getState().equals(MatchState.STARTING)){
+				paintballMatch.setState(MatchState.WAITING);
+			}else if(paintballMatch.getPlayerAmount() <= 1 && (paintballMatch.getState().equals(MatchState.PLAYING))) {
 				//fase finalizacion
 				PartidaManager.iniciarFaseFinalizacion(paintballMatch, plugin);
-			}else if((paintballMatch.getTeam1().getCantidadJugadores() == 0 || paintballMatch.getTeam2().getCantidadJugadores() == 0) && paintballMatch.getState().equals(MatchStatus.PLAYING)) {
+			}else if((paintballMatch.getTeam1().getCantidadJugadores() == 0 || paintballMatch.getTeam2().getCantidadJugadores() == 0) && paintballMatch.getState().equals(MatchState.PLAYING)) {
 				//fase finalizacion
 				PartidaManager.iniciarFaseFinalizacion(paintballMatch, plugin);
 			}
@@ -167,7 +167,7 @@ public class PartidaManager {
 	}
 	
 	public static void cooldownIniciarPartida(PaintballMatch paintballMatch, PaintballBattle plugin) {
-		paintballMatch.setState(MatchStatus.STARTING);
+		paintballMatch.setState(MatchState.STARTING);
 		FileConfiguration config = plugin.getConfig();
 		FileConfiguration messages = plugin.getMessages();
 		int time = Integer.valueOf(config.getString("arena_starting_cooldown"));
@@ -183,7 +183,7 @@ public class PartidaManager {
 				for(org.bukkit.entity.Player player : Bukkit.getOnlinePlayers()) {
 					if(player.getWorld().getName().equals(world)) {
 						player.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("arenaStartingBroadcast")
-								.replace("%arena%", paintballMatch.getNumber())));
+								.replace("%arena%", paintballMatch.getMatchNumber())));
 					}
 				}
 			}
@@ -191,7 +191,7 @@ public class PartidaManager {
 	}
 	
 	public static void iniciarPartida(PaintballMatch paintballMatch, PaintballBattle plugin) {
-		paintballMatch.setState(MatchStatus.PLAYING);
+		paintballMatch.setState(MatchState.PLAYING);
 		FileConfiguration messages = plugin.getMessages();
 		FileConfiguration config = plugin.getConfig();
 		//String prefix = ChatColor.translateAlternateColorCodes('&', messages.getString("prefix"))+" ";
@@ -236,10 +236,10 @@ public class PartidaManager {
 	
 
 	public static void setVidas(PaintballMatch paintballMatch, FileConfiguration shop) {
-		paintballMatch.getTeam1().setVidas(paintballMatch.getVidasIniciales());
-		paintballMatch.getTeam2().setVidas(paintballMatch.getVidasIniciales());
+		paintballMatch.getTeam1().setVidas(paintballMatch.getInitialLives());
+		paintballMatch.getTeam2().setVidas(paintballMatch.getInitialLives());
 		
-		ArrayList<PaintballPlayer> jugadoresTeam1 = paintballMatch.getTeam1().getJugadores();
+		ArrayList<PaintballPlayer> jugadoresTeam1 = paintballMatch.getTeam1().getPlayers();
 		for(PaintballPlayer j : jugadoresTeam1) {
 			//comprobar perk extralives
 			int nivelExtraLives = PaintballAPI.getPerkLevel(j.getJugador(), "extra_lives");
@@ -250,7 +250,7 @@ public class PartidaManager {
 				paintballMatch.getTeam1().aumentarVidas(cantidad);
 			}
 		}
-		ArrayList<PaintballPlayer> jugadoresTeam2 = paintballMatch.getTeam2().getJugadores();
+		ArrayList<PaintballPlayer> jugadoresTeam2 = paintballMatch.getTeam2().getPlayers();
 		for(PaintballPlayer j : jugadoresTeam2) {
 			//comprobar perk extralives
 			int nivelExtraLives = PaintballAPI.getPerkLevel(j.getJugador(), "extra_lives");
@@ -269,7 +269,7 @@ public class PartidaManager {
 			Team team = paintballMatch.getEquipoJugador(jugador.getName());
 			team.aumentarVidas(3);
 		}else if(key.equalsIgnoreCase("teleport")) {
-			PaintballPlayer j = paintballMatch.getJugador(jugador.getName());
+			PaintballPlayer j = paintballMatch.getPlayer(jugador.getName());
 			if(j.getDeathLocation() != null) {
 				j.getJugador().teleport(j.getDeathLocation());
 			}else {
@@ -277,7 +277,7 @@ public class PartidaManager {
 				j.getJugador().teleport(team.getSpawn());
 			}
 		}else if(key.equalsIgnoreCase("more_snowballs")) {
-			PaintballPlayer j = paintballMatch.getJugador(jugador.getName());
+			PaintballPlayer j = paintballMatch.getPlayer(jugador.getName());
 			int snowballs = Integer.valueOf(config.getString("killstreaks_items."+key+".snowballs"));
 			ItemStack item = null;
 			if(Bukkit.getVersion().contains("1.13") || Bukkit.getVersion().contains("1.14") || Bukkit.getVersion().contains("1.15")
@@ -301,21 +301,21 @@ public class PartidaManager {
 				jugador.getInventory().addItem(item);
 			}
 		}else if(key.equalsIgnoreCase("lightning")) {
-			PaintballPlayer jugadorAtacante = paintballMatch.getJugador(jugador.getName());
+			PaintballPlayer jugadorAtacante = paintballMatch.getPlayer(jugador.getName());
 			int radio = Integer.valueOf(config.getString("killstreaks_items."+key+".radius"));
 			Collection<Entity> entidades = jugador.getWorld().getNearbyEntities(jugador.getLocation(), radio, radio, radio);
 			for(Entity e : entidades) {
 				if(e != null && e.getType().equals(EntityType.PLAYER)) {
 					org.bukkit.entity.Player player = (org.bukkit.entity.Player) e;
-					PaintballPlayer jugadorDañado = paintballMatch.getJugador(player.getName());
+					PaintballPlayer jugadorDañado = paintballMatch.getPlayer(player.getName());
 					if(jugadorDañado != null) {
 						PartidaManager.muereJugador(paintballMatch, jugadorAtacante, jugadorDañado, plugin, true, false);
 					}
 				}
 			}
 		}else if(key.equalsIgnoreCase("nuke")) {
-			paintballMatch.setEnNuke(true);
-			PaintballPlayer jugadorAtacante = paintballMatch.getJugador(jugador.getName());
+			paintballMatch.setNuke(true);
+			PaintballPlayer jugadorAtacante = paintballMatch.getPlayer(jugador.getName());
 			CooldownKillstreaks c = new CooldownKillstreaks(plugin);
 			String[] separados1 = config.getString("killstreaks_items."+key+".activateSound").split(";");
 			String[] separados2 = config.getString("killstreaks_items."+key+".finalSound").split(";");
@@ -335,7 +335,7 @@ public class PartidaManager {
 			PaintballPlayer jugadorSelect = jugadoresCopia.get(pos);
 			jugadoresCopia.remove(pos);
 			
-			paintballMatch.repartirJugadorTeam2(jugadorSelect);
+			paintballMatch.changePlayerToTeam2(jugadorSelect);
 		}
 	}
 	
@@ -346,7 +346,7 @@ public class PartidaManager {
 		
 		ArrayList<PaintballPlayer> jugadores = paintballMatch.getPlayers();
 		for(PaintballPlayer j : jugadores) {
-			paintballMatch.getEquipoJugador(j.getJugador().getName()).removerJugador(j.getJugador().getName());
+			paintballMatch.getEquipoJugador(j.getJugador().getName()).removePlayer(j.getJugador().getName());
 			String preferenciaTeam = j.getPreferenciaTeam();
 			if(preferenciaTeam == null) {
 				if(paintballMatch.puedeSeleccionarEquipo(paintballMatch.getTeam1().getTipo())) {
@@ -357,9 +357,9 @@ public class PartidaManager {
 			}
 			preferenciaTeam = j.getPreferenciaTeam();
 			if(preferenciaTeam.equals(paintballMatch.getTeam2().getTipo())) {
-				paintballMatch.getTeam2().agregarJugador(j);
+				paintballMatch.getTeam2().addPlayer(j);
 			}else {
-				paintballMatch.getTeam1().agregarJugador(j);
+				paintballMatch.getTeam1().addPlayer(j);
 			}
 		}
 		
@@ -371,14 +371,14 @@ public class PartidaManager {
 			if(team1.getCantidadJugadores() > team2.getCantidadJugadores()+1) {
 				if(team.getTipo().equals(team1.getTipo())) {
 					//Mover al jugador del equipo1 al equipo2
-					team1.removerJugador(j.getJugador().getName());
-					team2.agregarJugador(j);
+					team1.removePlayer(j.getJugador().getName());
+					team2.addPlayer(j);
 				}
 			}else if(team2.getCantidadJugadores() > team1.getCantidadJugadores()+1) {
 				if(team.getTipo().equals(team2.getTipo())) {
 					//Mover al jugador del equipo2 al equipo1
-					team2.removerJugador(j.getJugador().getName());
-					team1.agregarJugador(j);
+					team2.removePlayer(j.getJugador().getName());
+					team1.addPlayer(j);
 				}
 			}
 		}
@@ -431,13 +431,13 @@ public class PartidaManager {
 					jugador.getJugador().addPotionEffect(new PotionEffect(PotionEffectType.SPEED,9999999,0,false,false));
 				}else if(h.getName().equals("present_hat")) {
 					Team team = paintballMatch.getEquipoJugador(jugador.getJugador().getName());
-					ArrayList<PaintballPlayer> jugadoresCopy = (ArrayList<PaintballPlayer>) team.getJugadores().clone();
+					ArrayList<PaintballPlayer> jugadoresCopy = (ArrayList<PaintballPlayer>) team.getPlayers().clone();
 					jugadoresCopy.remove(jugador);
 					if(!jugadoresCopy.isEmpty()) {
 						Random r = new Random();
 						int pos = r.nextInt(jugadoresCopy.size());
 						String jName = jugadoresCopy.get(pos).getJugador().getName();
-						PaintballPlayer j = paintballMatch.getJugador(jName);
+						PaintballPlayer j = paintballMatch.getPlayer(jName);
 						j.agregarCoins(3);
 						jugador.getJugador().sendMessage(ChatColor.translateAlternateColorCodes('&', messages.getString("presentHatGive").replace("%player%", j.getJugador().getName())));
 						j.getJugador().sendMessage(ChatColor.translateAlternateColorCodes('&', messages.getString("presentHatReceive").replace("%player%", jugador.getJugador().getName())));
@@ -528,7 +528,7 @@ public class PartidaManager {
 	}
 	
 	public static void iniciarFaseFinalizacion(PaintballMatch paintballMatch, PaintballBattle plugin) {
-		paintballMatch.setState(MatchStatus.ENDING);
+		paintballMatch.setState(MatchState.ENDING);
 		Team ganador = paintballMatch.getGanador();
 		FileConfiguration messages = plugin.getMessages();
 		FileConfiguration config = plugin.getConfig();
@@ -609,7 +609,7 @@ public class PartidaManager {
 					MySql.actualizarJugadorPartidaAsync(plugin, j.getJugador().getUniqueId().toString(), j.getJugador().getName(), wins, loses, ties, kills);
 				}				
 				//Este registro es el que se crea para datos mensuales y semanales
-				MySql.crearJugadorPartidaAsync(plugin, j.getJugador().getUniqueId().toString(), j.getJugador().getName(), paintballMatch.getNumber(), win, tie, lose, j.getAsesinatos(),0,0);
+				MySql.crearJugadorPartidaAsync(plugin, j.getJugador().getUniqueId().toString(), j.getJugador().getName(), paintballMatch.getMatchNumber(), win, tie, lose, j.getAsesinatos(),0,0);
 			}else {
 				plugin.registerPlayer(j.getJugador().getUniqueId().toString()+".yml");
 				if(plugin.getPlayer(j.getJugador().getName()) == null) {
@@ -725,10 +725,10 @@ public class PartidaManager {
 		}
 		paintballMatch.getTeam1().setVidas(0);
 		paintballMatch.getTeam2().setVidas(0);
-		paintballMatch.setEnNuke(false);
+		paintballMatch.setNuke(false);
 		paintballMatch.modifyTeams(config);
 		
-		paintballMatch.setState(MatchStatus.WAITING);
+		paintballMatch.setState(MatchState.WAITING);
 	}
 	
 	public static void muereJugador(PaintballMatch paintballMatch, PaintballPlayer jugadorAtacante, final PaintballPlayer jugadorDañado, PaintballBattle plugin, boolean lightning, boolean nuke) {
@@ -792,7 +792,7 @@ public class PartidaManager {
 				for(Entity e : entidades) {
 					if(e != null && e.getType().equals(EntityType.PLAYER)) {
 						org.bukkit.entity.Player player = (org.bukkit.entity.Player) e;
-						PaintballPlayer jugadorDañado2 = paintballMatch.getJugador(player.getName());
+						PaintballPlayer jugadorDañado2 = paintballMatch.getPlayer(player.getName());
 						if(jugadorDañado2 != null) {
 							PartidaManager.muereJugador(paintballMatch, jugadorDañado, jugadorDañado2, plugin, false, false);
 						}
@@ -894,8 +894,8 @@ public class PartidaManager {
 		ArrayList<PaintballMatch> paintballMatches = plugin.getPaintballMatches();
 		ArrayList<PaintballMatch> disponibles = new ArrayList<PaintballMatch>();
 		for(int i = 0; i< paintballMatches.size(); i++) {
-			if(paintballMatches.get(i).getState().equals(MatchStatus.WAITING) ||
-					paintballMatches.get(i).getState().equals(MatchStatus.STARTING)) {
+			if(paintballMatches.get(i).getState().equals(MatchState.WAITING) ||
+					paintballMatches.get(i).getState().equals(MatchState.STARTING)) {
 				if(!paintballMatches.get(i).estaLlena()) {
 					disponibles.add(paintballMatches.get(i));
 				}
@@ -909,7 +909,7 @@ public class PartidaManager {
 		//Ordenar
 		for(int i=0;i<disponibles.size();i++) {
 			for(int c=i+1;c<disponibles.size();c++) {
-				if(disponibles.get(i).getCantidadActualJugadores() < disponibles.get(c).getCantidadActualJugadores()) {
+				if(disponibles.get(i).getPlayerAmount() < disponibles.get(c).getPlayerAmount()) {
 					PaintballMatch p = disponibles.get(i);
 					disponibles.set(i, disponibles.get(c));
 					disponibles.set(c, p);

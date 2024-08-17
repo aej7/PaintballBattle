@@ -7,7 +7,7 @@ import org.bukkit.configuration.file.FileConfiguration;
 import pb.ajneb97.PaintballBattle;
 import pb.ajneb97.database.Player;
 import pb.ajneb97.database.MySql;
-import pb.ajneb97.enums.MatchStatus;
+import pb.ajneb97.enums.MatchState;
 import pb.ajneb97.logic.PaintballMatch;
 
 public class PaintballAPI {
@@ -189,7 +189,7 @@ public class PaintballAPI {
 	public static int getPlayersArena(String arena) {
 		PaintballMatch paintballMatch = plugin.getMatch(arena);
 		if(paintballMatch != null) {
-			return paintballMatch.getCantidadActualJugadores();
+			return paintballMatch.getPlayerAmount();
 		}else {
 			return 0;
 		}
@@ -199,13 +199,13 @@ public class PaintballAPI {
 		PaintballMatch paintballMatch = plugin.getMatch(arena);
 		FileConfiguration messages = plugin.getMessages();
 		if(paintballMatch != null) {
-			if(paintballMatch.getState().equals(MatchStatus.STARTING)) {
+			if(paintballMatch.getState().equals(MatchState.STARTING)) {
 				return messages.getString("signStatusStarting");
-			}else if(paintballMatch.getState().equals(MatchStatus.WAITING)) {
+			}else if(paintballMatch.getState().equals(MatchState.WAITING)) {
 				return messages.getString("signStatusWaiting");
-			}else if(paintballMatch.getState().equals(MatchStatus.PLAYING)) {
+			}else if(paintballMatch.getState().equals(MatchState.PLAYING)) {
 				return messages.getString("signStatusIngame");
-			}else if(paintballMatch.getState().equals(MatchStatus.ENDING)) {
+			}else if(paintballMatch.getState().equals(MatchState.ENDING)) {
 				return messages.getString("signStatusFinishing");
 			}else {
 				return messages.getString("signStatusDisabled");

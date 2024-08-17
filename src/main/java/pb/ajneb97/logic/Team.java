@@ -63,7 +63,7 @@ public class Team {
 		return false;
 	}
 	
-	public boolean agregarJugador(PaintballPlayer jugador) {
+	public boolean addPlayer(PaintballPlayer jugador) {
 		if(!contieneJugador(jugador.getJugador().getName())) {
 			this.jugadores.add(jugador);
 			return true;
@@ -72,7 +72,7 @@ public class Team {
 		}
 	}
 	
-	public boolean removerJugador(String jugador) {
+	public boolean removePlayer(String jugador) {
 		for(int i=0;i<jugadores.size();i++) {
 			if(jugadores.get(i).getJugador().getName().equals(jugador)) {
 				jugadores.remove(i);
@@ -82,7 +82,7 @@ public class Team {
 		return false;
 	}
 	
-	public ArrayList<PaintballPlayer> getJugadores(){
+	public ArrayList<PaintballPlayer> getPlayers(){
 		return this.jugadores;
 	}
 	

@@ -16,7 +16,7 @@ import org.bukkit.scheduler.BukkitScheduler;
 import me.clip.placeholderapi.PlaceholderAPI;
 import pb.ajneb97.PaintballBattle;
 import pb.ajneb97.logic.Team;
-import pb.ajneb97.enums.MatchStatus;
+import pb.ajneb97.enums.MatchState;
 import pb.ajneb97.logic.PaintballPlayer;
 import pb.ajneb97.logic.PaintballMatch;
 import pb.ajneb97.lib.fastboard.FastBoard;
@@ -52,7 +52,7 @@ public class ScoreboardAdmin {
 		PaintballMatch paintballMatch = plugin.getPlayersMatch(player.getName());
 		FastBoard board = boards.get(player.getUniqueId());
 		if(paintballMatch != null) {
-			PaintballPlayer jugador = paintballMatch.getJugador(player.getName());
+			PaintballPlayer jugador = paintballMatch.getPlayer(player.getName());
 			if(board == null) {
 				board = new FastBoard(player);
 				board.updateTitle(ChatColor.translateAlternateColorCodes('&',messages.getString("gameScoreboardTitle")));
@@ -68,8 +68,8 @@ public class ScoreboardAdmin {
 			for(int i=0;i<lista.size();i++) {
 				String message = ChatColor.translateAlternateColorCodes('&', lista.get(i).replace("%status%", getEstado(paintballMatch,messages)).replace("%team_1%", equipo1Nombre)
 						.replace("%team_2%", equipo2Nombre).replace("%team_1_lives%", team1.getVidas()+"").replace("%team_2_lives%", team2.getVidas()+"")
-						.replace("%kills%", jugador.getAsesinatos()+"").replace("%arena%", paintballMatch.getNumber()).replace("%current_players%", paintballMatch.getCantidadActualJugadores()+"")
-						.replace("%max_players%", paintballMatch.getCantidadMaximaJugadores()+""));
+						.replace("%kills%", jugador.getAsesinatos()+"").replace("%arena%", paintballMatch.getMatchNumber()).replace("%current_players%", paintballMatch.getPlayerAmount()+"")
+						.replace("%max_players%", paintballMatch.getMaximumPlayerAmount()+""));
 				if(Bukkit.getServer().getPluginManager().getPlugin("PlaceholderAPI")!= null){
 					message = PlaceholderAPI.setPlaceholders(player, message);
 				}
@@ -85,16 +85,16 @@ public class ScoreboardAdmin {
 	
 	private String getEstado(PaintballMatch paintballMatch, FileConfiguration messages) {
 		//Remplazar variables del %time%
-		if(paintballMatch.getState().equals(MatchStatus.WAITING)) {
+		if(paintballMatch.getState().equals(MatchState.WAITING)) {
 			return messages.getString("statusWaiting");
-		}else if(paintballMatch.getState().equals(MatchStatus.STARTING)) {
-			int tiempo = paintballMatch.getTiempo();
+		}else if(paintballMatch.getState().equals(MatchState.STARTING)) {
+			int tiempo = paintballMatch.getTime();
 			return messages.getString("statusStarting").replace("%time%", OthersUtils.getTiempo(tiempo));
-		}else if(paintballMatch.getState().equals(MatchStatus.ENDING)) {
-			int tiempo = paintballMatch.getTiempo();
+		}else if(paintballMatch.getState().equals(MatchState.ENDING)) {
+			int tiempo = paintballMatch.getTime();
 			return messages.getString("statusFinishing").replace("%time%", OthersUtils.getTiempo(tiempo));
 		}else {
-			int tiempo = paintballMatch.getTiempo();
+			int tiempo = paintballMatch.getTime();
 			return messages.getString("statusIngame").replace("%time%", OthersUtils.getTiempo(tiempo));
 		}
 	}

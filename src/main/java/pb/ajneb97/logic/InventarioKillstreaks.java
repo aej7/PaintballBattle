@@ -44,7 +44,7 @@ public class InventarioKillstreaks{
 		if(paintballMatch == null) {
 			return false;
 		}
-		PaintballPlayer j = paintballMatch.getJugador(jugador.getName());
+		PaintballPlayer j = paintballMatch.getPlayer(jugador.getName());
 		if(j == null) {
 			return false;
 		}

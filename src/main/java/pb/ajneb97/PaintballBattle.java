@@ -37,7 +37,7 @@ import pb.ajneb97.configuration.PlayerConfig;
 import pb.ajneb97.database.DatabaseConnection;
 import pb.ajneb97.database.Player;
 import pb.ajneb97.database.MySql;
-import pb.ajneb97.enums.MatchStatus;
+import pb.ajneb97.enums.MatchState;
 import pb.ajneb97.logic.PaintballPlayer;
 import pb.ajneb97.logic.PaintballMatch;
 import pb.ajneb97.logic.PaintballMatchEdit;
@@ -136,7 +136,7 @@ public class PaintballBattle extends JavaPlugin {
   public void onDisable(){
     if(paintballMatches != null) {
       for (PaintballMatch paintballMatch : paintballMatches) {
-        if (!paintballMatch.getState().equals(MatchStatus.OFF)) {
+        if (!paintballMatch.getState().equals(MatchState.OFF)) {
           PartidaManager.finalizarPartida(paintballMatch, this, true, null);
         }
       }
@@ -169,11 +169,11 @@ public class PaintballBattle extends JavaPlugin {
     topHologramAdmin.scheduledUpdateHolograms();
   }
 
-  public void setPartidaEditando(PaintballMatchEdit p) {
+  public void setPaintballMatchEdit(PaintballMatchEdit p) {
     this.paintballMatchEdit = p;
   }
 
-  public void removerPartidaEditando() {
+  public void removePaintballMatchEdit() {
     this.paintballMatchEdit = null;
   }
 
@@ -235,7 +235,7 @@ public class PaintballBattle extends JavaPlugin {
 
   public PaintballMatch getMatch(String number) {
     for (PaintballMatch paintballMatch : paintballMatches) {
-      if (paintballMatch.getNumber().equals(number)) {
+      if (paintballMatch.getMatchNumber().equals(number)) {
         return paintballMatch;
       }
     }
@@ -247,7 +247,7 @@ public class PaintballBattle extends JavaPlugin {
   }
 
   public void removePaintballMatch(String number) {
-    paintballMatches.removeIf(match -> match.getNumber().equals(number));
+    paintballMatches.removeIf(match -> match.getMatchNumber().equals(number));
   }
 
   public void registerPaintballMatch() {
@@ -259,7 +259,7 @@ public class PaintballBattle extends JavaPlugin {
       if (arenasSection == null) return;
 
       for (String arenaKey : arenasSection.getKeys(false)) {
-        String arenaPath = String.format("Arenas.$s.", arenaKey);
+        String arenaPath = String.format("Arenas.%s.", arenaKey);
         int minPlayers = Integer.parseInt(arenasConfig.getString(arenaPath + "min_players"));
         int maxPlayers = Integer.parseInt(arenasConfig.getString(arenaPath + "max_players"));
         int time = Integer.parseInt(arenasConfig.getString(arenaPath + "time"));
@@ -283,91 +283,93 @@ public class PaintballBattle extends JavaPlugin {
         }
 
         paintballMatch.modifyTeams(getConfig());
-        paintballMatch.setCantidadMaximaJugadores(maxPlayers);
-        paintballMatch.setCantidadMinimaJugadores(minPlayers);
+        paintballMatch.setMaximumPlayerAmount(maxPlayers);
+        paintballMatch.setMinimumPlayerAmount(minPlayers);
         paintballMatch.setLobby(lobby);
         paintballMatch.getTeam1().setSpawn(team1Spawn);
         paintballMatch.getTeam2().setSpawn(team2Spawn);
 
         String enabled = arenasConfig.getString(arenaPath + "enabled");
-        paintballMatch.setState("true".equalsIgnoreCase(enabled) ? MatchStatus.WAITING : MatchStatus.OFF);
+        paintballMatch.setState("true".equalsIgnoreCase(enabled) ? MatchState.WAITING : MatchState.OFF);
 
         this.paintballMatches.add(paintballMatch);
       }
     }
   }
 
-  private Location getLocationFromConfig(String path) throws NullPointerException {
+  private Location getLocationFromConfig(String basePath) throws NullPointerException {
     FileConfiguration arenasConfig = getArenasConfig();
-    if (arenasConfig.contains(path)) {
-      double posX = Double.parseDouble(arenasConfig.getString(path + ".x"));
-      double posY = Double.parseDouble(arenasConfig.getString(path + ".y"));
-      double posZ = Double.parseDouble(arenasConfig.getString(path + ".z"));
-      String worldName = arenasConfig.getString(path + ".world");
-      float pitch = Float.parseFloat(arenasConfig.getString(path + ".pitch"));
-      float yaw = Float.parseFloat(arenasConfig.getString(path + ".yaw"));
+    if (!arenasConfig.contains(basePath)) {
+      return null;
+    }
+      double posX = Double.parseDouble(arenasConfig.getString(basePath + ".x"));
+      double posY = Double.parseDouble(arenasConfig.getString(basePath + ".y"));
+      double posZ = Double.parseDouble(arenasConfig.getString(basePath + ".z"));
+      String worldName = arenasConfig.getString(basePath + ".world");
+      float pitch = Float.parseFloat(arenasConfig.getString(basePath + ".pitch"));
+      float yaw = Float.parseFloat(arenasConfig.getString(basePath + ".yaw"));
 
       World world = Bukkit.getWorld(worldName);
 
       return new Location(world, posX, posY, posZ, yaw, pitch);
-    }
-    return null;
   }
 
   public void saveMatches() {
     FileConfiguration arenas = getArenasConfig();
     arenas.set("Arenas", null);
-    for(PaintballMatch p : this.paintballMatches) {
-      String nombre = p.getNumber();
-      arenas.set("Arenas."+nombre+".min_players", p.getCantidadMinimaJugadores()+"");
-      arenas.set("Arenas."+nombre+".max_players", p.getCantidadMaximaJugadores()+"");
-      arenas.set("Arenas."+nombre+".time", p.getTiempoMaximo()+"");
-      arenas.set("Arenas."+nombre+".lives", p.getVidasIniciales()+"");
-      Location lLobby = p.getLobby();
+
+    for(PaintballMatch match : this.paintballMatches) {
+      String matchPath = String.format("Arenas.%s.", match.getMatchNumber());
+      match.getEquipoJugador()
+      arenas.set("Arenas."+matchNumber+".min_players", match.getMinimumPlayerAmount()+"");
+      arenas.set("Arenas."+matchNumber+".max_players", match.getMaximumPlayerAmount()+"");
+      arenas.set("Arenas."+matchNumber+".time", match.getMaximumTime()+"");
+      arenas.set("Arenas."+matchNumber+".lives", match.getInitialLives()+"");
+      Location lLobby = match.getLobby();
       if(lLobby != null) {
-        arenas.set("Arenas."+nombre+".Lobby.x", lLobby.getX()+"");
-        arenas.set("Arenas."+nombre+".Lobby.y", lLobby.getY()+"");
-        arenas.set("Arenas."+nombre+".Lobby.z", lLobby.getZ()+"");
-        arenas.set("Arenas."+nombre+".Lobby.world", lLobby.getWorld().getName());
-        arenas.set("Arenas."+nombre+".Lobby.pitch", lLobby.getPitch());
-        arenas.set("Arenas."+nombre+".Lobby.yaw", lLobby.getYaw());
+        arenas.set("Arenas."+matchNumber+".Lobby.x", lLobby.getX()+"");
+        arenas.set("Arenas."+matchNumber+".Lobby.y", lLobby.getY()+"");
+        arenas.set("Arenas."+matchNumber+".Lobby.z", lLobby.getZ()+"");
+        arenas.set("Arenas."+matchNumber+".Lobby.world", lLobby.getWorld().getName());
+        arenas.set("Arenas."+matchNumber+".Lobby.pitch", lLobby.getPitch());
+        arenas.set("Arenas."+matchNumber+".Lobby.yaw", lLobby.getYaw());
       }
 
-      Location lSpawnTeam1 = p.getTeam1().getSpawn();
+      Location lSpawnTeam1 = match.getTeam1().getSpawn();
       if(lSpawnTeam1 != null) {
-        arenas.set("Arenas."+nombre+".Team1.Spawn.x", lSpawnTeam1.getX()+"");
-        arenas.set("Arenas."+nombre+".Team1.Spawn.y", lSpawnTeam1.getY()+"");
-        arenas.set("Arenas."+nombre+".Team1.Spawn.z", lSpawnTeam1.getZ()+"");
-        arenas.set("Arenas."+nombre+".Team1.Spawn.world", lSpawnTeam1.getWorld().getName());
-        arenas.set("Arenas."+nombre+".Team1.Spawn.pitch", lSpawnTeam1.getPitch());
-        arenas.set("Arenas."+nombre+".Team1.Spawn.yaw", lSpawnTeam1.getYaw());
+        arenas.set("Arenas."+matchNumber+".Team1.Spawn.x", lSpawnTeam1.getX()+"");
+        arenas.set("Arenas."+matchNumber+".Team1.Spawn.y", lSpawnTeam1.getY()+"");
+        arenas.set("Arenas."+matchNumber+".Team1.Spawn.z", lSpawnTeam1.getZ()+"");
+        arenas.set("Arenas."+matchNumber+".Team1.Spawn.world", lSpawnTeam1.getWorld().getName());
+        arenas.set("Arenas."+matchNumber+".Team1.Spawn.pitch", lSpawnTeam1.getPitch());
+        arenas.set("Arenas."+matchNumber+".Team1.Spawn.yaw", lSpawnTeam1.getYaw());
       }
-      if(p.getTeam1().esRandom()) {
-        arenas.set("Arenas."+nombre+".Team1.name", "random");
+      if(match.getTeam1().esRandom()) {
+        arenas.set("Arenas."+matchNumber+".Team1.name", "random");
       }else {
-        arenas.set("Arenas."+nombre+".Team1.name", p.getTeam1().getTipo());
+        arenas.set("Arenas."+matchNumber+".Team1.name", match.getTeam1().getTipo());
       }
 
 
-      Location lSpawnTeam2 = p.getTeam2().getSpawn();
+      Location lSpawnTeam2 = match.getTeam2().getSpawn();
       if(lSpawnTeam2 != null) {
-        arenas.set("Arenas."+nombre+".Team2.Spawn.x", lSpawnTeam2.getX()+"");
-        arenas.set("Arenas."+nombre+".Team2.Spawn.y", lSpawnTeam2.getY()+"");
-        arenas.set("Arenas."+nombre+".Team2.Spawn.z", lSpawnTeam2.getZ()+"");
-        arenas.set("Arenas."+nombre+".Team2.Spawn.world", lSpawnTeam2.getWorld().getName());
-        arenas.set("Arenas."+nombre+".Team2.Spawn.pitch", lSpawnTeam2.getPitch());
-        arenas.set("Arenas."+nombre+".Team2.Spawn.yaw", lSpawnTeam2.getYaw());
+        arenas.set("Arenas."+matchNumber+".Team2.Spawn.x", lSpawnTeam2.getX()+"");
+        arenas.set("Arenas."+matchNumber+".Team2.Spawn.y", lSpawnTeam2.getY()+"");
+        arenas.set("Arenas."+matchNumber+".Team2.Spawn.z", lSpawnTeam2.getZ()+"");
+        arenas.set("Arenas."+matchNumber+".Team2.Spawn.world", lSpawnTeam2.getWorld().getName());
+        arenas.set("Arenas."+matchNumber+".Team2.Spawn.pitch", lSpawnTeam2.getPitch());
+        arenas.set("Arenas."+matchNumber+".Team2.Spawn.yaw", lSpawnTeam2.getYaw());
       }
-      if(p.getTeam2().esRandom()) {
-        arenas.set("Arenas."+nombre+".Team2.name", "random");
+      if(match.getTeam2().esRandom()) {
+        arenas.set("Arenas."+matchNumber+".Team2.name", "random");
       }else {
-        arenas.set("Arenas."+nombre+".Team2.name", p.getTeam2().getTipo());
+        arenas.set("Arenas."+matchNumber+".Team2.name", match.getTeam2().getTipo());
       }
 
-      if(p.getState().equals(MatchStatus.OFF)) {
-        arenas.set("Arenas."+nombre+".enabled", "false");
+      if(match.getState().equals(MatchState.OFF)) {
+        arenas.set("Arenas."+matchNumber+".enabled", "false");
       }else {
-        arenas.set("Arenas."+nombre+".enabled", "true");
+        arenas.set("Arenas."+matchNumber+".enabled", "true");
       }
     }
     this.saveArenas();

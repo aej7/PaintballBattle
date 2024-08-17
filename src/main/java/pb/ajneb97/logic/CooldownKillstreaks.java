@@ -10,7 +10,7 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.scheduler.BukkitScheduler;
 
 import pb.ajneb97.PaintballBattle;
-import pb.ajneb97.enums.MatchStatus;
+import pb.ajneb97.enums.MatchState;
 
 public class CooldownKillstreaks {
 
@@ -37,7 +37,7 @@ public class CooldownKillstreaks {
 			if(!ejecutarCooldownKillstreak(nombre)){
 				FileConfiguration messages = plugin.getMessages();
 				FileConfiguration config = plugin.getConfig();
-				if(!paintballMatch.getState().equals(MatchStatus.ENDING)) {
+				if(!paintballMatch.getState().equals(MatchState.ENDING)) {
 					String name = ChatColor.translateAlternateColorCodes('&', config.getString("killstreaks_items."+nombre+".name"));
 					jugador.getJugador().sendMessage(ChatColor.translateAlternateColorCodes('&', messages.getString("killstreakExpired").replace("%killstreak%", name)));
 					String[] separados = config.getString("expireKillstreakSound").split(";");
@@ -57,7 +57,7 @@ public class CooldownKillstreaks {
 	}
 
 	protected boolean ejecutarCooldownKillstreak(String nombre) {
-		if(paintballMatch != null && paintballMatch.getState().equals(MatchStatus.PLAYING)) {
+		if(paintballMatch != null && paintballMatch.getState().equals(MatchState.PLAYING)) {
 			if(tiempo <= 0) {
 				jugador.removerKillstreak(nombre);
 				return false;
@@ -93,7 +93,7 @@ public class CooldownKillstreaks {
 	}
 	
 	protected boolean ejecutarParticulasFury() {
-		if(paintballMatch != null && paintballMatch.getState().equals(MatchStatus.PLAYING)) {
+		if(paintballMatch != null && paintballMatch.getState().equals(MatchState.PLAYING)) {
 			if(jugador != null) {
 				if(jugador.getKillstreak("fury") != null) {
 					Location l = jugador.getJugador().getLocation().clone();
@@ -136,7 +136,7 @@ public class CooldownKillstreaks {
 	}
 
 	protected boolean ejecutarNuke(String[] separados1,String[] separados2,FileConfiguration messages) {
-		if(paintballMatch != null && paintballMatch.getState().equals(MatchStatus.PLAYING)) {
+		if(paintballMatch != null && paintballMatch.getState().equals(MatchState.PLAYING)) {
 			if(jugador != null) {
 				if(tiempo <= 0) {
 					try {
@@ -158,7 +158,7 @@ public class CooldownKillstreaks {
 					for(PaintballPlayer player : paintballMatch.getPlayers()) {
 						PartidaManager.muereJugador(paintballMatch, jugador, player, plugin, false, true);
 					}
-					paintballMatch.setEnNuke(false);
+					paintballMatch.setNuke(false);
 					return false;
 				}else {
 					try {

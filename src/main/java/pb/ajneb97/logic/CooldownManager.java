@@ -3,7 +3,7 @@ package pb.ajneb97.logic;
 import java.util.ArrayList;
 
 import pb.ajneb97.PaintballBattle;
-import pb.ajneb97.enums.MatchStatus;
+import pb.ajneb97.enums.MatchState;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -25,7 +25,7 @@ public class CooldownManager {
 	public void cooldownComenzarJuego(PaintballMatch paintballMatch, int cooldown){
 		this.paintballMatch = paintballMatch;
 		this.tiempo = cooldown;
-		paintballMatch.setTiempo(tiempo);
+		paintballMatch.setTime(tiempo);
 		final FileConfiguration messages = plugin.getMessages();
 		final FileConfiguration config = plugin.getConfig();
 		final String prefix = ChatColor.translateAlternateColorCodes('&', messages.getString("prefix"))+" ";
@@ -45,7 +45,7 @@ public class CooldownManager {
 	}
 	
 	protected boolean ejecutarComenzarJuego(FileConfiguration messages,FileConfiguration config,String prefix) {
-		if(paintballMatch != null && paintballMatch.getState().equals(MatchStatus.STARTING)) {
+		if(paintballMatch != null && paintballMatch.getState().equals(MatchState.STARTING)) {
 			if(tiempo <= 5 && tiempo > 0) {
 				ArrayList<PaintballPlayer> jugadores = paintballMatch.getPlayers();
 				for(int i=0;i<jugadores.size();i++) {
@@ -58,14 +58,14 @@ public class CooldownManager {
 						Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', PaintballBattle.prefix+"&7Sound Name: &c"+separados[0]+" &7is not valid."));
 					}
 				}
-				paintballMatch.disminuirTiempo();
+				paintballMatch.decreaseTime();
 				tiempo--;
 				return true;
 			}else if(tiempo <= 0) {
 				PartidaManager.iniciarPartida(paintballMatch,plugin);
 				return false;
 			}else {
-				paintballMatch.disminuirTiempo();
+				paintballMatch.decreaseTime();
 				tiempo--;
 				return true;
 			}
@@ -80,8 +80,8 @@ public class CooldownManager {
 	
 	public void cooldownJuego(PaintballMatch paintballMatch){
 		this.paintballMatch = paintballMatch;
-		this.tiempo = paintballMatch.getTiempoMaximo();
-		paintballMatch.setTiempo(tiempo);
+		this.tiempo = paintballMatch.getMaximumTime();
+		paintballMatch.setTime(tiempo);
 		BukkitScheduler scheduler = Bukkit.getServer().getScheduler();
  	    taskID = scheduler.scheduleSyncRepeatingTask(plugin, new Runnable() {
 		public void run(){
@@ -94,8 +94,8 @@ public class CooldownManager {
 	}
 	
 	protected boolean ejecutarJuego() {
-		if(paintballMatch != null && paintballMatch.getState().equals(MatchStatus.PLAYING)) {
-			paintballMatch.disminuirTiempo();
+		if(paintballMatch != null && paintballMatch.getState().equals(MatchState.PLAYING)) {
+			paintballMatch.decreaseTime();
 			if(tiempo == 0) {
 				PartidaManager.iniciarFaseFinalizacion(paintballMatch, plugin);
 				return false;
@@ -111,7 +111,7 @@ public class CooldownManager {
 	public void cooldownFaseFinalizacion(PaintballMatch paintballMatch, int cooldown, final Team ganador){
 		this.paintballMatch = paintballMatch;
 		this.tiempo = cooldown;
-		paintballMatch.setTiempo(tiempo);
+		paintballMatch.setTime(tiempo);
 		BukkitScheduler scheduler = Bukkit.getServer().getScheduler();
  	    taskID = scheduler.scheduleSyncRepeatingTask(plugin, new Runnable() {
 		public void run(){
@@ -124,15 +124,15 @@ public class CooldownManager {
 	}
 	
 	protected boolean ejecutarComenzarFaseFinalizacion(Team ganador) {
-		if(paintballMatch != null && paintballMatch.getState().equals(MatchStatus.ENDING)) {
-			paintballMatch.disminuirTiempo();
+		if(paintballMatch != null && paintballMatch.getState().equals(MatchState.ENDING)) {
+			paintballMatch.decreaseTime();
 			if(tiempo == 0) {
 				PartidaManager.finalizarPartida(paintballMatch,plugin,false,ganador);
 				return false;
 			}else {
 				tiempo--;
 				if(ganador != null) {
-					PartidaManager.lanzarFuegos(ganador.getJugadores());
+					PartidaManager.lanzarFuegos(ganador.getPlayers());
 				}
 				return true;
 			}
