@@ -3,7 +3,7 @@ package pb.ajneb97.logic;
 import java.util.ArrayList;
 
 import pb.ajneb97.PaintballBattle;
-import pb.ajneb97.enums.MatchState;
+import pb.ajneb97.enums.ArenaState;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -15,24 +15,24 @@ import org.bukkit.scheduler.BukkitScheduler;
 public class CooldownManager {
 
 	int taskID;
-	int tiempo;
-	private PaintballMatch paintballMatch;
-	private PaintballBattle plugin;
+	int time;
+	private PaintballArena paintballArena;
+	private final PaintballBattle plugin;
 	public CooldownManager(PaintballBattle plugin){		
 		this.plugin = plugin;		
 	}
 	
-	public void cooldownComenzarJuego(PaintballMatch paintballMatch, int cooldown){
-		this.paintballMatch = paintballMatch;
-		this.tiempo = cooldown;
-		paintballMatch.setTime(tiempo);
+	public void setMatchStartCooldown(PaintballArena paintballArena, int cooldown) {
+		this.paintballArena = paintballArena;
+		this.time = cooldown;
+		paintballArena.setTime(time);
 		final FileConfiguration messages = plugin.getMessages();
 		final FileConfiguration config = plugin.getConfig();
 		final String prefix = ChatColor.translateAlternateColorCodes('&', messages.getString("prefix"))+" ";
-		ArrayList<PaintballPlayer> jugadores = paintballMatch.getPlayers();
-		for(int i=0;i<jugadores.size();i++) {
-			jugadores.get(i).getJugador().sendMessage(ChatColor.translateAlternateColorCodes('&', messages.getString("arenaStartingMessage").replace("%time%", tiempo+"")));
-		}
+		ArrayList<PaintballPlayer> players = paintballArena.getPlayers();
+    for (PaintballPlayer player : players) {
+      player.getPlayer().sendMessage(ChatColor.translateAlternateColorCodes('&', messages.getString("arenaStartingMessage").replace("%time%", time + "")));
+    }
 		BukkitScheduler scheduler = Bukkit.getServer().getScheduler();
  	    taskID = scheduler.scheduleSyncRepeatingTask(plugin, new Runnable() {
 		public void run(){
@@ -45,43 +45,43 @@ public class CooldownManager {
 	}
 	
 	protected boolean ejecutarComenzarJuego(FileConfiguration messages,FileConfiguration config,String prefix) {
-		if(paintballMatch != null && paintballMatch.getState().equals(MatchState.STARTING)) {
-			if(tiempo <= 5 && tiempo > 0) {
-				ArrayList<PaintballPlayer> jugadores = paintballMatch.getPlayers();
+		if(paintballArena != null && paintballArena.getState().equals(ArenaState.STARTING)) {
+			if(time <= 5 && time > 0) {
+				ArrayList<PaintballPlayer> jugadores = paintballArena.getPlayers();
 				for(int i=0;i<jugadores.size();i++) {
-					jugadores.get(i).getJugador().sendMessage(ChatColor.translateAlternateColorCodes('&', messages.getString("arenaStartingMessage").replace("%time%", tiempo+"")));
+					jugadores.get(i).getPlayer().sendMessage(ChatColor.translateAlternateColorCodes('&', messages.getString("arenaStartingMessage").replace("%time%", time +"")));
 					String[] separados = config.getString("startCooldownSound").split(";");
 					try {
 						Sound sound = Sound.valueOf(separados[0]);
-						jugadores.get(i).getJugador().playSound(jugadores.get(i).getJugador().getLocation(), sound, Float.valueOf(separados[1]), Float.valueOf(separados[2]));
+						jugadores.get(i).getPlayer().playSound(jugadores.get(i).getPlayer().getLocation(), sound, Float.valueOf(separados[1]), Float.valueOf(separados[2]));
 					}catch(Exception ex) {
 						Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', PaintballBattle.prefix+"&7Sound Name: &c"+separados[0]+" &7is not valid."));
 					}
 				}
-				paintballMatch.decreaseTime();
-				tiempo--;
+				paintballArena.decreaseTime();
+				time--;
 				return true;
-			}else if(tiempo <= 0) {
-				PartidaManager.iniciarPartida(paintballMatch,plugin);
+			}else if(time <= 0) {
+				ArenaManager.startArena(paintballArena,plugin);
 				return false;
 			}else {
-				paintballMatch.decreaseTime();
-				tiempo--;
+				paintballArena.decreaseTime();
+				time--;
 				return true;
 			}
 		}else {
-			ArrayList<PaintballPlayer> jugadores = paintballMatch.getPlayers();
+			ArrayList<PaintballPlayer> jugadores = paintballArena.getPlayers();
 			for(int i=0;i<jugadores.size();i++) {
-				jugadores.get(i).getJugador().sendMessage(ChatColor.translateAlternateColorCodes('&', messages.getString("gameStartingCancelled")));
+				jugadores.get(i).getPlayer().sendMessage(ChatColor.translateAlternateColorCodes('&', messages.getString("gameStartingCancelled")));
 			}
 			return false;
 		}
 	}
 	
-	public void cooldownJuego(PaintballMatch paintballMatch){
-		this.paintballMatch = paintballMatch;
-		this.tiempo = paintballMatch.getMaximumTime();
-		paintballMatch.setTime(tiempo);
+	public void cooldownJuego(PaintballArena paintballArena){
+		this.paintballArena = paintballArena;
+		this.time = paintballArena.getMaximumTime();
+		paintballArena.setTime(time);
 		BukkitScheduler scheduler = Bukkit.getServer().getScheduler();
  	    taskID = scheduler.scheduleSyncRepeatingTask(plugin, new Runnable() {
 		public void run(){
@@ -94,13 +94,13 @@ public class CooldownManager {
 	}
 	
 	protected boolean ejecutarJuego() {
-		if(paintballMatch != null && paintballMatch.getState().equals(MatchState.PLAYING)) {
-			paintballMatch.decreaseTime();
-			if(tiempo == 0) {
-				PartidaManager.iniciarFaseFinalizacion(paintballMatch, plugin);
+		if(paintballArena != null && paintballArena.getState().equals(ArenaState.PLAYING)) {
+			paintballArena.decreaseTime();
+			if(time == 0) {
+				ArenaManager.setArenaStateToEnding(paintballArena, plugin);
 				return false;
 			}else {
-				tiempo--;
+				time--;
 				return true;
 			}
 		}else {
@@ -108,10 +108,10 @@ public class CooldownManager {
 		}
 	}
 	
-	public void cooldownFaseFinalizacion(PaintballMatch paintballMatch, int cooldown, final Team ganador){
-		this.paintballMatch = paintballMatch;
-		this.tiempo = cooldown;
-		paintballMatch.setTime(tiempo);
+	public void cooldownFaseFinalizacion(PaintballArena paintballArena, int cooldown, final PaintballTeam ganador){
+		this.paintballArena = paintballArena;
+		this.time = cooldown;
+		paintballArena.setTime(time);
 		BukkitScheduler scheduler = Bukkit.getServer().getScheduler();
  	    taskID = scheduler.scheduleSyncRepeatingTask(plugin, new Runnable() {
 		public void run(){
@@ -123,16 +123,16 @@ public class CooldownManager {
  	   }, 0L, 20L);
 	}
 	
-	protected boolean ejecutarComenzarFaseFinalizacion(Team ganador) {
-		if(paintballMatch != null && paintballMatch.getState().equals(MatchState.ENDING)) {
-			paintballMatch.decreaseTime();
-			if(tiempo == 0) {
-				PartidaManager.finalizarPartida(paintballMatch,plugin,false,ganador);
+	protected boolean ejecutarComenzarFaseFinalizacion(PaintballTeam winnerPaintballTeam) {
+		if(paintballArena != null && paintballArena.getState().equals(ArenaState.ENDING)) {
+			paintballArena.decreaseTime();
+			if(time == 0) {
+				ArenaManager.finalizarPartida(paintballArena,plugin,false, winnerPaintballTeam);
 				return false;
 			}else {
-				tiempo--;
-				if(ganador != null) {
-					PartidaManager.lanzarFuegos(ganador.getPlayers());
+				time--;
+				if(winnerPaintballTeam != null) {
+					ArenaManager.lanzarFuegos(winnerPaintballTeam.getPlayers().values().stream().toList());
 				}
 				return true;
 			}

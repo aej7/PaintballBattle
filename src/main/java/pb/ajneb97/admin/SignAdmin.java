@@ -12,8 +12,8 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.scheduler.BukkitScheduler;
 
 import pb.ajneb97.PaintballBattle;
-import pb.ajneb97.enums.MatchState;
-import pb.ajneb97.logic.PaintballMatch;
+import pb.ajneb97.enums.ArenaState;
+import pb.ajneb97.logic.PaintballArena;
 
 public class SignAdmin {
 	
@@ -41,8 +41,8 @@ public class SignAdmin {
 		FileConfiguration messages = plugin.getMessages();
 		if(config.contains("Signs")) {
 			for(String arena : config.getConfigurationSection("Signs").getKeys(false)) {
-				PaintballMatch paintballMatch = plugin.getMatch(arena);
-				if(paintballMatch != null) {
+				PaintballArena paintballArena = plugin.getMatch(arena);
+				if(paintballArena != null) {
 					List<String> listaCarteles = new ArrayList<String>();
 					if(config.contains("Signs."+arena)) {
 						listaCarteles = config.getStringList("Signs."+arena);
@@ -64,22 +64,22 @@ public class SignAdmin {
 							if(block.getType().name().contains("SIGN")) {
 								Sign sign = (Sign) block.getState();
 								String estado = "";
-								if(paintballMatch.getState().equals(MatchState.PLAYING)) {
+								if(paintballArena.getState().equals(ArenaState.PLAYING)) {
 									estado = messages.getString("signStatusIngame");
-								}else if(paintballMatch.getState().equals(MatchState.STARTING)) {
+								}else if(paintballArena.getState().equals(ArenaState.STARTING)) {
 									estado = messages.getString("signStatusStarting");
-								}else if(paintballMatch.getState().equals(MatchState.WAITING)) {
+								}else if(paintballArena.getState().equals(ArenaState.WAITING)) {
 									estado = messages.getString("signStatusWaiting");
-								}else if(paintballMatch.getState().equals(MatchState.OFF)) {
+								}else if(paintballArena.getState().equals(ArenaState.OFF)) {
 									estado = messages.getString("signStatusDisabled");
-								}else if(paintballMatch.getState().equals(MatchState.ENDING)) {
+								}else if(paintballArena.getState().equals(ArenaState.ENDING)) {
 									estado = messages.getString("signStatusFinishing");
 								}
 								
 								List<String> lista = messages.getStringList("signFormat");
 								for(int c=0;c<lista.size();c++) {
-									sign.setLine(c, ChatColor.translateAlternateColorCodes('&', lista.get(c).replace("%arena%", arena).replace("%current_players%", paintballMatch.getPlayerAmount()+"")
-											.replace("%max_players%", paintballMatch.getMaximumPlayerAmount()+"").replace("%status%", estado)));
+									sign.setLine(c, ChatColor.translateAlternateColorCodes('&', lista.get(c).replace("%arena%", arena).replace("%current_players%", paintballArena.getPlayerAmount()+"")
+											.replace("%max_players%", paintballArena.getMaximumPlayerAmount()+"").replace("%status%", estado)));
 								}
 
 								sign.update();

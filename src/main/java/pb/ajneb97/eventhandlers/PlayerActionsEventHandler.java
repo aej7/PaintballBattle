@@ -48,14 +48,14 @@ import pb.ajneb97.PaintballBattle;
 import pb.ajneb97.logic.CooldownHats;
 import pb.ajneb97.logic.CooldownKillstreaks;
 import pb.ajneb97.logic.InventarioKillstreaks;
-import pb.ajneb97.logic.PartidaManager;
+import pb.ajneb97.logic.ArenaManager;
 import pb.ajneb97.logic.CooldownSnowballParticle;
 import pb.ajneb97.logic.InventarioHats;
-import pb.ajneb97.logic.Team;
-import pb.ajneb97.enums.MatchState;
+import pb.ajneb97.logic.PaintballTeam;
+import pb.ajneb97.enums.ArenaState;
 import pb.ajneb97.logic.PaintballPlayer;
 import pb.ajneb97.logic.Killstreak;
-import pb.ajneb97.logic.PaintballMatch;
+import pb.ajneb97.logic.PaintballArena;
 import pb.ajneb97.utils.ItemsUtils;
 
 public class PlayerActionsEventHandler implements Listener{
@@ -68,24 +68,24 @@ public class PlayerActionsEventHandler implements Listener{
 	@EventHandler
 	public void alSalir(PlayerQuitEvent event) {
 		Player jugador = event.getPlayer();
-		PaintballMatch paintballMatch = plugin.getPlayersMatch(jugador.getName());
-		if(paintballMatch != null) {
-			PartidaManager.jugadorSale(paintballMatch, jugador,false,plugin,false);
+		PaintballArena paintballArena = plugin.getPlayersMatch(jugador.getName());
+		if(paintballArena != null) {
+			ArenaManager.onPlayerLeavesArena(paintballArena, jugador,false,plugin,false);
 		}
 	}
 	
 	@EventHandler
 	public void clickearItemSalir(PlayerInteractEvent event) {
 		Player jugador = event.getPlayer();
-		PaintballMatch paintballMatch = plugin.getPlayersMatch(jugador.getName());
-		if(paintballMatch != null) {
+		PaintballArena paintballArena = plugin.getPlayersMatch(jugador.getName());
+		if(paintballArena != null) {
 			if(event.getAction().equals(Action.RIGHT_CLICK_AIR) || event.getAction().equals(Action.RIGHT_CLICK_BLOCK)) {
 				if(event.getItem() != null) {
 					FileConfiguration config = plugin.getConfig();
-					ItemStack item = ItemsUtils.crearItem(config, "leave_item");
+					ItemStack item = ItemsUtils.creaItem(config, "leave_item");
 					if(event.getItem().isSimilar(item)) {
 						event.setCancelled(true);
-						PartidaManager.jugadorSale(paintballMatch, jugador,false,plugin,false);
+						ArenaManager.onPlayerLeavesArena(paintballArena, jugador,false,plugin,false);
 					}
 				}
 			}
@@ -95,12 +95,12 @@ public class PlayerActionsEventHandler implements Listener{
 	@EventHandler
 	public void clickearItemHats(PlayerInteractEvent event) {
 		final Player jugador = event.getPlayer();
-		PaintballMatch paintballMatch = plugin.getPlayersMatch(jugador.getName());
-		if(paintballMatch != null) {
+		PaintballArena paintballArena = plugin.getPlayersMatch(jugador.getName());
+		if(paintballArena != null) {
 			if(event.getAction().equals(Action.RIGHT_CLICK_AIR) || event.getAction().equals(Action.RIGHT_CLICK_BLOCK)) {
 				if(event.getItem() != null) {
 					FileConfiguration config = plugin.getConfig();
-					ItemStack item = ItemsUtils.crearItem(config, "hats_item");
+					ItemStack item = ItemsUtils.creaItem(config, "hats_item");
 					if(event.getItem().isSimilar(item)) {
 						event.setCancelled(true);
 						
@@ -122,21 +122,21 @@ public class PlayerActionsEventHandler implements Listener{
 	@EventHandler
 	public void clickearItemPlayAgain(PlayerInteractEvent event) {
 		Player jugador = event.getPlayer();
-		PaintballMatch paintballMatch = plugin.getPlayersMatch(jugador.getName());
-		if(paintballMatch != null) {
+		PaintballArena paintballArena = plugin.getPlayersMatch(jugador.getName());
+		if(paintballArena != null) {
 			if(event.getAction().equals(Action.RIGHT_CLICK_AIR) || event.getAction().equals(Action.RIGHT_CLICK_BLOCK)) {
 				if(event.getItem() != null) {
 					FileConfiguration config = plugin.getConfig();
-					ItemStack item = ItemsUtils.crearItem(config, "play_again_item");
+					ItemStack item = ItemsUtils.creaItem(config, "play_again_item");
 					if(event.getItem().isSimilar(item)) {
 						event.setCancelled(true);
-						PaintballMatch paintballMatchNueva = PartidaManager.getPartidaDisponible(plugin);
-						if(paintballMatchNueva == null) {
+						PaintballArena paintballArenaNueva = ArenaManager.getPartidaDisponible(plugin);
+						if(paintballArenaNueva == null) {
 							FileConfiguration messages = plugin.getMessages();
 							jugador.sendMessage(ChatColor.translateAlternateColorCodes('&', messages.getString("noArenasAvailable")));
 						}else {
-							PartidaManager.jugadorSale(paintballMatch, jugador, true, plugin, false);
-							PartidaManager.jugadorEntra(paintballMatchNueva, jugador, plugin);
+							ArenaManager.onPlayerLeavesArena(paintballArena, jugador, true, plugin, false);
+							ArenaManager.onPlayerJoinsArena(paintballArenaNueva, jugador, plugin);
 						}
 					}
 				}
@@ -147,33 +147,33 @@ public class PlayerActionsEventHandler implements Listener{
 	@EventHandler
 	public void clickearItemSelectorEquipo(PlayerInteractEvent event) {
 		Player jugador = event.getPlayer();
-		PaintballMatch paintballMatch = plugin.getPlayersMatch(jugador.getName());
-		if(paintballMatch != null) {
+		PaintballArena paintballArena = plugin.getPlayersMatch(jugador.getName());
+		if(paintballArena != null) {
 			if(event.getAction().equals(Action.RIGHT_CLICK_AIR) || event.getAction().equals(Action.RIGHT_CLICK_BLOCK)) {
 				if(event.getItem() != null) {
 					FileConfiguration config = plugin.getConfig();
 					FileConfiguration messages = plugin.getMessages();
 					if(config.getString("choose_team_system").equals("true")) {
-						ItemStack team1 = ItemsUtils.crearItem(config, "teams."+ paintballMatch.getTeam1().getTipo());
+						ItemStack team1 = ItemsUtils.creaItem(config, "teams."+ paintballArena.getTeam1().getColor());
 						ItemMeta meta = team1.getItemMeta();
-						meta.setDisplayName(ChatColor.translateAlternateColorCodes('&', messages.getString("teamChoose").replace("%team%", config.getString("teams."+ paintballMatch.getTeam1().getTipo()+".name"))));
+						meta.setDisplayName(ChatColor.translateAlternateColorCodes('&', messages.getString("teamChoose").replace("%team%", config.getString("teams."+ paintballArena.getTeam1().getColor()+".name"))));
 						team1.setItemMeta(meta);
-						ItemStack team2 = ItemsUtils.crearItem(config, "teams."+ paintballMatch.getTeam2().getTipo());
+						ItemStack team2 = ItemsUtils.creaItem(config, "teams."+ paintballArena.getTeam2().getColor());
 						meta = team2.getItemMeta();
-						meta.setDisplayName(ChatColor.translateAlternateColorCodes('&', messages.getString("teamChoose").replace("%team%", config.getString("teams."+ paintballMatch.getTeam2().getTipo()+".name"))));
+						meta.setDisplayName(ChatColor.translateAlternateColorCodes('&', messages.getString("teamChoose").replace("%team%", config.getString("teams."+ paintballArena.getTeam2().getColor()+".name"))));
 						team2.setItemMeta(meta);
 						//String prefix = ChatColor.translateAlternateColorCodes('&', messages.getString("prefix"))+" ";
 						if(event.getItem().isSimilar(team1)) {
 							event.setCancelled(true);
 							jugador.updateInventory();
-							PaintballPlayer j = paintballMatch.getPlayer(jugador.getName());
-							if(j.getPreferenciaTeam() != null && j.getPreferenciaTeam().equals(paintballMatch.getTeam1().getTipo())) {
+							PaintballPlayer j = paintballArena.getPlayer(jugador.getName());
+							if(j.getPreferenciaTeam() != null && j.getPreferenciaTeam().equals(paintballArena.getTeam1().getColor())) {
 								jugador.sendMessage(ChatColor.translateAlternateColorCodes('&', messages.getString("errorTeamAlreadySelected")));
 								return;
 							}
-							if(paintballMatch.puedeSeleccionarEquipo(paintballMatch.getTeam1().getTipo())) {
-								j.setPreferenciaTeam(paintballMatch.getTeam1().getTipo());
-								jugador.sendMessage(ChatColor.translateAlternateColorCodes('&', messages.getString("teamSelected").replace("%team%", config.getString("teams."+ paintballMatch.getTeam1().getTipo()+".name"))));
+							if(paintballArena.puedeSeleccionarEquipo(paintballArena.getTeam1().getColor())) {
+								j.setPreferenciaTeam(paintballArena.getTeam1().getColor());
+								jugador.sendMessage(ChatColor.translateAlternateColorCodes('&', messages.getString("teamSelected").replace("%team%", config.getString("teams."+ paintballArena.getTeam1().getColor()+".name"))));
 							}else {
 								jugador.sendMessage(ChatColor.translateAlternateColorCodes('&', messages.getString("errorTeamSelected")));
 							}
@@ -181,14 +181,14 @@ public class PlayerActionsEventHandler implements Listener{
 						}else if(event.getItem().isSimilar(team2)) {
 							event.setCancelled(true);
 							jugador.updateInventory();
-							PaintballPlayer j = paintballMatch.getPlayer(jugador.getName());
-							if(j.getPreferenciaTeam() != null && j.getPreferenciaTeam().equals(paintballMatch.getTeam2().getTipo())) {
+							PaintballPlayer j = paintballArena.getPlayer(jugador.getName());
+							if(j.getPreferenciaTeam() != null && j.getPreferenciaTeam().equals(paintballArena.getTeam2().getColor())) {
 								jugador.sendMessage(ChatColor.translateAlternateColorCodes('&', messages.getString("errorTeamAlreadySelected")));
 								return;
 							}
-							if(paintballMatch.puedeSeleccionarEquipo(paintballMatch.getTeam2().getTipo())) {
-								j.setPreferenciaTeam(paintballMatch.getTeam2().getTipo());
-								jugador.sendMessage(ChatColor.translateAlternateColorCodes('&', messages.getString("teamSelected").replace("%team%", config.getString("teams."+ paintballMatch.getTeam2().getTipo()+".name"))));
+							if(paintballArena.puedeSeleccionarEquipo(paintballArena.getTeam2().getColor())) {
+								j.setPreferenciaTeam(paintballArena.getTeam2().getColor());
+								jugador.sendMessage(ChatColor.translateAlternateColorCodes('&', messages.getString("teamSelected").replace("%team%", config.getString("teams."+ paintballArena.getTeam2().getColor()+".name"))));
 							}else {
 								jugador.sendMessage(ChatColor.translateAlternateColorCodes('&', messages.getString("errorTeamSelected")));
 							}
@@ -203,19 +203,19 @@ public class PlayerActionsEventHandler implements Listener{
 	@EventHandler
 	public void clickearItemKillstreak(PlayerInteractEvent event) {
 		Player jugador = event.getPlayer();
-		PaintballMatch paintballMatch = plugin.getPlayersMatch(jugador.getName());
-		if(paintballMatch != null) {
+		PaintballArena paintballArena = plugin.getPlayersMatch(jugador.getName());
+		if(paintballArena != null) {
 			if(event.getAction().equals(Action.RIGHT_CLICK_AIR) || event.getAction().equals(Action.RIGHT_CLICK_BLOCK)) {
 				if(event.getItem() != null && event.getItem().hasItemMeta()) {
 					FileConfiguration config = plugin.getConfig();
 					if(jugador.getInventory().getHeldItemSlot() == 8 && (event.getAction().equals(Action.RIGHT_CLICK_AIR) || event.getAction().equals(Action.RIGHT_CLICK_BLOCK))) {
 						if(config.getString("killstreaks_item_enabled").equals("true")) {
-							if(paintballMatch.getState().equals(MatchState.PLAYING)) {
+							if(paintballArena.getState().equals(ArenaState.PLAYING)) {
 								event.setCancelled(true);
 								Inventory inv = Bukkit.createInventory(null, 18, ChatColor.translateAlternateColorCodes('&', config.getString("killstreaks_inventory_title")));
 								jugador.openInventory(inv);
 								InventarioKillstreaks i = new InventarioKillstreaks(plugin);
-								i.actualizarInventario(jugador, paintballMatch);
+								i.actualizarInventario(jugador, paintballArena);
 							}
 						}
 					}
@@ -229,10 +229,10 @@ public class PlayerActionsEventHandler implements Listener{
 	public void alShiftear(PlayerToggleSneakEvent event) {
 		if(event.isSneaking()) {
 			Player jugador = event.getPlayer();
-			PaintballMatch paintballMatch = plugin.getPlayersMatch(jugador.getName());
-			if(paintballMatch != null && paintballMatch.getState().equals(MatchState.PLAYING)) {
+			PaintballArena paintballArena = plugin.getPlayersMatch(jugador.getName());
+			if(paintballArena != null && paintballArena.getState().equals(ArenaState.PLAYING)) {
 				FileConfiguration messages = plugin.getMessages();
-				PaintballPlayer j = paintballMatch.getPlayer(jugador.getName());
+				PaintballPlayer j = paintballArena.getPlayer(jugador.getName());
 				String hat = j.getSelectedHat();
 				if(hat.equals("guardian_hat") || hat.equals("jump_hat")) {
 					if(!j.isEfectoHatEnCooldown()) {
@@ -244,20 +244,20 @@ public class PlayerActionsEventHandler implements Listener{
 						}else if(hat.equals("guardian_hat")) {
 							jugador.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS,20*duration,2,false,false));
 							CooldownHats c = new CooldownHats(plugin);
-							c.durationHat(j, paintballMatch, duration);
+							c.durationHat(j, paintballArena, duration);
 						}
 						j.setEfectoHatActivado(true);
 						j.setEfectoHatEnCooldown(true);
-						j.getJugador().sendMessage(ChatColor.translateAlternateColorCodes('&', messages.getString("hatAbilityActivated")));
+						j.getPlayer().sendMessage(ChatColor.translateAlternateColorCodes('&', messages.getString("hatAbilityActivated")));
 						String[] separados = config.getString("hatAbilityActivatedSound").split(";");
 						try {
 							Sound sound = Sound.valueOf(separados[0]);
-							j.getJugador().playSound(j.getJugador().getLocation(), sound, Float.valueOf(separados[1]), Float.valueOf(separados[2]));
+							j.getPlayer().playSound(j.getPlayer().getLocation(), sound, Float.valueOf(separados[1]), Float.valueOf(separados[2]));
 						}catch(Exception ex) {
 							Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', PaintballBattle.prefix+"&7Sound Name: &c"+separados[0]+" &7is not valid."));
 						}
 						CooldownHats c = new CooldownHats(plugin);
-						c.cooldownHat(j, paintballMatch, cooldown);
+						c.cooldownHat(j, paintballArena, cooldown);
 					}else {
 						jugador.sendMessage(ChatColor.translateAlternateColorCodes('&', messages.getString("hatCooldownError").replace("%time%", j.getTiempoEfectoHat()+"")));
 					}
@@ -271,8 +271,8 @@ public class PlayerActionsEventHandler implements Listener{
 	public void alUsarComando(PlayerCommandPreprocessEvent event) {
 		String comando = event.getMessage().toLowerCase();
 		Player jugador = event.getPlayer();
-		PaintballMatch paintballMatch = plugin.getPlayersMatch(jugador.getName());
-		if(paintballMatch != null && !jugador.isOp() && !jugador.hasPermission("paintball.admin")) {
+		PaintballArena paintballArena = plugin.getPlayersMatch(jugador.getName());
+		if(paintballArena != null && !jugador.isOp() && !jugador.hasPermission("paintball.admin")) {
 			FileConfiguration config = plugin.getConfig();
 			List<String> comandos = config.getStringList("commands_whitelist");
 			for(int i=0;i<comandos.size();i++) {
@@ -287,8 +287,8 @@ public class PlayerActionsEventHandler implements Listener{
 	@EventHandler
 	public void romperBloques(BlockBreakEvent event) {
 		Player jugador = event.getPlayer();
-		PaintballMatch paintballMatch = plugin.getPlayersMatch(jugador.getName());
-		if(paintballMatch != null) {
+		PaintballArena paintballArena = plugin.getPlayersMatch(jugador.getName());
+		if(paintballArena != null) {
 			event.setCancelled(true);
 		}
 	}
@@ -296,8 +296,8 @@ public class PlayerActionsEventHandler implements Listener{
 	@EventHandler
 	public void dropearItem(PlayerDropItemEvent event) {
 		Player jugador = event.getPlayer();
-		PaintballMatch paintballMatch = plugin.getPlayersMatch(jugador.getName());
-		if(paintballMatch != null) {
+		PaintballArena paintballArena = plugin.getPlayersMatch(jugador.getName());
+		if(paintballArena != null) {
 			event.setCancelled(true);
 		}
 	}
@@ -306,8 +306,8 @@ public class PlayerActionsEventHandler implements Listener{
 	@EventHandler
 	public void interactuarInventario(InventoryClickEvent event){
 		Player jugador = (Player) event.getWhoClicked();
-		PaintballMatch paintballMatch = plugin.getPlayersMatch(jugador.getName());
-		if(paintballMatch != null) {
+		PaintballArena paintballArena = plugin.getPlayersMatch(jugador.getName());
+		if(paintballArena != null) {
 			if((event.getInventory().getType().equals(InventoryType.PLAYER) || 
 					event.getInventory().getType().equals(InventoryType.CRAFTING)) 
 					&& event.getSlotType() != null && event.getCurrentItem() != null){
@@ -322,8 +322,8 @@ public class PlayerActionsEventHandler implements Listener{
 	@EventHandler
 	public void ponerBloques(BlockPlaceEvent event) {
 		Player jugador = event.getPlayer();
-		PaintballMatch paintballMatch = plugin.getPlayersMatch(jugador.getName());
-		if(paintballMatch != null) {
+		PaintballArena paintballArena = plugin.getPlayersMatch(jugador.getName());
+		if(paintballArena != null) {
 			event.setCancelled(true);
 		}
 	}
@@ -333,12 +333,12 @@ public class PlayerActionsEventHandler implements Listener{
 		Entity entidad = event.getEntity();
 		if(entidad instanceof Player) {
 			Player jugador = (Player) entidad;
-			PaintballMatch paintballMatch = plugin.getPlayersMatch(jugador.getName());
-			if(paintballMatch != null  && paintballMatch.estaIniciada()) {
+			PaintballArena paintballArena = plugin.getPlayersMatch(jugador.getName());
+			if(paintballArena != null  && paintballArena.estaIniciada()) {
 				if(event.getCause().equals(DamageCause.VOID)) {
-					Team team = paintballMatch.getEquipoJugador(jugador.getName());
-					if(team != null) {
-						jugador.teleport(team.getSpawn());
+					PaintballTeam paintballTeam = paintballArena.GetPlayerTeam(jugador.getName());
+					if(paintballTeam != null) {
+						jugador.teleport(paintballTeam.getSpawn());
 					}
 				}
 			}
@@ -348,8 +348,8 @@ public class PlayerActionsEventHandler implements Listener{
 	@EventHandler
 	public void craftear(InventoryClickEvent event) {
 		Player jugador = (Player) event.getWhoClicked();
-		PaintballMatch paintballMatch = plugin.getPlayersMatch(jugador.getName());
-		if(paintballMatch != null) {
+		PaintballArena paintballArena = plugin.getPlayersMatch(jugador.getName());
+		if(paintballArena != null) {
 			if(event.getClickedInventory() != null) {
 				if(event.getClickedInventory().getType().equals(InventoryType.CRAFTING)
 						&& event.getSlot() == 0 && event.getSlotType() != null && event.getSlotType().equals(SlotType.RESULT)) {
@@ -363,8 +363,8 @@ public class PlayerActionsEventHandler implements Listener{
 	@EventHandler
 	public void romperGranjas(PlayerInteractEvent event) {
 		Player jugador = event.getPlayer();
-		PaintballMatch paintballMatch = plugin.getPlayersMatch(jugador.getName());
-		if(paintballMatch != null) {
+		PaintballArena paintballArena = plugin.getPlayersMatch(jugador.getName());
+		if(paintballArena != null) {
 			if(event.getClickedBlock() != null) {
 				String name = event.getClickedBlock().getType().name();
 			    if(event.getAction() == Action.PHYSICAL && (name.equals("SOIL") || name.equals("FARMLAND"))) {
@@ -379,8 +379,8 @@ public class PlayerActionsEventHandler implements Listener{
 		Entity entidad = event.getEntity();
 		if(entidad instanceof Player) {
 			Player jugador = (Player) entidad;
-			PaintballMatch paintballMatch = plugin.getPlayersMatch(jugador.getName());
-			if(paintballMatch != null) {
+			PaintballArena paintballArena = plugin.getPlayersMatch(jugador.getName());
+			if(paintballArena != null) {
 				event.setCancelled(true);
 			}
 		}
@@ -389,8 +389,8 @@ public class PlayerActionsEventHandler implements Listener{
 	@EventHandler
 	public void nivelDeComida(FoodLevelChangeEvent event) {
 		Player jugador = (Player) event.getEntity();
-		PaintballMatch paintballMatch = plugin.getPlayersMatch(jugador.getName());
-		if(paintballMatch != null) {
+		PaintballArena paintballArena = plugin.getPlayersMatch(jugador.getName());
+		if(paintballArena != null) {
 			event.setCancelled(true);
 		}
 	}
@@ -399,36 +399,36 @@ public class PlayerActionsEventHandler implements Listener{
 	public void alChatear(AsyncPlayerChatEvent event) {
 		Player jugador = event.getPlayer();
 		if(!event.isCancelled()) {
-			PaintballMatch paintballMatch = plugin.getPlayersMatch(jugador.getName());
+			PaintballArena paintballArena = plugin.getPlayersMatch(jugador.getName());
 			FileConfiguration config = plugin.getConfig();
 			if(config.getString("arena_chat_enabled").equals("false")) {
 				return;
 			}
-			if(paintballMatch != null) {
+			if(paintballArena != null) {
 				FileConfiguration messages = plugin.getMessages();
 				String message = event.getMessage();
 				event.setCancelled(true);
-				ArrayList<PaintballPlayer> jugadores = paintballMatch.getPlayers();
-				if(paintballMatch.estaIniciada()) {
-					String teamName = config.getString("teams."+ paintballMatch.getEquipoJugador(jugador.getName()).getTipo()+".name");
+				ArrayList<PaintballPlayer> jugadores = paintballArena.getPlayers();
+				if(paintballArena.estaIniciada()) {
+					String teamName = config.getString("teams."+ paintballArena.GetPlayerTeam(jugador.getName()).getColor()+".name");
 					for(PaintballPlayer j : jugadores) {
 						String msg = ChatColor.translateAlternateColorCodes('&', config.getString("arena_chat_format").replace("%player%", jugador.getName()).replace("%team%", teamName));
 						if(Bukkit.getServer().getPluginManager().getPlugin("PlaceholderAPI") != null) {
-							msg = PlaceholderAPI.setPlaceholders(j.getJugador(), msg.replace("%message%", message));
+							msg = PlaceholderAPI.setPlaceholders(j.getPlayer(), msg.replace("%message%", message));
 						}else {
 							msg = msg.replace("%message%", message);
 						}
-						j.getJugador().sendMessage(msg);
+						j.getPlayer().sendMessage(msg);
 					}
 				}else {
 					for(PaintballPlayer j : jugadores) {
 						String msg = ChatColor.translateAlternateColorCodes('&', config.getString("arena_chat_format").replace("%player%", jugador.getName()).replace("%team%", messages.getString("teamInformationNone")));
 						if(Bukkit.getServer().getPluginManager().getPlugin("PlaceholderAPI") != null) {
-							msg = PlaceholderAPI.setPlaceholders(j.getJugador(), msg.replace("%message%", message));
+							msg = PlaceholderAPI.setPlaceholders(j.getPlayer(), msg.replace("%message%", message));
 						}else {
 							msg = msg.replace("%message%", message);
 						}
-						j.getJugador().sendMessage(msg);
+						j.getPlayer().sendMessage(msg);
 					}
 				}
 			}else {
@@ -451,21 +451,21 @@ public class PlayerActionsEventHandler implements Listener{
 			if(dañado instanceof Player && shooter instanceof Player) {
 				Player jugadorDañado = (Player) dañado;
 				Player jugadorAtacante = (Player) shooter;
-				PaintballMatch paintballMatch = plugin.getPlayersMatch(jugadorAtacante.getName());
-				if(paintballMatch != null) {
-					if(paintballMatch.getState().equals(MatchState.PLAYING)) {
+				PaintballArena paintballArena = plugin.getPlayersMatch(jugadorAtacante.getName());
+				if(paintballArena != null) {
+					if(paintballArena.getState().equals(ArenaState.PLAYING)) {
 						
 						event.setCancelled(true);
 						
-						PaintballPlayer j = paintballMatch.getPlayer(jugadorAtacante.getName());
-						PaintballPlayer j2 = paintballMatch.getPlayer(jugadorDañado.getName());
+						PaintballPlayer j = paintballArena.getPlayer(jugadorAtacante.getName());
+						PaintballPlayer j2 = paintballArena.getPlayer(jugadorDañado.getName());
 						
 						if(j2 == null || j2.getKillstreak("fury") != null) {
 							return;
 						}
 						
 						
-						PartidaManager.muereJugador(paintballMatch, j, j2, plugin, false, false);
+						ArenaManager.muereJugador(paintballArena, j, j2, plugin, false, false);
 											
 					}
 					
@@ -493,9 +493,9 @@ public class PlayerActionsEventHandler implements Listener{
 				Player jugador = (Player) event.getWhoClicked();
 				event.setCancelled(true);
 				if(event.getClickedInventory().equals(jugador.getOpenInventory().getTopInventory())) {
-					PaintballMatch paintballMatch = plugin.getPlayersMatch(jugador.getName());
-					PaintballPlayer j = paintballMatch.getPlayer(jugador.getName());
-					if(paintballMatch != null) {
+					PaintballArena paintballArena = plugin.getPlayersMatch(jugador.getName());
+					PaintballPlayer j = paintballArena.getPlayer(jugador.getName());
+					if(paintballArena != null) {
 						int slot = event.getSlot();
 						for(String key : config.getConfigurationSection("killstreaks_items").getKeys(false)) {
 							if(slot == Integer.valueOf(config.getString("killstreaks_items."+key+".slot"))) {
@@ -512,20 +512,20 @@ public class PlayerActionsEventHandler implements Listener{
 								
 								int cost = Integer.valueOf(config.getString("killstreaks_items."+key+".cost"));
 								if(j.getCoins() >= cost) {
-									if(key.equalsIgnoreCase("nuke") && paintballMatch.isNuke()) {
+									if(key.equalsIgnoreCase("nuke") && paintballArena.isNuke()) {
 										jugador.sendMessage(ChatColor.translateAlternateColorCodes('&', messages.getString("nukeError")));
 										return;
 									}
 									
 									j.disminuirCoins(cost);
 									String name = ChatColor.translateAlternateColorCodes('&', config.getString("killstreaks_items."+key+".name"));
-									String teamName = config.getString("teams."+ paintballMatch.getEquipoJugador(jugador.getName()).getTipo()+".name");
+									String teamName = config.getString("teams."+ paintballArena.GetPlayerTeam(jugador.getName()).getColor()+".name");
 									
-									for(PaintballPlayer player : paintballMatch.getPlayers()) {
-										if(!player.getJugador().getName().equals(jugador.getName())) {
+									for(PaintballPlayer player : paintballArena.getPlayers()) {
+										if(!player.getPlayer().getName().equals(jugador.getName())) {
 											String msg = ChatColor.translateAlternateColorCodes('&', messages.getString("killstreakActivatedPlayer").replace("%player%", jugador.getName()).replace("%team%", teamName)
 													.replace("%killstreak%", name));
-											player.getJugador().sendMessage(msg);
+											player.getPlayer().sendMessage(msg);
 										}
 									}
 									
@@ -540,9 +540,9 @@ public class PlayerActionsEventHandler implements Listener{
 										Killstreak k = new Killstreak(key,duration);
 										j.agregarKillstreak(k);
 										CooldownKillstreaks cooldown = new CooldownKillstreaks(plugin);
-										cooldown.cooldownKillstreak(j, paintballMatch, key, duration);
+										cooldown.cooldownKillstreak(j, paintballArena, key, duration);
 									}else {
-										PartidaManager.killstreakInstantanea(key, jugador, paintballMatch, plugin);
+										ArenaManager.killstreakInstantanea(key, jugador, paintballArena, plugin);
 									}
 									
 									String[] separados = config.getString("killstreaks_items."+key+".activateSound").split(";");
@@ -550,8 +550,8 @@ public class PlayerActionsEventHandler implements Listener{
 										Sound sound = Sound.valueOf(separados[0]);
 										if(separados.length >= 4) {
 											if(separados[3].equalsIgnoreCase("global")) {
-												for(PaintballPlayer player : paintballMatch.getPlayers()) {
-													player.getJugador().playSound(player.getJugador().getLocation(), sound, Float.valueOf(separados[1]), Float.valueOf(separados[2]));
+												for(PaintballPlayer player : paintballArena.getPlayers()) {
+													player.getPlayer().playSound(player.getPlayer().getLocation(), sound, Float.valueOf(separados[1]), Float.valueOf(separados[2]));
 												}
 											}else {
 												jugador.playSound(jugador.getLocation(), sound, Float.valueOf(separados[1]), Float.valueOf(separados[2]));
@@ -564,7 +564,7 @@ public class PlayerActionsEventHandler implements Listener{
 										Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', PaintballBattle.prefix+"&7Sound Name: &c"+separados[0]+" &7is not valid."));
 									}
 									
-									ItemsUtils.crearItemKillstreaks(j, config);
+									ItemsUtils.createItemKillstreaks(j, config);
 								}else {
 									jugador.sendMessage(ChatColor.translateAlternateColorCodes('&', messages.getString("noSufficientCoins")));
 								}
@@ -583,10 +583,10 @@ public class PlayerActionsEventHandler implements Listener{
 		ItemStack item = event.getItem();
 		if(event.getAction().equals(Action.RIGHT_CLICK_AIR)) {
 			if(item != null && (item.getType().name().contains("SNOW") || item.getType().name().contains("EGG"))) {
-				PaintballMatch paintballMatch = plugin.getPlayersMatch(jugador.getName());
-				if(paintballMatch != null) {
+				PaintballArena paintballArena = plugin.getPlayersMatch(jugador.getName());
+				if(paintballArena != null) {
 					event.setCancelled(true);
-					PaintballPlayer player = paintballMatch.getPlayer(jugador.getName());
+					PaintballPlayer player = paintballArena.getPlayer(jugador.getName());
 					
 					if(player.getKillstreak("fury") == null) {
 						if(Bukkit.getVersion().contains("1.13") || Bukkit.getVersion().contains("1.14") || Bukkit.getVersion().contains("1.15")
@@ -669,11 +669,11 @@ public class PlayerActionsEventHandler implements Listener{
 		FileConfiguration config = plugin.getConfig();
 		if((p.getType().equals(EntityType.SNOWBALL) || p.getType().equals(EntityType.EGG)) && source instanceof Player) {
 			Player jugador = (Player) source;
-			PaintballMatch paintballMatch = plugin.getPlayersMatch(jugador.getName());
-			if(paintballMatch != null) {
+			PaintballArena paintballArena = plugin.getPlayersMatch(jugador.getName());
+			if(paintballArena != null) {
 				p.setMetadata("PaintballBattle", new FixedMetadataValue(plugin,"proyectil"));
 				p.setVelocity(p.getVelocity().multiply(1.25));
-				PaintballPlayer player = paintballMatch.getPlayer(jugador.getName());
+				PaintballPlayer player = paintballArena.getPlayer(jugador.getName());
 				Killstreak k = player.getKillstreak("strong_arm");
 				if(k != null) {
 					p.setVelocity(p.getVelocity().multiply(2));

@@ -23,13 +23,13 @@ public class InventarioKillstreaks{
 		this.plugin = plugin;
 	}
 	
-	public void actualizarInventario(final Player jugador,final PaintballMatch paintballMatch) {
+	public void actualizarInventario(final Player jugador,final PaintballArena paintballArena) {
 		BukkitScheduler sh = Bukkit.getServer().getScheduler();
 		final FileConfiguration config = plugin.getConfig();
 		final FileConfiguration messages = plugin.getMessages();
 		taskID = sh.scheduleSyncRepeatingTask(plugin, new Runnable() {
 			public void run() {
-				if(!update(jugador,config,messages, paintballMatch)) {
+				if(!update(jugador,config,messages, paintballArena)) {
 					Bukkit.getScheduler().cancelTask(taskID);
 					return;
 				}
@@ -37,20 +37,20 @@ public class InventarioKillstreaks{
 		}, 0L, 20L);
 	}
 	
-	protected boolean update(Player jugador, FileConfiguration config, FileConfiguration messages, PaintballMatch paintballMatch) {
+	protected boolean update(Player jugador, FileConfiguration config, FileConfiguration messages, PaintballArena paintballArena) {
 		String pathInventory = ChatColor.translateAlternateColorCodes('&', ChatColor.translateAlternateColorCodes('&', config.getString("killstreaks_inventory_title")));
 		String pathInventoryM = ChatColor.stripColor(pathInventory);
 		Inventory inv = jugador.getOpenInventory().getTopInventory();
-		if(paintballMatch == null) {
+		if(paintballArena == null) {
 			return false;
 		}
-		PaintballPlayer j = paintballMatch.getPlayer(jugador.getName());
+		PaintballPlayer j = paintballArena.getPlayer(jugador.getName());
 		if(j == null) {
 			return false;
 		}
 		if(inv != null && ChatColor.stripColor(jugador.getOpenInventory().getTitle()).equals(pathInventoryM)) {
 			for(String key : config.getConfigurationSection("killstreaks_items").getKeys(false)) {
-				ItemStack item = ItemsUtils.crearItem(config, "killstreaks_items."+key);
+				ItemStack item = ItemsUtils.creaItem(config, "killstreaks_items."+key);
 				
 				Killstreak k = j.getKillstreak(key);
 				if(k != null) {

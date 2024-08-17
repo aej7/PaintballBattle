@@ -40,35 +40,35 @@ public class SavedItems {
 		return isFlying;
 	}
 
-	public ItemStack[] getInventarioGuardado() {
+	public ItemStack[] getInventory() {
 		return inventarioGuardado;
 	}
 	
-	public ItemStack[] getEquipamientoGuardado() {
+	public ItemStack[] getEquipment() {
 		return equipamientoGuardado;
 	}
 
-	public GameMode getGamemodeGuardado() {
+	public GameMode getGamemode() {
 		return gamemodeGuardado;
 	}
 	
-	public float getXPGuardada() {
+	public float getXp() {
 		return experienciaGuardada;
 	}
 	
-	public int getLevelGuardado() {
+	public int getLevel() {
 		return this.levelGuardado;
 	}
 	
-	public int getHambreGuardada() {
+	public int GetHunger() {
 		return this.hambreGuardada;
 	}
 
-	public double getVidaGuardada() {
+	public double getHealth() {
 		return vidaGuardada;
 	}
 
-	public double getMaxVidaGuardada() {
+	public double getMaxHealth() {
 		return maxVidaGuardada;
 	}
 }

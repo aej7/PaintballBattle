@@ -5,10 +5,10 @@ import java.util.ArrayList;
 import org.bukkit.configuration.file.FileConfiguration;
 
 import pb.ajneb97.PaintballBattle;
-import pb.ajneb97.database.Player;
+import pb.ajneb97.database.PaintballPlayer;
 import pb.ajneb97.database.MySql;
-import pb.ajneb97.enums.MatchState;
-import pb.ajneb97.logic.PaintballMatch;
+import pb.ajneb97.enums.ArenaState;
+import pb.ajneb97.logic.PaintballArena;
 
 public class PaintballAPI {
 
@@ -33,7 +33,7 @@ public class PaintballAPI {
 	
 	public static int getCoins(org.bukkit.entity.Player player) {
 		if(!MySql.isEnabled(plugin.getConfig())) {
-			Player j = plugin.getPlayer(player.getName());
+			PaintballPlayer j = plugin.getPlayer(player.getName());
 			if(j != null) {
 				return j.getCoins();
 			}else {
@@ -46,7 +46,7 @@ public class PaintballAPI {
 	
 	public static void addCoins(org.bukkit.entity.Player player, int coins) {
 		if(!MySql.isEnabled(plugin.getConfig())) {
-			Player j = plugin.getPlayer(player.getName());
+			PaintballPlayer j = plugin.getPlayer(player.getName());
 			if(j != null) {
 				j.increaseCoinsByAmount(coins);
 			}
@@ -57,7 +57,7 @@ public class PaintballAPI {
 	
 	public static void removeCoins(org.bukkit.entity.Player player, int coins) {
 		if(!MySql.isEnabled(plugin.getConfig())) {
-			Player j = plugin.getPlayer(player.getName());
+			PaintballPlayer j = plugin.getPlayer(player.getName());
 			if(j != null) {
 				j.decreaseCoinsByAmount(coins);
 			}
@@ -68,7 +68,7 @@ public class PaintballAPI {
 	
 	public static int getWins(org.bukkit.entity.Player player) {
 		if(!MySql.isEnabled(plugin.getConfig())) {
-			Player j = plugin.getPlayer(player.getName());
+			PaintballPlayer j = plugin.getPlayer(player.getName());
 			if(j != null) {
 				return j.getWins();
 			}else {
@@ -82,7 +82,7 @@ public class PaintballAPI {
 	
 	public static int getLoses(org.bukkit.entity.Player player) {
 		if(!MySql.isEnabled(plugin.getConfig())) {
-			Player j = plugin.getPlayer(player.getName());
+			PaintballPlayer j = plugin.getPlayer(player.getName());
 			if(j != null) {
 				return j.getLosses();
 			}else {
@@ -96,7 +96,7 @@ public class PaintballAPI {
 	
 	public static int getTies(org.bukkit.entity.Player player) {
 		if(!MySql.isEnabled(plugin.getConfig())) {
-			Player j = plugin.getPlayer(player.getName());
+			PaintballPlayer j = plugin.getPlayer(player.getName());
 			if(j != null) {
 				return j.getTies();
 			}else {
@@ -109,7 +109,7 @@ public class PaintballAPI {
 	
 	public static int getKills(org.bukkit.entity.Player player) {
 		if(!MySql.isEnabled(plugin.getConfig())) {
-			Player j = plugin.getPlayer(player.getName());
+			PaintballPlayer j = plugin.getPlayer(player.getName());
 			if(j != null) {
 				return j.getKills();
 			}else {
@@ -123,7 +123,7 @@ public class PaintballAPI {
 	
 	public static int getPerkLevel(org.bukkit.entity.Player player, String perk) {
 		if(!MySql.isEnabled(plugin.getConfig())) {
-			Player j = plugin.getPlayer(player.getName());
+			PaintballPlayer j = plugin.getPlayer(player.getName());
 			if(j != null) {
 				return j.getPerkLevel(perk);
 			}else {
@@ -136,7 +136,7 @@ public class PaintballAPI {
 	
 	public static boolean hasHat(org.bukkit.entity.Player player, String hat) {
 		if(!MySql.isEnabled(plugin.getConfig())) {
-			Player j = plugin.getPlayer(player.getName());
+			PaintballPlayer j = plugin.getPlayer(player.getName());
 			if(j != null) {
 				return j.hasHat(hat);
 			}else {
@@ -149,7 +149,7 @@ public class PaintballAPI {
 	
 	public static boolean hasHatSelected(org.bukkit.entity.Player player, String hat) {
 		if(!MySql.isEnabled(plugin.getConfig())) {
-			Player j = plugin.getPlayer(player.getName());
+			PaintballPlayer j = plugin.getPlayer(player.getName());
 			if(j != null) {
 				return j.hasHatEquipped(hat);
 			}else {
@@ -162,7 +162,7 @@ public class PaintballAPI {
 	
 	public static ArrayList<Perk> getPerks(org.bukkit.entity.Player player) {
 		if(!MySql.isEnabled(plugin.getConfig())) {
-			Player j = plugin.getPlayer(player.getName());
+			PaintballPlayer j = plugin.getPlayer(player.getName());
 			if(j != null) {
 				return j.getNamesAndLevelsOfPerks();
 			}else {
@@ -175,7 +175,7 @@ public class PaintballAPI {
 	
 	public static ArrayList<Hat> getHats(org.bukkit.entity.Player player) {
 		if(!MySql.isEnabled(plugin.getConfig())) {
-			Player j = plugin.getPlayer(player.getName());
+			PaintballPlayer j = plugin.getPlayer(player.getName());
 			if(j != null && j.getNamesAndLevelsOfHats() != null) {
 				return j.getNamesAndLevelsOfHats();
 			}else {
@@ -187,25 +187,25 @@ public class PaintballAPI {
 	}
 	
 	public static int getPlayersArena(String arena) {
-		PaintballMatch paintballMatch = plugin.getMatch(arena);
-		if(paintballMatch != null) {
-			return paintballMatch.getPlayerAmount();
+		PaintballArena paintballArena = plugin.getMatch(arena);
+		if(paintballArena != null) {
+			return paintballArena.getPlayerAmount();
 		}else {
 			return 0;
 		}
 	}
 	
 	public static String getStatusArena(String arena) {
-		PaintballMatch paintballMatch = plugin.getMatch(arena);
+		PaintballArena paintballArena = plugin.getMatch(arena);
 		FileConfiguration messages = plugin.getMessages();
-		if(paintballMatch != null) {
-			if(paintballMatch.getState().equals(MatchState.STARTING)) {
+		if(paintballArena != null) {
+			if(paintballArena.getState().equals(ArenaState.STARTING)) {
 				return messages.getString("signStatusStarting");
-			}else if(paintballMatch.getState().equals(MatchState.WAITING)) {
+			}else if(paintballArena.getState().equals(ArenaState.WAITING)) {
 				return messages.getString("signStatusWaiting");
-			}else if(paintballMatch.getState().equals(MatchState.PLAYING)) {
+			}else if(paintballArena.getState().equals(ArenaState.PLAYING)) {
 				return messages.getString("signStatusIngame");
-			}else if(paintballMatch.getState().equals(MatchState.ENDING)) {
+			}else if(paintballArena.getState().equals(ArenaState.ENDING)) {
 				return messages.getString("signStatusFinishing");
 			}else {
 				return messages.getString("signStatusDisabled");

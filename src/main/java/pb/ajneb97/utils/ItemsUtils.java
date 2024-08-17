@@ -16,7 +16,7 @@ import pb.ajneb97.versions.V1_20;
 public class ItemsUtils {
 
 	@SuppressWarnings("deprecation")
-	public static ItemStack crearItem(FileConfiguration config,String path){
+	public static ItemStack creaItem(FileConfiguration config, String path){
 		String id = config.getString(path+".item");
 		String[] idsplit = new String[2]; 
 		  int DataValue = 0;
@@ -53,10 +53,10 @@ public class ItemsUtils {
 			return stack;
 	}
 	
-	public static void crearItemKillstreaks(PaintballPlayer jugador, FileConfiguration config) {
+	public static void createItemKillstreaks(PaintballPlayer jugador, FileConfiguration config) {
 		if(config.getString("killstreaks_item_enabled").equals("true")) {
 			int coins = jugador.getCoins();
-			ItemStack item = ItemsUtils.crearItem(config, "killstreaks_item");
+			ItemStack item = ItemsUtils.creaItem(config, "killstreaks_item");
 			ItemMeta meta = item.getItemMeta();
 			meta.setDisplayName(ChatColor.translateAlternateColorCodes('&', config.getString("killstreaks_item.name").replace("%amount%", coins+"")));
 			item.setItemMeta(meta);
@@ -67,7 +67,7 @@ public class ItemsUtils {
 			}else {
 				item.setAmount(coins);
 			}
-			jugador.getJugador().getInventory().setItem(8, item);
+			jugador.getPlayer().getInventory().setItem(8, item);
 		}
 	}
 	

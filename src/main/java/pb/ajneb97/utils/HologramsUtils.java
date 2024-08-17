@@ -9,7 +9,7 @@ import org.bukkit.Location;
 import org.bukkit.configuration.file.FileConfiguration;
 
 import pb.ajneb97.PaintballBattle;
-import pb.ajneb97.database.Player;
+import pb.ajneb97.database.PaintballPlayer;
 import pb.ajneb97.database.MySql;
 import pb.ajneb97.database.MySqlCallback;
 
@@ -30,13 +30,13 @@ public class HologramsUtils {
 	//This method is only used weekly/monthly
 		public static void getTopPlayersFromDatabase(final PaintballBattle plugin, final String type, final String frequency, final MySqlCallback callback) {
 			Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
-				List<Player> players = getPlayerDataByFrequency(plugin, frequency);
+				List<PaintballPlayer> paintballPlayers = getPlayerDataByFrequency(plugin, frequency);
 
-				List<Player> sortedPlayers = players.stream()
+				List<PaintballPlayer> sortedPaintballPlayers = paintballPlayers.stream()
 					.sorted((player1, player2) -> Integer.compare(getTotal(player2, type), getTotal(player1, type)))
 					.collect(Collectors.toList());
 
-				List<String> formattedPlayers = sortedPlayers.stream()
+				List<String> formattedPlayers = sortedPaintballPlayers.stream()
 					.map(player -> player.getName() + ";" + getTotal(player, type))
 					.collect(Collectors.toList());
 
@@ -44,15 +44,15 @@ public class HologramsUtils {
 			});
 		}
 
-		private static int getTotal(Player player, String type) {
+		private static int getTotal(PaintballPlayer paintballPlayer, String type) {
 			return switch (type) {
-				case "kills" -> player.getKills();
-				case "wins" -> player.getWins();
+				case "kills" -> paintballPlayer.getKills();
+				case "wins" -> paintballPlayer.getWins();
 				default -> 0;
 			};
 		}
 
-		private static List<Player> getPlayerDataByFrequency(PaintballBattle plugin, String frequency) {
+		private static List<PaintballPlayer> getPlayerDataByFrequency(PaintballBattle plugin, String frequency) {
 			return switch (frequency) {
 				case "monthly" -> MySql.getPlayerDataMonthly(plugin);
 				case "weekly" -> MySql.getPlayerDataWeekly(plugin);
@@ -60,13 +60,13 @@ public class HologramsUtils {
 			};
     }
 		
-		public static void getTopPlayers(final PaintballBattle plugin, final ArrayList<Player> jugadores, final String tipo, final MySqlCallback callback){
+		public static void getTopPlayers(final PaintballBattle plugin, final ArrayList<PaintballPlayer> jugadores, final String tipo, final MySqlCallback callback){
 			Bukkit.getScheduler().runTaskAsynchronously(plugin, new Runnable() {
 	            @Override
 	            public void run() {
 	            	final ArrayList<String> playersList = new ArrayList<String>();
 	            	if(!MySql.isEnabled(plugin.getConfig())) {
-	            		for(Player j : jugadores) {
+	            		for(PaintballPlayer j : jugadores) {
 	            			String name = j.getName();
 	            			int total = 0;
 	            			if(tipo.equals("kills")) {
@@ -77,8 +77,8 @@ public class HologramsUtils {
 	            			playersList.add(name+";"+total);
 	            		}
 	            	}else {
-	            		ArrayList<Player> jugadores = MySql.getPlayerData(plugin);
-	            		for(Player p : jugadores) {
+	            		ArrayList<PaintballPlayer> jugadores = MySql.getPlayerData(plugin);
+	            		for(PaintballPlayer p : jugadores) {
 	            			String name = p.getName();
 	            			int total = 0;
 	            			if(tipo.equals("kills")) {

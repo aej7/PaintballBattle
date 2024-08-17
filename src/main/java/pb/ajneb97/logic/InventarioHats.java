@@ -16,7 +16,7 @@ import net.md_5.bungee.api.ChatColor;
 import pb.ajneb97.PaintballBattle;
 import pb.ajneb97.api.Hat;
 import pb.ajneb97.api.PaintballAPI;
-import pb.ajneb97.database.Player;
+import pb.ajneb97.database.PaintballPlayer;
 import pb.ajneb97.database.MySql;
 import pb.ajneb97.utils.ItemsUtils;
 
@@ -33,13 +33,13 @@ public class InventarioHats implements Listener{
 		ArrayList<Hat> hats = PaintballAPI.getHats(jugador);
 		int slot = 0;
 		if(hats.isEmpty()) {
-			ItemStack item = ItemsUtils.crearItem(config, "hats_items.no_hats");
+			ItemStack item = ItemsUtils.creaItem(config, "hats_items.no_hats");
 			inv.setItem(13, item);
 		}else {
 			FileConfiguration messages = plugin.getMessages();
 			for(Hat h : hats) {
 				String name = h.getName();
-				ItemStack item = ItemsUtils.crearItem(config, "hats_items."+name);
+				ItemStack item = ItemsUtils.creaItem(config, "hats_items."+name);
 				ItemMeta meta = item.getItemMeta();
 				List<String> lore = meta.getLore();
 				String status = "";
@@ -64,7 +64,7 @@ public class InventarioHats implements Listener{
 				slot++;
 			}
 			
-			ItemStack item = ItemsUtils.crearItem(config, "hats_items.remove_hat");
+			ItemStack item = ItemsUtils.creaItem(config, "hats_items.remove_hat");
 			inv.setItem(26, item);
 		}
 		
@@ -97,7 +97,7 @@ public class InventarioHats implements Listener{
 							if(MySql.isEnabled(config)) {
 								MySql.deseleccionarHats(plugin, jugador.getName());
 							}else {
-								Player jDatos = plugin.getPlayer(jugador.getName());
+								PaintballPlayer jDatos = plugin.getPlayer(jugador.getName());
 								jDatos.unequipHat();
 							}
 							jugador.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("hatRemoved")));
@@ -109,7 +109,7 @@ public class InventarioHats implements Listener{
 							return;
 						}
 						for(Hat h : hats) {
-							ItemStack itemConfig = ItemsUtils.crearItem(config, "hats_items."+h.getName());
+							ItemStack itemConfig = ItemsUtils.creaItem(config, "hats_items."+h.getName());
 							ItemMeta meta = item.getItemMeta();
 							ItemMeta metaConfig = itemConfig.getItemMeta();
 							if(item.getType().equals(itemConfig.getType()) && meta.getDisplayName().equals(metaConfig.getDisplayName())) {
@@ -121,7 +121,7 @@ public class InventarioHats implements Listener{
 								if(MySql.isEnabled(config)) {
 									MySql.seleccionarHatAsync(plugin, jugador.getName(), h.getName());
 								}else {
-									Player jDatos = plugin.getPlayer(jugador.getName());
+									PaintballPlayer jDatos = plugin.getPlayer(jugador.getName());
 									jDatos.equipHat(h.getName());
 								}
 								jugador.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("hatSelected").replace("%name%", config.getString("hats_items."+h.getName()+".name"))));

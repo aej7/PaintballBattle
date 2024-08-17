@@ -7,7 +7,7 @@ import java.util.Map;
 import pb.ajneb97.api.Hat;
 import pb.ajneb97.api.Perk;
 
-public class Player {
+public class PaintballPlayer {
 
 	private int wins;
 	private int losses;
@@ -19,7 +19,7 @@ public class Player {
 	private final Map<String, Perk> namesAndLevelsOfPerks;
 	private final Map<String, Hat> namesAndLevelsOfHats;
 	
-	public Player(String name, String uuid, int wins, int losses, int ties, int kills, int coins, List<Perk> perks, List<Hat> hats) {
+	public PaintballPlayer(String name, String uuid, int wins, int losses, int ties, int kills, int coins, List<Perk> perks, List<Hat> hats) {
 		this.wins = wins;
 		this.losses = losses;
 		this.ties = ties;

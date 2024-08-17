@@ -37,6 +37,6 @@ local.properties
 .loadpath
 .recommenders
 
-.players/
+.paintballPlayers/
 holograms.yml
 arenas.yml

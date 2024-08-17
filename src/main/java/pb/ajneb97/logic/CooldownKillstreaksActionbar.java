@@ -33,14 +33,14 @@ public class CooldownKillstreaksActionbar {
 	}
 	
 	protected void actualizarActionbars(final Player player,final FileConfiguration messages,final FileConfiguration config) {
-		PaintballMatch paintballMatch = plugin.getPlayersMatch(player.getName());
-		if(paintballMatch != null) {
-			PaintballPlayer jugador = paintballMatch.getPlayer(player.getName());
+		PaintballArena paintballArena = plugin.getPlayersMatch(player.getName());
+		if(paintballArena != null) {
+			PaintballPlayer jugador = paintballArena.getPlayer(player.getName());
 			Killstreak ultima = jugador.getUltimaKillstreak();
 			if(ultima != null) {
 				String name = config.getString("killstreaks_items."+ultima.getTipo()+".name");
 				int tiempo = ultima.getTiempo();
-				ActionBarAPI.sendActionBar(jugador.getJugador(), ChatColor.translateAlternateColorCodes('&', messages.getString("killstreakActionbar")
+				ActionBarAPI.sendActionBar(jugador.getPlayer(), ChatColor.translateAlternateColorCodes('&', messages.getString("killstreakActionbar")
 						.replace("%killstreak%", name).replace("%time%", tiempo+"")));
 			}
 		}

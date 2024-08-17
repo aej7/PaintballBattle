@@ -7,30 +7,30 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.scheduler.BukkitScheduler;
 
 import pb.ajneb97.PaintballBattle;
-import pb.ajneb97.enums.MatchState;
+import pb.ajneb97.enums.ArenaState;
 
 public class CooldownHats {
 
 	int taskID;
 	int tiempo;
 	private PaintballPlayer jugador;
-	private PaintballMatch paintballMatch;
+	private PaintballArena paintballArena;
 	private PaintballBattle plugin;
 	public CooldownHats(PaintballBattle plugin){		
 		this.plugin = plugin;		
 	}
 	
-	public void cooldownHat(final PaintballPlayer jugador, final PaintballMatch paintballMatch, int tiempo){
+	public void cooldownHat(final PaintballPlayer jugador, final PaintballArena paintballArena, int tiempo){
 		this.jugador = jugador;
 		this.tiempo = tiempo;
-		this.paintballMatch = paintballMatch;
+		this.paintballArena = paintballArena;
 		BukkitScheduler scheduler = Bukkit.getServer().getScheduler();
  	    taskID = scheduler.scheduleSyncRepeatingTask(plugin, new Runnable() {
 		public void run(){
 			if(!ejecutarCooldownHat()){
 				FileConfiguration messages = plugin.getMessages();
-				if(!paintballMatch.getState().equals(MatchState.ENDING)) {
-					jugador.getJugador().sendMessage(ChatColor.translateAlternateColorCodes('&', messages.getString("hatCooldownFinished")));
+				if(!paintballArena.getState().equals(ArenaState.ENDING)) {
+					jugador.getPlayer().sendMessage(ChatColor.translateAlternateColorCodes('&', messages.getString("hatCooldownFinished")));
 				}
 				
 				Bukkit.getScheduler().cancelTask(taskID);
@@ -41,7 +41,7 @@ public class CooldownHats {
 	}
 
 	protected boolean ejecutarCooldownHat() {
-		if(paintballMatch != null && paintballMatch.getState().equals(MatchState.PLAYING)) {
+		if(paintballArena != null && paintballArena.getState().equals(ArenaState.PLAYING)) {
 			if(tiempo <= 0) {
 				jugador.setEfectoHatEnCooldown(false);
 				return false;
@@ -56,10 +56,10 @@ public class CooldownHats {
 		}
 	}
 	
-	public void durationHat(final PaintballPlayer jugador, final PaintballMatch paintballMatch, int tiempo){
+	public void durationHat(final PaintballPlayer jugador, final PaintballArena paintballArena, int tiempo){
 		this.jugador = jugador;
 		this.tiempo = tiempo;
-		this.paintballMatch = paintballMatch;
+		this.paintballArena = paintballArena;
 		BukkitScheduler scheduler = Bukkit.getServer().getScheduler();
  	    taskID = scheduler.scheduleSyncRepeatingTask(plugin, new Runnable() {
 		public void run(){
@@ -72,7 +72,7 @@ public class CooldownHats {
 	}
 	
 	protected boolean ejecutarDurationHat() {
-		if(paintballMatch != null && paintballMatch.getState().equals(MatchState.PLAYING)) {
+		if(paintballArena != null && paintballArena.getState().equals(ArenaState.PLAYING)) {
 			if(tiempo <= 0) {
 				jugador.setEfectoHatActivado(false);
 				return false;

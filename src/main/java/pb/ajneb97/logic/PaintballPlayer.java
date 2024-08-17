@@ -122,7 +122,7 @@ public class PaintballPlayer {
 		return this.coins;
 	}
 	
-	public void agregarCoins(int cantidad) {
+	public void addCoins(int cantidad) {
 		this.coins = this.coins+cantidad;
 	}
 	
@@ -138,7 +138,7 @@ public class PaintballPlayer {
 		return this.preferenciaTeam;
 	}
 	
-	public SavedItems getGuardados() {
+	public SavedItems getSavedData() {
 		return this.guardados;
 	}
 	
@@ -150,7 +150,7 @@ public class PaintballPlayer {
 		this.muertes++;
 	}
 	
-	public int getAsesinatos() {
+	public int getKills() {
 		return this.asesinatos;
 	}
 	
@@ -158,7 +158,7 @@ public class PaintballPlayer {
 		return this.muertes;
 	}
 	
-	public Player getJugador() {
+	public Player getPlayer() {
 		return this.jugador;
 	}
 	

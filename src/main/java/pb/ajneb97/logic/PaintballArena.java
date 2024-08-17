@@ -2,37 +2,37 @@ package pb.ajneb97.logic;
 
 import org.bukkit.Location;
 import org.bukkit.configuration.file.FileConfiguration;
-import pb.ajneb97.enums.MatchState;
+import pb.ajneb97.enums.ArenaState;
 
 import java.util.ArrayList;
 import java.util.Random;
 
 
 
-public class PaintballMatch {
+public class PaintballArena {
 
-	private final Team team1;
-	private final Team team2;
+	private final PaintballTeam paintballTeam1;
+	private final PaintballTeam paintballTeam2;
 	private final String matchNumber;
 	private int maximumPlayerAmount;
 	private int minimumPlayerAmount;
 	private int playerAmount;
-	private MatchState matchState;
+	private ArenaState arenaState;
 	private Location lobby;
 	private int time;
 	private int maximumTime;
 	private int initialLives;
 	private boolean isNuke;
 	
-	public PaintballMatch(String matchNumber, int maximumTime, String team1, String team2, int initialLives) {
+	public PaintballArena(String matchNumber, int maximumTime, String team1, String team2, int initialLives) {
 		//por defecto
-		this.team1 = new Team(team1);
-		this.team2 = new Team(team2);
+		this.paintballTeam1 = new PaintballTeam(team1);
+		this.paintballTeam2 = new PaintballTeam(team2);
 		this.matchNumber = matchNumber;
 		this.maximumPlayerAmount = 16;
 		this.minimumPlayerAmount = 4;
 		this.playerAmount = 0;
-		this.matchState = MatchState.OFF;
+		this.arenaState = ArenaState.OFF;
 		this.time = 0;
 		this.maximumTime = maximumTime;
 		this.initialLives = initialLives;
@@ -85,63 +85,63 @@ public class PaintballMatch {
 	
 	public void addPlayer(PaintballPlayer player) {
 		//ANTES DE INICIAR LA PARTIDA TODOS ESTAN EN EL TEAM 1 Y LUEGO SE REPARTEN LOS DEMAS AL TEAM 2
-		if(team1.addPlayer(player)) {
+		if(paintballTeam1.addPlayer(player)) {
 			this.playerAmount++;
 		}	
 	}
 	
-	public void changePlayerToTeam2(PaintballPlayer player) {
-		this.team1.removePlayer(player.getJugador().getName());
-		this.team2.addPlayer(player);
+	public void changePlayerToTeam2(PaintballPlayer paintballPlayer) {
+		this.paintballTeam1.removePlayer(paintballPlayer.getPlayer().getName());
+		this.paintballTeam2.addPlayer(paintballPlayer);
 	}
 	
 	public void removePlayer(String player) {
-		if(team1.removePlayer(player) || team2.removePlayer(player)) {
+		if(paintballTeam1.removePlayer(player) || paintballTeam2.removePlayer(player)) {
 			this.playerAmount--;
 		}	
 	}
 	
-	public ArrayList<PaintballPlayer> getPlayers(){
+	public ArrayList<PaintballPlayer> getPlayers() {
 		ArrayList<PaintballPlayer> players = new ArrayList<PaintballPlayer>();
 
-    players.addAll(team1.getPlayers());
-    players.addAll(team2.getPlayers());
+    players.addAll(paintballTeam1.getPlayers());
+    players.addAll(paintballTeam2.getPlayers());
 		
 		return players;
 	}
 	
 	public PaintballPlayer getPlayer(String playerName) {
-		for (PaintballPlayer player : getPlayers()) {
-			if (player.getJugador().getName().equals(playerName)) {
-				return player;
+		for (PaintballPlayer paintballPlayer : getPlayers()) {
+			if (paintballPlayer.getPlayer().getName().equals(playerName)) {
+				return paintballPlayer;
 			}
 		}
 		return null;
 	}
 	
-	public Team getEquipoJugador(String jugador) {
-		ArrayList<PaintballPlayer> jugadoresTeam1 = team1.getPlayers();
+	public PaintballTeam GetPlayerTeam(String playerName) {
+		ArrayList<PaintballPlayer> jugadoresTeam1 = paintballTeam1.getPlayers();
 		for(int i=0;i<jugadoresTeam1.size();i++) {
-			if(jugadoresTeam1.get(i).getJugador().getName().equals(jugador)) {
-				return this.team1;
+			if(jugadoresTeam1.get(i).getPlayer().getName().equals(playerName)) {
+				return this.paintballTeam1;
 			}
 		}
-		ArrayList<PaintballPlayer> jugadoresTeam2 = team2.getPlayers();
+		ArrayList<PaintballPlayer> jugadoresTeam2 = paintballTeam2.getPlayers();
 		for(int i=0;i<jugadoresTeam2.size();i++) {
-			if(jugadoresTeam2.get(i).getJugador().getName().equals(jugador)){
-				return this.team2;
+			if(jugadoresTeam2.get(i).getPlayer().getName().equals(playerName)){
+				return this.paintballTeam2;
 			}
 		}
 		
 		return null;
 	}
 	
-	public Team getTeam1() {
-		return this.team1;
+	public PaintballTeam getTeam1() {
+		return this.paintballTeam1;
 	}
 	
-	public Team getTeam2() {
-		return this.team2;
+	public PaintballTeam getTeam2() {
+		return this.paintballTeam2;
 	}
 	
 	public int getMaximumPlayerAmount() {
@@ -164,16 +164,16 @@ public class PaintballMatch {
 		return this.playerAmount;
 	}
 	
-	public MatchState getState() {
-		return this.matchState;
+	public ArenaState getState() {
+		return this.arenaState;
 	}
 	
-	public void setState(MatchState estado) {
-		this.matchState = estado;
+	public void setState(ArenaState estado) {
+		this.arenaState = estado;
 	}
 	
 	public boolean estaIniciada() {
-		if(!this.matchState.equals(MatchState.WAITING) && !this.matchState.equals(MatchState.STARTING)) {
+		if(!this.arenaState.equals(ArenaState.WAITING) && !this.arenaState.equals(ArenaState.STARTING)) {
 			return true;
 		}else {
 			return false;
@@ -188,8 +188,8 @@ public class PaintballMatch {
 		}
 	}
 	
-	public boolean estaActivada() {
-		if(this.matchState.equals(MatchState.OFF)) {
+	public boolean isActivated() {
+		if(this.arenaState.equals(ArenaState.OFF)) {
 			return false;
 		}else {
 			return true;
@@ -204,20 +204,20 @@ public class PaintballMatch {
 		return this.lobby;
 	}
 	
-	public Team getGanador() {
-		if(team1.getPlayers().size() == 0) {
-			return team2;
+	public PaintballTeam getGanador() {
+		if(paintballTeam1.getPlayers().size() == 0) {
+			return paintballTeam2;
 		}
-		if(team2.getPlayers().size() == 0) {
-			return team1;
+		if(paintballTeam2.getPlayers().size() == 0) {
+			return paintballTeam1;
 		}
 		
-		int vidasTeam1 = team1.getVidas();
-		int vidasTeam2 = team2.getVidas();
+		int vidasTeam1 = paintballTeam1.getLives();
+		int vidasTeam2 = paintballTeam2.getLives();
 		if(vidasTeam1 > vidasTeam2) {
-			return team1;
+			return paintballTeam1;
 		}else if(vidasTeam2 > vidasTeam1) {
-			return team2;
+			return paintballTeam2;
 		}else {
 			return null; //empate
 		}	
@@ -231,7 +231,7 @@ public class PaintballMatch {
 		
 		for(int i=0;i<nuevo.size();i++) {
 			for(int c=i+1;c<nuevo.size();c++) {
-				if(nuevo.get(i).getAsesinatos() < nuevo.get(c).getAsesinatos()) {
+				if(nuevo.get(i).getKills() < nuevo.get(c).getKills()) {
 					PaintballPlayer j = nuevo.get(i);
 					nuevo.set(i, nuevo.get(c));
 					nuevo.set(c, j);
@@ -249,10 +249,10 @@ public class PaintballMatch {
 		}else {
 			mitad = (int)this.playerAmount /2;
 		}
-		if(equipo.equals(this.team1.getTipo())) {
+		if(equipo.equals(this.paintballTeam1.getColor())) {
 			int cantidadPreferenciaTeam1 = 0;
 			for(PaintballPlayer j : this.getPlayers()) {
-				if(j.getPreferenciaTeam() != null && j.getPreferenciaTeam().equals(this.team1.getTipo())) {
+				if(j.getPreferenciaTeam() != null && j.getPreferenciaTeam().equals(this.paintballTeam1.getColor())) {
 					cantidadPreferenciaTeam1++;
 				}
 			}
@@ -268,7 +268,7 @@ public class PaintballMatch {
 		}else {
 			int cantidadPreferenciaTeam2 = 0;
 			for(PaintballPlayer j : this.getPlayers()) {
-				if(j.getPreferenciaTeam() != null &&  j.getPreferenciaTeam().equals(this.team2.getTipo())) {
+				if(j.getPreferenciaTeam() != null &&  j.getPreferenciaTeam().equals(this.paintballTeam2.getColor())) {
 					cantidadPreferenciaTeam2++;
 				}
 			}
@@ -285,10 +285,10 @@ public class PaintballMatch {
 	}
 	
 	public void modifyTeams(FileConfiguration config) {
-		Team team1 = this.team1;
-		Team team2 = this.team2;
-		String nTeam1 = team1.getTipo();
-		String nTeam2 = team2.getTipo();
+		PaintballTeam paintballTeam1 = this.paintballTeam1;
+		PaintballTeam paintballTeam2 = this.paintballTeam2;
+		String nTeam1 = paintballTeam1.getColor();
+		String nTeam2 = paintballTeam2.getColor();
 		Random r = new Random();
 		ArrayList<String> nombres = new ArrayList<String>();
 		for(String key : config.getConfigurationSection("teams").getKeys(false)) {
@@ -296,23 +296,23 @@ public class PaintballMatch {
 		}
 		
 		int max = nombres.size();
-		if(team1.esRandom() && !team2.esRandom()) {
+		if(paintballTeam1.isRandom() && !paintballTeam2.isRandom()) {
 			int num = r.nextInt(max);
 			nTeam1 = nombres.get(num);
 			while(nTeam1.equals(nTeam2)) {
 				num = r.nextInt(max);
 				nTeam1 = nombres.get(num);
 			}
-			team1.setTipo(nTeam1);
-		}else if(!team1.esRandom() && team2.esRandom()) {
+			paintballTeam1.setColor(nTeam1);
+		}else if(!paintballTeam1.isRandom() && paintballTeam2.isRandom()) {
 			int num = r.nextInt(max);
 			nTeam2 = nombres.get(num);
 			while(nTeam2.equals(nTeam1)) {
 				num = r.nextInt(max);
 				nTeam2 = nombres.get(num);
 			}
-			team2.setTipo(nTeam2);
-		}else if(team1.esRandom() && team2.esRandom()) {
+			paintballTeam2.setColor(nTeam2);
+		}else if(paintballTeam1.isRandom() && paintballTeam2.isRandom()) {
 			int num = r.nextInt(max);
 			nTeam1 = nombres.get(num);
 			num = r.nextInt(max);
@@ -321,8 +321,8 @@ public class PaintballMatch {
 				num = r.nextInt(max);
 				nTeam2 = nombres.get(num);
 			}
-			team1.setTipo(nTeam1);
-			team2.setTipo(nTeam2);
+			paintballTeam1.setColor(nTeam1);
+			paintballTeam2.setColor(nTeam2);
 		}
 	}
 }

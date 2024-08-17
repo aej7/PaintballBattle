@@ -1,6 +1,6 @@
 package pb.ajneb97.enums;
 
-public enum MatchState {
+public enum ArenaState {
 	WAITING,
 	STARTING,
 	PLAYING,

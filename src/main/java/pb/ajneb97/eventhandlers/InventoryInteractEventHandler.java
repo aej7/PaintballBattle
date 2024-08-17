@@ -21,7 +21,7 @@ import pb.ajneb97.PaintballBattle;
 import pb.ajneb97.api.Hat;
 import pb.ajneb97.api.PaintballAPI;
 import pb.ajneb97.api.Perk;
-import pb.ajneb97.database.Player;
+import pb.ajneb97.database.PaintballPlayer;
 import pb.ajneb97.database.MySql;
 import pb.ajneb97.utils.ItemsUtils;
 
@@ -37,7 +37,7 @@ public class InventoryInteractEventHandler implements Listener{
 		FileConfiguration shop = plugin.getShop();
 		Inventory inv = Bukkit.createInventory(null, 27, ChatColor.translateAlternateColorCodes('&', shop.getString("shopInventoryTitle")));
 		for(String key : shop.getConfigurationSection("shop_items").getKeys(false)) {
-			ItemStack item = ItemsUtils.crearItem(shop, "shop_items."+key);
+			ItemStack item = ItemsUtils.creaItem(shop, "shop_items."+key);
 			int slot = Integer.valueOf(shop.getString("shop_items."+key+".slot"));
 			if(slot != - 1) {
 				inv.setItem(slot, item);
@@ -87,7 +87,7 @@ public class InventoryInteractEventHandler implements Listener{
 		FileConfiguration config = plugin.getConfig();
 		Inventory inv = Bukkit.createInventory(null, 54, ChatColor.translateAlternateColorCodes('&', shop.getString("shopPerksInventoryTitle")));
 		for(String key : shop.getConfigurationSection("perks_items").getKeys(false)) {
-			ItemStack item = ItemsUtils.crearItem(shop, "perks_items."+key);
+			ItemStack item = ItemsUtils.creaItem(shop, "perks_items."+key);
 			if(key.equals("coins_info")) {
 				ItemMeta meta = item.getItemMeta();
 				if(config.getString("economy_used").equals("vault")) {
@@ -111,7 +111,7 @@ public class InventoryInteractEventHandler implements Listener{
 			}
 				
 		}
-		ItemStack item = ItemsUtils.crearItem(shop, "perks_items.decorative_item");
+		ItemStack item = ItemsUtils.creaItem(shop, "perks_items.decorative_item");
 		for(int i=0;i<=8;i++) {
 			inv.setItem(i, item);
 		}
@@ -123,9 +123,9 @@ public class InventoryInteractEventHandler implements Listener{
 		List<String> lista = shop.getStringList("perks_upgrades.extra_lives");
 		for(int i=0;i<lista.size();i++) {
 			if(i > levelExtraLives-1) {
-				item = ItemsUtils.crearItem(shop, "perks_items.extra_lives_perk_item");
+				item = ItemsUtils.creaItem(shop, "perks_items.extra_lives_perk_item");
 			}else {
-				item = ItemsUtils.crearItem(shop, "perks_items.extra_lives_bought_perk_item");
+				item = ItemsUtils.creaItem(shop, "perks_items.extra_lives_bought_perk_item");
 			}
 			ItemMeta meta = item.getItemMeta();
 			String[] separados = lista.get(i).split(";");
@@ -147,9 +147,9 @@ public class InventoryInteractEventHandler implements Listener{
 		lista = shop.getStringList("perks_upgrades.initial_killcoins");
 		for(int i=0;i<lista.size();i++) {
 			if(i > levelInitialKillcoins-1) {
-				item = ItemsUtils.crearItem(shop, "perks_items.initial_killcoins_perk_item");
+				item = ItemsUtils.creaItem(shop, "perks_items.initial_killcoins_perk_item");
 			}else {
-				item = ItemsUtils.crearItem(shop, "perks_items.initial_killcoins_bought_perk_item");
+				item = ItemsUtils.creaItem(shop, "perks_items.initial_killcoins_bought_perk_item");
 			}
 			ItemMeta meta = item.getItemMeta();
 			String[] separados = lista.get(i).split(";");
@@ -171,9 +171,9 @@ public class InventoryInteractEventHandler implements Listener{
 		lista = shop.getStringList("perks_upgrades.extra_killcoins");
 		for(int i=0;i<lista.size();i++) {
 			if(i > levelExtraKillcoins-1) {
-				item = ItemsUtils.crearItem(shop, "perks_items.extra_killcoins_perk_item");
+				item = ItemsUtils.creaItem(shop, "perks_items.extra_killcoins_perk_item");
 			}else {
-				item = ItemsUtils.crearItem(shop, "perks_items.extra_killcoins_bought_perk_item");
+				item = ItemsUtils.creaItem(shop, "perks_items.extra_killcoins_bought_perk_item");
 			}	
 			ItemMeta meta = item.getItemMeta();
 			String[] separados = lista.get(i).split(";");
@@ -273,9 +273,9 @@ public class InventoryInteractEventHandler implements Listener{
 										}else {
 											plugin.registerPlayer(jugador.getUniqueId().toString()+".yml");
 											if(plugin.getPlayer(jugador.getName()) == null) {
-												plugin.addPlayer(new Player(jugador.getName(),jugador.getUniqueId().toString(),0,0,0,0,0,new ArrayList<Perk>(),new ArrayList<Hat>()));
+												plugin.addPlayer(new PaintballPlayer(jugador.getName(),jugador.getUniqueId().toString(),0,0,0,0,0,new ArrayList<Perk>(),new ArrayList<Hat>()));
 											}
-											Player jDatos = plugin.getPlayer(jugador.getName());
+											PaintballPlayer jDatos = plugin.getPlayer(jugador.getName());
 											jDatos.setPerk(perk, nivel+1);
 										}
 										jugador.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("perkUnlocked").replace("%name%", separados[2]))); 
@@ -316,7 +316,7 @@ public class InventoryInteractEventHandler implements Listener{
 		FileConfiguration config = plugin.getConfig();
 		Inventory inv = Bukkit.createInventory(null, 54, ChatColor.translateAlternateColorCodes('&', shop.getString("shopHatsInventoryTitle")));
 		for(String key : shop.getConfigurationSection("hats_items").getKeys(false)) {
-			ItemStack item = ItemsUtils.crearItem(shop, "hats_items."+key);
+			ItemStack item = ItemsUtils.creaItem(shop, "hats_items."+key);
 			if(key.equals("coins_info")) {
 				ItemMeta meta = item.getItemMeta();
 				if(config.getString("economy_used").equals("vault")) {
@@ -430,9 +430,9 @@ public class InventoryInteractEventHandler implements Listener{
 									}else {
 										plugin.registerPlayer(jugador.getUniqueId().toString()+".yml");
 										if(plugin.getPlayer(jugador.getName()) == null) {
-											plugin.addPlayer(new Player(jugador.getName(),jugador.getUniqueId().toString(),0,0,0,0,0,new ArrayList<Perk>(),new ArrayList<Hat>()));
+											plugin.addPlayer(new PaintballPlayer(jugador.getName(),jugador.getUniqueId().toString(),0,0,0,0,0,new ArrayList<Perk>(),new ArrayList<Hat>()));
 										}
-										Player jDatos = plugin.getPlayer(jugador.getName());
+										PaintballPlayer jDatos = plugin.getPlayer(jugador.getName());
 										jDatos.addHat(key);
 									}
 									jugador.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("hatBought").replace("%name%", shop.getString("hats_items."+key+".name")))); 

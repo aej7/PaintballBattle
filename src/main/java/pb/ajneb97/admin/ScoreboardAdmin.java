@@ -15,10 +15,10 @@ import org.bukkit.scheduler.BukkitScheduler;
 
 import me.clip.placeholderapi.PlaceholderAPI;
 import pb.ajneb97.PaintballBattle;
-import pb.ajneb97.logic.Team;
-import pb.ajneb97.enums.MatchState;
+import pb.ajneb97.logic.PaintballTeam;
+import pb.ajneb97.enums.ArenaState;
 import pb.ajneb97.logic.PaintballPlayer;
-import pb.ajneb97.logic.PaintballMatch;
+import pb.ajneb97.logic.PaintballArena;
 import pb.ajneb97.lib.fastboard.FastBoard;
 import pb.ajneb97.utils.OthersUtils;
 
@@ -49,10 +49,10 @@ public class ScoreboardAdmin {
 	}
 	
 	protected void actualizarScoreboard(final Player player,final FileConfiguration messages,final FileConfiguration config) {
-		PaintballMatch paintballMatch = plugin.getPlayersMatch(player.getName());
+		PaintballArena paintballArena = plugin.getPlayersMatch(player.getName());
 		FastBoard board = boards.get(player.getUniqueId());
-		if(paintballMatch != null) {
-			PaintballPlayer jugador = paintballMatch.getPlayer(player.getName());
+		if(paintballArena != null) {
+			PaintballPlayer jugador = paintballArena.getPlayer(player.getName());
 			if(board == null) {
 				board = new FastBoard(player);
 				board.updateTitle(ChatColor.translateAlternateColorCodes('&',messages.getString("gameScoreboardTitle")));
@@ -60,16 +60,16 @@ public class ScoreboardAdmin {
 			}
 			
 			List<String> lista = messages.getStringList("gameScoreboardBody");
-			Team team1 = paintballMatch.getTeam1();
-			Team team2 = paintballMatch.getTeam2();
-			String equipo1Nombre = config.getString("teams."+ team1.getTipo()+".name");
-			String equipo2Nombre = config.getString("teams."+ team2.getTipo()+".name");
+			PaintballTeam paintballTeam1 = paintballArena.getTeam1();
+			PaintballTeam paintballTeam2 = paintballArena.getTeam2();
+			String equipo1Nombre = config.getString("teams."+ paintballTeam1.getColor()+".name");
+			String equipo2Nombre = config.getString("teams."+ paintballTeam2.getColor()+".name");
 
 			for(int i=0;i<lista.size();i++) {
-				String message = ChatColor.translateAlternateColorCodes('&', lista.get(i).replace("%status%", getEstado(paintballMatch,messages)).replace("%team_1%", equipo1Nombre)
-						.replace("%team_2%", equipo2Nombre).replace("%team_1_lives%", team1.getVidas()+"").replace("%team_2_lives%", team2.getVidas()+"")
-						.replace("%kills%", jugador.getAsesinatos()+"").replace("%arena%", paintballMatch.getMatchNumber()).replace("%current_players%", paintballMatch.getPlayerAmount()+"")
-						.replace("%max_players%", paintballMatch.getMaximumPlayerAmount()+""));
+				String message = ChatColor.translateAlternateColorCodes('&', lista.get(i).replace("%status%", getEstado(paintballArena,messages)).replace("%team_1%", equipo1Nombre)
+						.replace("%team_2%", equipo2Nombre).replace("%team_1_lives%", paintballTeam1.getLives()+"").replace("%team_2_lives%", paintballTeam2.getLives()+"")
+						.replace("%kills%", jugador.getKills()+"").replace("%arena%", paintballArena.getMatchNumber()).replace("%current_players%", paintballArena.getPlayerAmount()+"")
+						.replace("%max_players%", paintballArena.getMaximumPlayerAmount()+""));
 				if(Bukkit.getServer().getPluginManager().getPlugin("PlaceholderAPI")!= null){
 					message = PlaceholderAPI.setPlaceholders(player, message);
 				}
@@ -83,18 +83,18 @@ public class ScoreboardAdmin {
 		}
 	}
 	
-	private String getEstado(PaintballMatch paintballMatch, FileConfiguration messages) {
+	private String getEstado(PaintballArena paintballArena, FileConfiguration messages) {
 		//Remplazar variables del %time%
-		if(paintballMatch.getState().equals(MatchState.WAITING)) {
+		if(paintballArena.getState().equals(ArenaState.WAITING)) {
 			return messages.getString("statusWaiting");
-		}else if(paintballMatch.getState().equals(MatchState.STARTING)) {
-			int tiempo = paintballMatch.getTime();
+		}else if(paintballArena.getState().equals(ArenaState.STARTING)) {
+			int tiempo = paintballArena.getTime();
 			return messages.getString("statusStarting").replace("%time%", OthersUtils.getTiempo(tiempo));
-		}else if(paintballMatch.getState().equals(MatchState.ENDING)) {
-			int tiempo = paintballMatch.getTime();
+		}else if(paintballArena.getState().equals(ArenaState.ENDING)) {
+			int tiempo = paintballArena.getTime();
 			return messages.getString("statusFinishing").replace("%time%", OthersUtils.getTiempo(tiempo));
 		}else {
-			int tiempo = paintballMatch.getTime();
+			int tiempo = paintballArena.getTime();
 			return messages.getString("statusIngame").replace("%time%", OthersUtils.getTiempo(tiempo));
 		}
 	}

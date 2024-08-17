@@ -35,12 +35,11 @@ import pb.ajneb97.api.PaintballAPI;
 import pb.ajneb97.api.Perk;
 import pb.ajneb97.configuration.PlayerConfig;
 import pb.ajneb97.database.DatabaseConnection;
-import pb.ajneb97.database.Player;
+import pb.ajneb97.database.PaintballPlayer;
 import pb.ajneb97.database.MySql;
-import pb.ajneb97.enums.MatchState;
-import pb.ajneb97.logic.PaintballPlayer;
-import pb.ajneb97.logic.PaintballMatch;
-import pb.ajneb97.logic.PaintballMatchEdit;
+import pb.ajneb97.enums.ArenaState;
+import pb.ajneb97.logic.PaintballArena;
+import pb.ajneb97.logic.PaintballArenaEdit;
 import pb.ajneb97.eventhandlers.OnPlayerJoinEventHandler;
 import pb.ajneb97.admin.SignAdmin;
 import pb.ajneb97.eventhandlers.SignInteractEventHandler;
@@ -51,7 +50,7 @@ import pb.ajneb97.logic.InventarioHats;
 import pb.ajneb97.eventhandlers.InventoryInteractEventHandler;
 import pb.ajneb97.eventhandlers.PlayerActionsEventHandler;
 import pb.ajneb97.eventhandlers.MatchEventHandlerNew;
-import pb.ajneb97.logic.PartidaManager;
+import pb.ajneb97.logic.ArenaManager;
 import pb.ajneb97.admin.ScoreboardAdmin;
 import pb.ajneb97.logic.TopHologram;
 import pb.ajneb97.admin.TopHologramAdmin;
@@ -62,16 +61,16 @@ public class PaintballBattle extends JavaPlugin {
   PluginDescriptionFile pluginDescriptionFile = getDescription();
   public String version = pluginDescriptionFile.getVersion();
   public static String prefix = ChatColor.translateAlternateColorCodes('&', "&8[&b&lPaintball Battle&8] ");
-  private List<PaintballMatch> paintballMatches;
+  private List<PaintballArena> paintballArenas;
   private FileConfiguration arenas = null;
   private File arenasFile = null;
   private FileConfiguration messages = null;
   private File messagesFile = null;
   private FileConfiguration shop = null;
   private File shopFile = null;
-  private PaintballMatchEdit paintballMatchEdit;
+  private PaintballArenaEdit paintballArenaEdit;
   private List<PlayerConfig> playerConfigs;
-  private List<Player> players;
+  private List<PaintballPlayer> paintballPlayers;
   private List<TopHologram> topHolograms;
   private FileConfiguration holograms = null;
   private File hologramsFile = null;
@@ -91,20 +90,20 @@ public class PaintballBattle extends JavaPlugin {
   @SuppressWarnings("unused")
   public void onEnable(){
     playerConfigs = new ArrayList<>();
-    players = new ArrayList<>();
+    paintballPlayers = new ArrayList<>();
     topHolograms = new ArrayList<>();
     registerEvents();
-    registerArenas();
+    initializeArenas();
     registerConfig();
     registerHolograms();
     registerMessages();
     createPlayersFolder();
     registerPlayers();
     registerShop();
-    registerPaintballMatch();
+    registerPaintballArena();
     registerCommands();
     checkMessagesUpdate();
-    cargarJugadores();
+    loadPlayers();
     setupEconomy();
 
     if(MySql.isEnabled(getConfig())){
@@ -134,10 +133,10 @@ public class PaintballBattle extends JavaPlugin {
   }
 
   public void onDisable(){
-    if(paintballMatches != null) {
-      for (PaintballMatch paintballMatch : paintballMatches) {
-        if (!paintballMatch.getState().equals(MatchState.OFF)) {
-          PartidaManager.finalizarPartida(paintballMatch, this, true, null);
+    if(paintballArenas != null) {
+      for (PaintballArena paintballArena : paintballArenas) {
+        if (!paintballArena.getState().equals(ArenaState.OFF)) {
+          ArenaManager.finalizarPartida(paintballArena, this, true, null);
         }
       }
     }
@@ -169,16 +168,16 @@ public class PaintballBattle extends JavaPlugin {
     topHologramAdmin.scheduledUpdateHolograms();
   }
 
-  public void setPaintballMatchEdit(PaintballMatchEdit p) {
-    this.paintballMatchEdit = p;
+  public void setPaintballMatchEdit(PaintballArenaEdit p) {
+    this.paintballArenaEdit = p;
   }
 
   public void removePaintballMatchEdit() {
-    this.paintballMatchEdit = null;
+    this.paintballArenaEdit = null;
   }
 
-  public PaintballMatchEdit getPaintballMatchEdit() {
-    return this.paintballMatchEdit;
+  public PaintballArenaEdit getPaintballMatchEdit() {
+    return this.paintballArenaEdit;
   }
 
   public DatabaseConnection getDatabaseConnection() {
@@ -217,42 +216,42 @@ public class PaintballBattle extends JavaPlugin {
     Objects.requireNonNull(this.getCommand("paintball")).setExecutor(new CommandHandler(this));
   }
 
-  public PaintballMatch getPlayersMatch(String playerName) {
-    for (PaintballMatch paintballMatch : paintballMatches) {
-      ArrayList<PaintballPlayer> players = paintballMatch.getPlayers();
-      for (PaintballPlayer player : players) {
-        if (player.getJugador().getName().equals(playerName)) {
-          return paintballMatch;
+  public PaintballArena getPlayersMatch(String playerName) {
+    for (PaintballArena paintballArena : paintballArenas) {
+      ArrayList<pb.ajneb97.logic.PaintballPlayer> paintballPlayers = paintballArena.getPlayers();
+      for (pb.ajneb97.logic.PaintballPlayer paintballPlayer : paintballPlayers) {
+        if (paintballPlayer.getPlayer().getName().equals(playerName)) {
+          return paintballArena;
         }
       }
     }
     return null;
   }
 
-  public List<PaintballMatch> getPaintballMatches() {
-    return this.paintballMatches;
+  public List<PaintballArena> getPaintballMatches() {
+    return this.paintballArenas;
   }
 
-  public PaintballMatch getMatch(String number) {
-    for (PaintballMatch paintballMatch : paintballMatches) {
-      if (paintballMatch.getMatchNumber().equals(number)) {
-        return paintballMatch;
+  public PaintballArena getMatch(String number) {
+    for (PaintballArena paintballArena : paintballArenas) {
+      if (paintballArena.getMatchNumber().equals(number)) {
+        return paintballArena;
       }
     }
     return null;
   }
 
-  public void addPaintballMatch(PaintballMatch paintballMatch) {
-    this.paintballMatches.add(paintballMatch);
+  public void addPaintballMatch(PaintballArena paintballArena) {
+    this.paintballArenas.add(paintballArena);
   }
 
   public void removePaintballMatch(String number) {
-    paintballMatches.removeIf(match -> match.getMatchNumber().equals(number));
+    paintballArenas.removeIf(match -> match.getMatchNumber().equals(number));
   }
 
-  public void registerPaintballMatch() {
-    this.paintballMatches = new ArrayList<PaintballMatch>();
-    FileConfiguration arenasConfig = getArenasConfig();
+  public void registerPaintballArena() {
+    this.paintballArenas = new ArrayList<PaintballArena>();
+    FileConfiguration arenasConfig = getArenas();
 
     if(arenasConfig.contains("Arenas")) {
       ConfigurationSection arenasSection = arenasConfig.getConfigurationSection("Arenas");
@@ -273,32 +272,32 @@ public class PaintballBattle extends JavaPlugin {
         String team2Name = arenasConfig.getString(arenaPath + "Team2.name");
         Location team2Spawn = getLocationFromConfig(arenaPath + "Team2.Spawn");
 
-        PaintballMatch paintballMatch = new PaintballMatch(arenaKey, time, team1Name, team2Name, lives);
+        PaintballArena paintballArena = new PaintballArena(arenaKey, time, team1Name, team2Name, lives);
 
         if ("random".equalsIgnoreCase(team1Name)) {
-          paintballMatch.getTeam1().setRandom(true);
+          paintballArena.getTeam1().setRandom(true);
         }
         if ("random".equalsIgnoreCase(team2Name)) {
-          paintballMatch.getTeam2().setRandom(true);
+          paintballArena.getTeam2().setRandom(true);
         }
 
-        paintballMatch.modifyTeams(getConfig());
-        paintballMatch.setMaximumPlayerAmount(maxPlayers);
-        paintballMatch.setMinimumPlayerAmount(minPlayers);
-        paintballMatch.setLobby(lobby);
-        paintballMatch.getTeam1().setSpawn(team1Spawn);
-        paintballMatch.getTeam2().setSpawn(team2Spawn);
+        paintballArena.modifyTeams(getConfig());
+        paintballArena.setMaximumPlayerAmount(maxPlayers);
+        paintballArena.setMinimumPlayerAmount(minPlayers);
+        paintballArena.setLobby(lobby);
+        paintballArena.getTeam1().setSpawn(team1Spawn);
+        paintballArena.getTeam2().setSpawn(team2Spawn);
 
         String enabled = arenasConfig.getString(arenaPath + "enabled");
-        paintballMatch.setState("true".equalsIgnoreCase(enabled) ? MatchState.WAITING : MatchState.OFF);
+        paintballArena.setState("true".equalsIgnoreCase(enabled) ? ArenaState.WAITING : ArenaState.OFF);
 
-        this.paintballMatches.add(paintballMatch);
+        this.paintballArenas.add(paintballArena);
       }
     }
   }
 
   private Location getLocationFromConfig(String basePath) throws NullPointerException {
-    FileConfiguration arenasConfig = getArenasConfig();
+    FileConfiguration arenasConfig = getArenas();
     if (!arenasConfig.contains(basePath)) {
       return null;
     }
@@ -315,12 +314,12 @@ public class PaintballBattle extends JavaPlugin {
   }
 
   public void saveMatches() {
-    FileConfiguration arenas = getArenasConfig();
+    FileConfiguration arenas = getArenas();
     arenas.set("Arenas", null);
 
-    for(PaintballMatch match : this.paintballMatches) {
+    for(PaintballArena match : this.paintballArenas) {
       String matchPath = String.format("Arenas.%s.", match.getMatchNumber());
-      match.getEquipoJugador()
+      match.GetPlayerTeam()
       arenas.set("Arenas."+matchNumber+".min_players", match.getMinimumPlayerAmount()+"");
       arenas.set("Arenas."+matchNumber+".max_players", match.getMaximumPlayerAmount()+"");
       arenas.set("Arenas."+matchNumber+".time", match.getMaximumTime()+"");
@@ -344,10 +343,10 @@ public class PaintballBattle extends JavaPlugin {
         arenas.set("Arenas."+matchNumber+".Team1.Spawn.pitch", lSpawnTeam1.getPitch());
         arenas.set("Arenas."+matchNumber+".Team1.Spawn.yaw", lSpawnTeam1.getYaw());
       }
-      if(match.getTeam1().esRandom()) {
+      if(match.getTeam1().isRandom()) {
         arenas.set("Arenas."+matchNumber+".Team1.name", "random");
       }else {
-        arenas.set("Arenas."+matchNumber+".Team1.name", match.getTeam1().getTipo());
+        arenas.set("Arenas."+matchNumber+".Team1.name", match.getTeam1().getColor());
       }
 
 
@@ -360,13 +359,13 @@ public class PaintballBattle extends JavaPlugin {
         arenas.set("Arenas."+matchNumber+".Team2.Spawn.pitch", lSpawnTeam2.getPitch());
         arenas.set("Arenas."+matchNumber+".Team2.Spawn.yaw", lSpawnTeam2.getYaw());
       }
-      if(match.getTeam2().esRandom()) {
+      if(match.getTeam2().isRandom()) {
         arenas.set("Arenas."+matchNumber+".Team2.name", "random");
       }else {
-        arenas.set("Arenas."+matchNumber+".Team2.name", match.getTeam2().getTipo());
+        arenas.set("Arenas."+matchNumber+".Team2.name", match.getTeam2().getColor());
       }
 
-      if(match.getState().equals(MatchState.OFF)) {
+      if(match.getState().equals(ArenaState.OFF)) {
         arenas.set("Arenas."+matchNumber+".enabled", "false");
       }else {
         arenas.set("Arenas."+matchNumber+".enabled", "true");
@@ -375,13 +374,14 @@ public class PaintballBattle extends JavaPlugin {
     this.saveArenas();
   }
 
-  public void registerArenas(){
+  public void initializeArenas() {
     arenasFile = new File(this.getDataFolder(), "arenas.yml");
     if(!arenasFile.exists()){
-      this.getArenasConfig().options().copyDefaults(true);
+      this.getArenas().options().copyDefaults(true);
       saveArenas();
     }
   }
+
   public void saveArenas() {
     try {
       arenas.save(arenasFile);
@@ -390,7 +390,7 @@ public class PaintballBattle extends JavaPlugin {
     }
   }
 
-  public FileConfiguration getArenasConfig() {
+  public FileConfiguration getArenas() {
     if (arenas == null) {
       reloadArenas();
     }
@@ -403,13 +403,11 @@ public class PaintballBattle extends JavaPlugin {
     }
     arenas = YamlConfiguration.loadConfiguration(arenasFile);
 
-    Reader defConfigStream;
+    Reader defaultConfigStream;
     try {
-      defConfigStream = new InputStreamReader(this.getResource("arenas.yml"), "UTF8");
-      if (defConfigStream != null) {
-        YamlConfiguration defConfig = YamlConfiguration.loadConfiguration(defConfigStream);
-        arenas.setDefaults(defConfig);
-      }
+      defaultConfigStream = new InputStreamReader(this.getResource("arenas.yml"), "UTF8");
+      YamlConfiguration defConfig = YamlConfiguration.loadConfiguration(defaultConfigStream);
+      arenas.setDefaults(defConfig);
     } catch (UnsupportedEncodingException e) {
       e.printStackTrace();
     }
@@ -576,7 +574,7 @@ public class PaintballBattle extends JavaPlugin {
     }
   }
 
-  public void cargarJugadores() {
+  public void loadPlayers() {
     if(!MySql.isEnabled(getConfig())) {
       for(PlayerConfig playerConfig : playerConfigs) {
         FileConfiguration players = playerConfig.getConfig();
@@ -622,26 +620,26 @@ public class PaintballBattle extends JavaPlugin {
         }
 
 
-        this.addPlayer(new Player(jugador,playerConfig.getPath().replace(".yml", ""),wins,loses,ties,kills,coins,perks,hats));
+        this.addPlayer(new PaintballPlayer(jugador,playerConfig.getPath().replace(".yml", ""),wins,loses,ties,kills,coins,perks,hats));
       }
     }
   }
 
   public void savePlayers() {
     if(!MySql.isEnabled(getConfig())) {
-      for(Player player : players) {
-        String playerName = player.getName();
-        PlayerConfig playerConfig = getPlayerConfig(player.getUUID()+".yml");
+      for(PaintballPlayer paintballPlayer : paintballPlayers) {
+        String playerName = paintballPlayer.getName();
+        PlayerConfig playerConfig = getPlayerConfig(paintballPlayer.getUUID()+".yml");
         FileConfiguration config = playerConfig.getConfig();
 
         config.set("name", playerName);
-        config.set("kills", player.getKills());
-        config.set("wins", player.getWins());
-        config.set("ties", player.getTies());
-        config.set("losses", player.getLosses());
-        config.set("coins", player.getCoins());
-        config.set("perks", player.getNamesAndLevelsOfPerks());
-        config.set("hats", player.getNamesAndLevelsOfHats());
+        config.set("kills", paintballPlayer.getKills());
+        config.set("wins", paintballPlayer.getWins());
+        config.set("ties", paintballPlayer.getTies());
+        config.set("losses", paintballPlayer.getLosses());
+        config.set("coins", paintballPlayer.getCoins());
+        config.set("perks", paintballPlayer.getNamesAndLevelsOfPerks());
+        config.set("hats", paintballPlayer.getNamesAndLevelsOfHats());
       }
 
       try {
@@ -654,21 +652,21 @@ public class PaintballBattle extends JavaPlugin {
     }
   }
 
-  public void addPlayer(Player player) {
-    players.add(player);
+  public void addPlayer(PaintballPlayer paintballPlayer) {
+    paintballPlayers.add(paintballPlayer);
   }
 
-  public Player getPlayer(String playerName) {
-    for(Player player : players) {
-      if(player != null && player.getName() != null && player.getName().equals(playerName)) {
-        return player;
+  public PaintballPlayer getPlayer(String playerName) {
+    for(PaintballPlayer paintballPlayer : paintballPlayers) {
+      if(paintballPlayer != null && paintballPlayer.getName() != null && paintballPlayer.getName().equals(playerName)) {
+        return paintballPlayer;
       }
     }
     return null;
   }
 
-  public List<Player> getJugadores(){
-    return this.players;
+  public List<PaintballPlayer> getJugadores(){
+    return this.paintballPlayers;
   }
 
   public void registerHolograms(){

@@ -381,7 +381,7 @@ public class MySql {
 				
 		}
 		
-		public static Player getJugador(PaintballBattle plugin, String name){
+		public static PaintballPlayer getJugador(PaintballBattle plugin, String name){
 			try {
 				PreparedStatement statement = plugin.getDatabaseConnection().getConnection().prepareStatement("SELECT * FROM "+plugin.getDatabaseConnection().getTablePlayers()+" WHERE (Global_Data=1 AND Name=?)");
 				statement.setString(1, name);
@@ -392,7 +392,7 @@ public class MySql {
 					int ties = resultado.getInt("Tie");
 					int kills = resultado.getInt("Kills");
 					int coins = resultado.getInt("Coins");
-					Player p = new Player(name,"",wins,loses,ties,kills,coins,null,null);
+					PaintballPlayer p = new PaintballPlayer(name,"",wins,loses,ties,kills,coins,null,null);
 					return p;
 				}		
 			} catch (SQLException e) {
@@ -402,9 +402,9 @@ public class MySql {
 			return null;
 		}
 		
-		public static ArrayList<Player> getPlayerDataMonthly(PaintballBattle plugin){
+		public static ArrayList<PaintballPlayer> getPlayerDataMonthly(PaintballBattle plugin){
 			
-			ArrayList<Player> players = new ArrayList<Player>();
+			ArrayList<PaintballPlayer> paintballPlayers = new ArrayList<PaintballPlayer>();
 			Calendar calendar = Calendar.getInstance();
 			Date date = new Date();
 			calendar.setTime(date);
@@ -415,10 +415,10 @@ public class MySql {
 				ResultSet resultado = statement.executeQuery();	
 				while(resultado.next()){
 					String name = resultado.getString("Name");
-					if(!yaContieneJugador(players,name)) {
+					if(!yaContieneJugador(paintballPlayers,name)) {
 						int[] stats = getStatsTotalesMonthly(plugin,name,mes,año);
-						Player p = new Player(name,"",stats[0],stats[1],stats[2],stats[3],0,null,null);
-						players.add(p);
+						PaintballPlayer p = new PaintballPlayer(name,"",stats[0],stats[1],stats[2],stats[3],0,null,null);
+						paintballPlayers.add(p);
 					}	
 				}		
 			} catch (SQLException e) {
@@ -426,12 +426,12 @@ public class MySql {
 				e.printStackTrace();
 			}
 			
-			return players;
+			return paintballPlayers;
 		}
 		
-		public static ArrayList<Player> getPlayerDataWeekly(PaintballBattle plugin){
+		public static ArrayList<PaintballPlayer> getPlayerDataWeekly(PaintballBattle plugin){
 			
-			ArrayList<Player> players = new ArrayList<Player>();
+			ArrayList<PaintballPlayer> paintballPlayers = new ArrayList<PaintballPlayer>();
 			Calendar calendar = Calendar.getInstance();
 			Date date = new Date();
 			calendar.setTime(date);
@@ -444,10 +444,10 @@ public class MySql {
 				ResultSet resultado = statement.executeQuery();	
 				while(resultado.next()){
 					String name = resultado.getString("Name");
-					if(!yaContieneJugador(players,name)) {
+					if(!yaContieneJugador(paintballPlayers,name)) {
 						int[] stats = getStatsTotalesWeekly(plugin,name,mes,año,semana);
-						Player p = new Player(name,"",stats[0],stats[1],stats[2],stats[3],0,null,null);
-						players.add(p);
+						PaintballPlayer p = new PaintballPlayer(name,"",stats[0],stats[1],stats[2],stats[3],0,null,null);
+						paintballPlayers.add(p);
 					}	
 				}		
 			} catch (SQLException e) {
@@ -455,11 +455,11 @@ public class MySql {
 				e.printStackTrace();
 			}
 			
-			return players;
+			return paintballPlayers;
 		}
 		
-		private static boolean yaContieneJugador(ArrayList<Player> players, String player) {
-			for(Player p : players) {
+		private static boolean yaContieneJugador(ArrayList<PaintballPlayer> paintballPlayers, String player) {
+			for(PaintballPlayer p : paintballPlayers) {
 				if(p.getName().equals(player)) {
 					return true;
 				}
@@ -510,27 +510,27 @@ public class MySql {
 		}
 		
 		//Se cargan solo las globales
-		public static ArrayList<Player> getPlayerData(PaintballBattle plugin){
-			ArrayList<Player> players = new ArrayList<Player>();
+		public static ArrayList<PaintballPlayer> getPlayerData(PaintballBattle plugin){
+			ArrayList<PaintballPlayer> paintballPlayers = new ArrayList<PaintballPlayer>();
 			try {
 				PreparedStatement statement = plugin.getDatabaseConnection().getConnection().prepareStatement("SELECT * FROM "+plugin.getDatabaseConnection().getTablePlayers()+" WHERE Global_Data=1");
 				ResultSet resultado = statement.executeQuery();	
 				while(resultado.next()){			
 					String name = resultado.getString("Name");
-					if(!yaContieneJugador(players,name)) {
+					if(!yaContieneJugador(paintballPlayers,name)) {
 						int wins = resultado.getInt("Win");
 						int loses = resultado.getInt("Lose");
 						int ties = resultado.getInt("Tie");
 						int kills = resultado.getInt("Kills");
 						int coins = resultado.getInt("Coins");
-						Player p = new Player(name,"",wins,loses,ties,kills,coins,null,null);
-						players.add(p);
+						PaintballPlayer p = new PaintballPlayer(name,"",wins,loses,ties,kills,coins,null,null);
+						paintballPlayers.add(p);
 					}	
 				}		
 			} catch (SQLException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-			return players;
+			return paintballPlayers;
 		}
 }
