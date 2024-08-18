@@ -15,6 +15,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -454,10 +455,8 @@ public class PaintballBattle extends JavaPlugin {
     Reader defConfigStream;
     try {
       defConfigStream = new InputStreamReader(this.getResource("shop.yml"), "UTF8");
-      if (defConfigStream != null) {
-        YamlConfiguration defConfig = YamlConfiguration.loadConfiguration(defConfigStream);
-        shop.setDefaults(defConfig);
-      }
+      YamlConfiguration defConfig = YamlConfiguration.loadConfiguration(defConfigStream);
+      shop.setDefaults(defConfig);
     } catch (UnsupportedEncodingException e) {
       e.printStackTrace();
     }
@@ -495,10 +494,8 @@ public class PaintballBattle extends JavaPlugin {
     Reader defConfigStream;
     try {
       defConfigStream = new InputStreamReader(this.getResource("messages.yml"), "UTF8");
-      if (defConfigStream != null) {
-        YamlConfiguration defConfig = YamlConfiguration.loadConfiguration(defConfigStream);
-        messages.setDefaults(defConfig);
-      }
+      YamlConfiguration defConfig = YamlConfiguration.loadConfiguration(defConfigStream);
+      messages.setDefaults(defConfig);
     } catch (UnsupportedEncodingException e) {
       e.printStackTrace();
     }
@@ -520,23 +517,23 @@ public class PaintballBattle extends JavaPlugin {
     String path = this.getDataFolder() + File.separator + "players";
     File folder = new File(path);
     File[] listOfFiles = folder.listFiles();
-    for (int i=0;i<listOfFiles.length;i++) {
-      if(listOfFiles[i].isFile()) {
-        String pathName = listOfFiles[i].getName();
-        PlayerConfig config = new PlayerConfig(pathName,this);
+    for (File listOfFile : listOfFiles) {
+      if (listOfFile.isFile()) {
+        String pathName = listOfFile.getName();
+        PlayerConfig config = new PlayerConfig(pathName, this);
         config.registerPlayerConfig();
         playerConfigs.add(config);
       }
     }
   }
 
-  public ArrayList<PlayerConfig> getPlayerConfigs(){
+  public List<PlayerConfig> getPlayerConfigs(){
     return this.playerConfigs;
   }
 
   public boolean archivoYaRegistrado(String pathName) {
-    for(int i = 0; i< playerConfigs.size(); i++) {
-      if(playerConfigs.get(i).getPath().equals(pathName)) {
+    for (PlayerConfig playerConfig : playerConfigs) {
+      if (playerConfig.getPath().equals(pathName)) {
         return true;
       }
     }
@@ -544,41 +541,31 @@ public class PaintballBattle extends JavaPlugin {
   }
 
   public PlayerConfig getPlayerConfig(String pathName) {
-    for(int i = 0; i< playerConfigs.size(); i++) {
-      if(playerConfigs.get(i).getPath().equals(pathName)) {
-        return playerConfigs.get(i);
+    for (PlayerConfig playerConfig : playerConfigs) {
+      if (playerConfig.getPath().equals(pathName)) {
+        return playerConfig;
       }
     }
     return null;
   }
-  public ArrayList<PlayerConfig> getPlayerConfigs() {
-    return this.playerConfigs;
-  }
 
-  public boolean registerPlayer(String pathName) {
+  public void registerPlayer(String pathName) {
     if(!archivoYaRegistrado(pathName)) {
       PlayerConfig config = new PlayerConfig(pathName,this);
       config.registerPlayerConfig();
       playerConfigs.add(config);
-      return true;
-    }else {
-      return false;
     }
   }
 
-  public void removerConfigPlayer(String path) {
-    for(int i = 0; i< playerConfigs.size(); i++) {
-      if(playerConfigs.get(i).getPath().equals(path)) {
-        playerConfigs.remove(i);
-      }
-    }
+  public void removePlayerConfig(String path) {
+    playerConfigs.removeIf(playerConfig -> playerConfig.getPath().equals(path));
   }
 
   public void loadPlayers() {
     if(!MySql.isEnabled(getConfig())) {
       for(PlayerConfig playerConfig : playerConfigs) {
         FileConfiguration players = playerConfig.getConfig();
-        String jugador = players.getString("name");
+        String player = players.getString("name");
         int kills = 0;
         int wins = 0;
         int loses = 0;
@@ -586,43 +573,69 @@ public class PaintballBattle extends JavaPlugin {
         int coins = 0;
 
         if(players.contains("kills")) {
-          kills = Integer.valueOf(players.getString("kills"));
+          kills = Integer.parseInt(players.getString("kills"));
         }
         if(players.contains("wins")) {
-          wins = Integer.valueOf(players.getString("wins"));
+          wins = Integer.parseInt(players.getString("wins"));
         }
         if(players.contains("loses")) {
-          loses = Integer.valueOf(players.getString("loses"));
+          loses = Integer.parseInt(players.getString("loses"));
         }
         if(players.contains("ties")) {
-          ties = Integer.valueOf(players.getString("ties"));
+          ties = Integer.parseInt(players.getString("ties"));
         }
         if(players.contains("coins")) {
-          coins = Integer.valueOf(players.getString("coins"));
+          coins = Integer.parseInt(players.getString("coins"));
         }
-        ArrayList<Perk> perks = new ArrayList<Perk>();
+
+        List<Perk> perks = new ArrayList<Perk>();
         if(players.contains("perks")) {
-          List<String> listaPerks = players.getStringList("perks");
-          for(int i=0;i<listaPerks.size();i++) {
-            String[] separados = listaPerks.get(i).split(";");
-            Perk p = new Perk(separados[0],Integer.valueOf(separados[1]));
-            perks.add(p);
+          for (String perkName : players.getStringList("perks")) {
+            String[] sep = perkName.split(";");
+            Perk perk = new Perk(sep[0], Integer.parseInt(sep[1]));
+            perks.add(perk);
           }
         }
-        ArrayList<Hat> hats = new ArrayList<Hat>();
+
+        List<Hat> hats = new ArrayList<>();
         if(players.contains("hats")) {
-          List<String> listaHats = players.getStringList("hats");
-          for (String listaHat : listaHats) {
-            String[] separados = listaHat.split(";");
-            Hat h = new Hat(separados[0], Boolean.valueOf(separados[1]));
+          for (String hat : players.getStringList("hats")) {
+            String[] sep = hat.split(";");
+            Hat h = new Hat(sep[0], Boolean.parseBoolean(sep[1]));
             hats.add(h);
           }
         }
 
 
-        this.addPlayer(new PaintballPlayer(jugador,playerConfig.getPath().replace(".yml", ""),wins,loses,ties,kills,coins,perks,hats));
+        this.addPlayer(new PaintballPlayer(player,playerConfig.getPath().replace(".yml", ""), wins, loses, ties, kills, coins, perks, hats));
       }
     }
+  }
+
+  public <T> List<T> addPlayerPerksOrHat(FileConfiguration players, String contains) {
+    if (!players.contains(contains)) {
+      return List.of();
+    }
+    switch (contains) {
+      case "perks" -> {
+        for (String perkEntry : players.getStringList("perks")) {
+          String[] separatedPerkData = perkEntry.split(";");
+          String perkName = separatedPerkData[0];
+          int perkLevel = Integer.parseInt(separatedPerkData[1]);
+          Perk perk = new Perk(perkName, perkLevel);
+          perks.add(perk);
+        }
+      }
+      case "hats" -> {
+        for (String hatEntry : players.getStringList("perks")) {
+          String[] separatedHatData = hatEntry.split(";");
+          String hatName = separatedHatData[0];
+          boolean isEquipped = Boolean.parseBoolean(separatedHatData[1]);
+
+        }
+      }
+    }
+
   }
 
   public void savePlayers() {
