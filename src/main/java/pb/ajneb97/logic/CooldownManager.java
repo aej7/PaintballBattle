@@ -3,6 +3,8 @@ package pb.ajneb97.logic;
 import java.util.ArrayList;
 
 import pb.ajneb97.PaintballBattle;
+import pb.ajneb97.arena.ArenaManager;
+import pb.ajneb97.arena.PaintballArena;
 import pb.ajneb97.enums.ArenaState;
 
 import org.bukkit.Bukkit;
@@ -10,6 +12,7 @@ import org.bukkit.ChatColor;
 import org.bukkit.Sound;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.scheduler.BukkitScheduler;
+import pb.ajneb97.player.PaintballTeam;
 
 
 public class CooldownManager {

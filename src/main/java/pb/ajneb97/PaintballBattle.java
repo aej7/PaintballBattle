@@ -30,28 +30,29 @@ import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import net.milkbowl.vault.economy.Economy;
+
 import pb.ajneb97.api.ExpansionPaintballBattle;
-import pb.ajneb97.api.Hat;
-import pb.ajneb97.api.PaintballAPI;
-import pb.ajneb97.api.Perk;
+import pb.ajneb97.player.PaintballHat;
+import pb.ajneb97.database.PaintballPlayerDAO;
+import pb.ajneb97.player.PaintballPerk;
 import pb.ajneb97.configuration.PlayerConfig;
 import pb.ajneb97.database.DatabaseConnection;
 import pb.ajneb97.database.PaintballPlayer;
 import pb.ajneb97.database.MySql;
 import pb.ajneb97.enums.ArenaState;
-import pb.ajneb97.logic.PaintballArena;
-import pb.ajneb97.logic.PaintballArenaEdit;
+import pb.ajneb97.arena.PaintballArena;
+import pb.ajneb97.arena.PaintballArenaEdit;
 import pb.ajneb97.eventhandlers.OnPlayerJoinEventHandler;
 import pb.ajneb97.admin.SignAdmin;
 import pb.ajneb97.eventhandlers.SignInteractEventHandler;
 import pb.ajneb97.configuration.Checks;
 import pb.ajneb97.logic.CooldownKillstreaksActionbar;
 import pb.ajneb97.admin.InventoryAdmin;
-import pb.ajneb97.logic.InventarioHats;
+import pb.ajneb97.logic.HatsInventory;
 import pb.ajneb97.eventhandlers.InventoryInteractEventHandler;
 import pb.ajneb97.eventhandlers.PlayerActionsEventHandler;
 import pb.ajneb97.eventhandlers.MatchEventHandlerNew;
-import pb.ajneb97.logic.ArenaManager;
+import pb.ajneb97.arena.ArenaManager;
 import pb.ajneb97.admin.ScoreboardAdmin;
 import pb.ajneb97.logic.TopHologram;
 import pb.ajneb97.admin.TopHologramAdmin;
@@ -85,6 +86,7 @@ public class PaintballBattle extends JavaPlugin {
   private ScoreboardAdmin scoreboardAdmin;
   private SignAdmin signAdmin;
   private TopHologramAdmin topHologramAdmin;
+  private CooldownKillstreaksActionbar cooldownKillstreaksActionbar;
 
   private DatabaseConnection databaseConnection;
 
@@ -115,14 +117,14 @@ public class PaintballBattle extends JavaPlugin {
     scoreboardAdmin.reloadScoreboards();
     signAdmin = new SignAdmin(this);
     signAdmin.reloadSigns();
-    CooldownKillstreaksActionbar cooldownKillstreaksActionbar = new CooldownKillstreaksActionbar(this);
+    cooldownKillstreaksActionbar = new CooldownKillstreaksActionbar(this);
     cooldownKillstreaksActionbar.createActionbars();
 
     loadTopHolograms();
     topHologramAdmin = new TopHologramAdmin(this);
     topHologramAdmin.scheduledUpdateHolograms();
 
-    PaintballAPI api = new PaintballAPI(this);
+    PaintballPlayerDAO api = new PaintballPlayerDAO(this);
     if(Bukkit.getPluginManager().getPlugin("PlaceholderAPI") != null){
       new ExpansionPaintballBattle(this).register();
     }
@@ -209,7 +211,7 @@ public class PaintballBattle extends JavaPlugin {
     pm.registerEvents(new SignInteractEventHandler(this), this);
     pm.registerEvents(new InventoryAdmin(this), this);
     pm.registerEvents(new InventoryInteractEventHandler(this), this);
-    pm.registerEvents(new InventarioHats(this), this);
+    pm.registerEvents(new HatsInventory(this), this);
     pm.registerEvents(new OnPlayerJoinEventHandler(this), this);
   }
 
@@ -314,6 +316,8 @@ public class PaintballBattle extends JavaPlugin {
       return new Location(world, posX, posY, posZ, yaw, pitch);
   }
 
+
+  //TODO fix
   public void saveMatches() {
     FileConfiguration arenas = getArenas();
     arenas.set("Arenas", null);
@@ -566,6 +570,7 @@ public class PaintballBattle extends JavaPlugin {
       for(PlayerConfig playerConfig : playerConfigs) {
         FileConfiguration players = playerConfig.getConfig();
         String player = players.getString("name");
+
         int kills = 0;
         int wins = 0;
         int loses = 0;
@@ -575,67 +580,42 @@ public class PaintballBattle extends JavaPlugin {
         if(players.contains("kills")) {
           kills = Integer.parseInt(players.getString("kills"));
         }
+
         if(players.contains("wins")) {
           wins = Integer.parseInt(players.getString("wins"));
         }
+
         if(players.contains("loses")) {
           loses = Integer.parseInt(players.getString("loses"));
         }
+
         if(players.contains("ties")) {
           ties = Integer.parseInt(players.getString("ties"));
         }
+
         if(players.contains("coins")) {
           coins = Integer.parseInt(players.getString("coins"));
         }
 
-        List<Perk> perks = new ArrayList<Perk>();
+        List<PaintballPerk> paintballPerks = new ArrayList<>();
         if(players.contains("perks")) {
-          for (String perkName : players.getStringList("perks")) {
-            String[] sep = perkName.split(";");
-            Perk perk = new Perk(sep[0], Integer.parseInt(sep[1]));
-            perks.add(perk);
-          }
+          paintballPerks = players.getStringList("perks").stream()
+            .map(perkEntry -> perkEntry.split(";"))
+            .map(separatedPerkData -> new PaintballPerk(separatedPerkData[0], Integer.parseInt(separatedPerkData[1])))
+            .collect(Collectors.toList());
         }
 
-        List<Hat> hats = new ArrayList<>();
+        List<PaintballHat> paintballHats = new ArrayList<>();
         if(players.contains("hats")) {
-          for (String hat : players.getStringList("hats")) {
-            String[] sep = hat.split(";");
-            Hat h = new Hat(sep[0], Boolean.parseBoolean(sep[1]));
-            hats.add(h);
-          }
+          paintballHats = players.getStringList("hats").stream()
+            .map(hatEntry -> hatEntry.split(";"))
+            .map(separatedHatData -> new PaintballHat(separatedHatData[0], Boolean.parseBoolean(separatedHatData[1])))
+            .collect(Collectors.toList());
         }
 
-
-        this.addPlayer(new PaintballPlayer(player,playerConfig.getPath().replace(".yml", ""), wins, loses, ties, kills, coins, perks, hats));
+        addPlayer(new PaintballPlayer(player,playerConfig.getPath().replace(".yml", ""), wins, loses, ties, kills, coins, paintballPerks, paintballHats));
       }
     }
-  }
-
-  public <T> List<T> addPlayerPerksOrHat(FileConfiguration players, String contains) {
-    if (!players.contains(contains)) {
-      return List.of();
-    }
-    switch (contains) {
-      case "perks" -> {
-        for (String perkEntry : players.getStringList("perks")) {
-          String[] separatedPerkData = perkEntry.split(";");
-          String perkName = separatedPerkData[0];
-          int perkLevel = Integer.parseInt(separatedPerkData[1]);
-          Perk perk = new Perk(perkName, perkLevel);
-          perks.add(perk);
-        }
-      }
-      case "hats" -> {
-        for (String hatEntry : players.getStringList("perks")) {
-          String[] separatedHatData = hatEntry.split(";");
-          String hatName = separatedHatData[0];
-          boolean isEquipped = Boolean.parseBoolean(separatedHatData[1]);
-
-        }
-      }
-    }
-
   }
 
   public void savePlayers() {

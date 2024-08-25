@@ -1,11 +1,11 @@
 package pb.ajneb97.api;
 
-import org.bukkit.Bukkit;
-import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 
 import me.clip.placeholderapi.expansion.PlaceholderExpansion;
 import pb.ajneb97.PaintballBattle;
+import pb.ajneb97.database.PaintballPlayerDAO;
+
 /**
  * This class will automatically register as a placeholder expansion 
  * when a jar including this class is added to the directory 
@@ -102,33 +102,33 @@ public class ExpansionPaintballBattle extends PlaceholderExpansion {
         }
 
         if(identifier.equals("wins")){
-            return PaintballAPI.getWins(player)+"";
+            return PaintballPlayerDAO.getWins(player)+"";
         }
         
         if(identifier.equals("loses")){
-            return PaintballAPI.getLoses(player)+"";
+            return PaintballPlayerDAO.getLoses(player)+"";
         }
         
         if(identifier.equals("ties")){
-            return PaintballAPI.getTies(player)+"";
+            return PaintballPlayerDAO.getTies(player)+"";
         }
         
         if(identifier.equals("coins")){
-            return PaintballAPI.getCoins(player)+"";
+            return PaintballPlayerDAO.getCoins(player)+"";
         }
         
         if(identifier.equals("kills")){
-            return PaintballAPI.getKills(player)+"";
+            return PaintballPlayerDAO.getKills(player)+"";
         }
         
         if(identifier.startsWith("arenaplayers_count_")){
             String arena = identifier.replace("arenaplayers_count_", "");
-            return PaintballAPI.getPlayersArena(arena)+"";
+            return PaintballPlayerDAO.getPlayersArena(arena)+"";
         }
         
         if(identifier.startsWith("arena_status_")){
             String arena = identifier.replace("arena_status_", "");
-            return PaintballAPI.getStatusArena(arena)+"";
+            return PaintballPlayerDAO.getStatusArena(arena)+"";
         }
 
         // We return null if an invalid placeholder (f.e. %someplugin_placeholder3%) 

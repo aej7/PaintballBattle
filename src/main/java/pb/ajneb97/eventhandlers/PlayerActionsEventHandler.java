@@ -47,15 +47,15 @@ import me.clip.placeholderapi.PlaceholderAPI;
 import pb.ajneb97.PaintballBattle;
 import pb.ajneb97.logic.CooldownHats;
 import pb.ajneb97.logic.CooldownKillstreaks;
-import pb.ajneb97.logic.InventarioKillstreaks;
-import pb.ajneb97.logic.ArenaManager;
+import pb.ajneb97.logic.KillstreaksInventory;
+import pb.ajneb97.arena.ArenaManager;
 import pb.ajneb97.logic.CooldownSnowballParticle;
-import pb.ajneb97.logic.InventarioHats;
-import pb.ajneb97.logic.PaintballTeam;
+import pb.ajneb97.logic.HatsInventory;
+import pb.ajneb97.player.PaintballTeam;
 import pb.ajneb97.enums.ArenaState;
 import pb.ajneb97.logic.PaintballPlayer;
-import pb.ajneb97.logic.Killstreak;
-import pb.ajneb97.logic.PaintballArena;
+import pb.ajneb97.player.PaintballKillstreak;
+import pb.ajneb97.arena.PaintballArena;
 import pb.ajneb97.utils.ItemsUtils;
 
 public class PlayerActionsEventHandler implements Listener{
@@ -110,7 +110,7 @@ public class PlayerActionsEventHandler implements Listener{
 								// TODO Auto-generated method stub
 								jugador.updateInventory();
 								jugador.getEquipment().setHelmet(null);
-								InventarioHats.crearInventario(jugador, plugin);
+								HatsInventory.createInventory(jugador, plugin);
 							}
 						},2L);
 					}
@@ -214,7 +214,7 @@ public class PlayerActionsEventHandler implements Listener{
 								event.setCancelled(true);
 								Inventory inv = Bukkit.createInventory(null, 18, ChatColor.translateAlternateColorCodes('&', config.getString("killstreaks_inventory_title")));
 								jugador.openInventory(inv);
-								InventarioKillstreaks i = new InventarioKillstreaks(plugin);
+								KillstreaksInventory i = new KillstreaksInventory(plugin);
 								i.actualizarInventario(jugador, paintballArena);
 							}
 						}
@@ -537,7 +537,7 @@ public class PlayerActionsEventHandler implements Listener{
 										if(j.getSelectedHat().equals("time_hat")) {
 											duration = duration+5;
 										}
-										Killstreak k = new Killstreak(key,duration);
+										PaintballKillstreak k = new PaintballKillstreak(key,duration);
 										j.agregarKillstreak(k);
 										CooldownKillstreaks cooldown = new CooldownKillstreaks(plugin);
 										cooldown.cooldownKillstreak(j, paintballArena, key, duration);
@@ -623,7 +623,7 @@ public class PlayerActionsEventHandler implements Listener{
 			       
 			        
 					
-					Killstreak k = player.getKillstreak("triple_shoot");
+					PaintballKillstreak k = player.getKillstreak("triple_shoot");
 					if(k != null) {
 						Vector direccion = jugador.getLocation().getDirection().clone();
 						double anguloEntre = Math.toRadians(10);
@@ -674,7 +674,7 @@ public class PlayerActionsEventHandler implements Listener{
 				p.setMetadata("PaintballBattle", new FixedMetadataValue(plugin,"proyectil"));
 				p.setVelocity(p.getVelocity().multiply(1.25));
 				PaintballPlayer player = paintballArena.getPlayer(jugador.getName());
-				Killstreak k = player.getKillstreak("strong_arm");
+				PaintballKillstreak k = player.getKillstreak("strong_arm");
 				if(k != null) {
 					p.setVelocity(p.getVelocity().multiply(2));
 				}

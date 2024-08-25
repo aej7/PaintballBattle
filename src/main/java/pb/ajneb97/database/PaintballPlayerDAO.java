@@ -1,4 +1,4 @@
-package pb.ajneb97.api;
+package pb.ajneb97.database;
 
 import java.util.ArrayList;
 
@@ -6,30 +6,19 @@ import org.bukkit.configuration.file.FileConfiguration;
 
 import pb.ajneb97.PaintballBattle;
 import pb.ajneb97.database.PaintballPlayer;
-import pb.ajneb97.database.MySql;
 import pb.ajneb97.enums.ArenaState;
-import pb.ajneb97.logic.PaintballArena;
+import pb.ajneb97.arena.PaintballArena;
+import pb.ajneb97.player.PaintballHat;
+import pb.ajneb97.player.PaintballPerk;
+import pb.ajneb97.player.PaintballPlayer;
 
-public class PaintballAPI {
+public class PaintballPlayerDAO {
 
 	private static PaintballBattle plugin;
 	
-	public PaintballAPI(PaintballBattle plugin) {
+	public PaintballPlayerDAO(PaintballBattle plugin) {
 		this.plugin = plugin;
 	}
-	
-//	public static JugadorDatos getPaintballDatos(Player player) {
-//		if(!MySQL.isEnabled(plugin.getConfig())) {
-//			JugadorDatos j = plugin.getJugador(player.getName());
-//			if(j != null) {
-//				return new JugadorPaintballDatos(j.getWins(),j.getLoses(),j.getTies(),j.getKills(),j.getHats(),j.getPerks());
-//			}else {
-//				return new JugadorPaintballDatos(0,0,0,0,new ArrayList<Hat>(),new ArrayList<Perk>());
-//			}
-//		}else {
-//			return MySQL.getStatsTotales(plugin, player.getName(),"Coins");
-//		}
-//	}
 	
 	public static int getCoins(org.bukkit.entity.Player player) {
 		if(!MySql.isEnabled(plugin.getConfig())) {
@@ -40,7 +29,7 @@ public class PaintballAPI {
 				return 0;
 			}
 		}else {
-			return MySql.getStatsTotales(plugin, player.getName(),"Coins");
+			return MySql.getTotalStats(plugin, player.getName(),"Coins");
 		}
 	}
 	
@@ -51,7 +40,7 @@ public class PaintballAPI {
 				j.increaseCoinsByAmount(coins);
 			}
 		}else {
-			MySql.agregarCoinsJugadorAsync(plugin, player.getName(), coins);
+			MySql.addPlayerCoins(plugin, player.getName(), coins);
 		}
 	}
 	
@@ -62,7 +51,7 @@ public class PaintballAPI {
 				j.decreaseCoinsByAmount(coins);
 			}
 		}else {
-			MySql.removerCoinsJugadorAsync(plugin, player.getName(), coins);
+			MySql.removePlayerCoins(plugin, player.getName(), coins);
 		}
 	}
 	
@@ -75,7 +64,7 @@ public class PaintballAPI {
 				return 0;
 			}
 		}else {
-			return MySql.getStatsTotales(plugin, player.getName(),"Win");
+			return MySql.getTotalStats(plugin, player.getName(),"Win");
 		}
 		
 	}
@@ -89,7 +78,7 @@ public class PaintballAPI {
 				return 0;
 			}
 		}else {
-			return MySql.getStatsTotales(plugin, player.getName(),"Lose");
+			return MySql.getTotalStats(plugin, player.getName(),"Lose");
 		}
 		
 	}
@@ -103,7 +92,7 @@ public class PaintballAPI {
 				return 0;
 			}
 		}else {
-			return MySql.getStatsTotales(plugin, player.getName(),"Tie");
+			return MySql.getTotalStats(plugin, player.getName(),"Tie");
 		}
 	}
 	
@@ -116,7 +105,7 @@ public class PaintballAPI {
 				return 0;
 			}
 		}else {
-			return MySql.getStatsTotales(plugin, player.getName(),"Kills");
+			return MySql.getTotalStats(plugin, player.getName(),"Kills");
 		}
 		
 	}
@@ -143,7 +132,7 @@ public class PaintballAPI {
 				return false;
 			}
 		}else {
-			return MySql.jugadorTieneHat(plugin, player.getName(), hat);
+			return MySql.playerHasHat(plugin, player.getName(), hat);
 		}
 	}
 	
@@ -151,38 +140,38 @@ public class PaintballAPI {
 		if(!MySql.isEnabled(plugin.getConfig())) {
 			PaintballPlayer j = plugin.getPlayer(player.getName());
 			if(j != null) {
-				return j.hasHatEquipped(hat);
+				return j.hasAnyHatEquipped(hat);
 			}else {
 				return false;
 			}
 		}else {
-			return MySql.jugadorTieneHatSeleccionado(plugin, player.getName(), hat);
+			return MySql.playerHasHatSelected(plugin, player.getName(), hat);
 		}
 	}
 	
-	public static ArrayList<Perk> getPerks(org.bukkit.entity.Player player) {
+	public static ArrayList<PaintballPerk> getPerks(org.bukkit.entity.Player player) {
 		if(!MySql.isEnabled(plugin.getConfig())) {
 			PaintballPlayer j = plugin.getPlayer(player.getName());
 			if(j != null) {
 				return j.getNamesAndLevelsOfPerks();
 			}else {
-				return new ArrayList<Perk>();
+				return new ArrayList<PaintballPerk>();
 			}
 		}else {
 			return MySql.getPerksJugador(plugin, player.getName());
 		}
 	}
 	
-	public static ArrayList<Hat> getHats(org.bukkit.entity.Player player) {
+	public static ArrayList<PaintballHat> getHats(org.bukkit.entity.Player player) {
 		if(!MySql.isEnabled(plugin.getConfig())) {
 			PaintballPlayer j = plugin.getPlayer(player.getName());
 			if(j != null && j.getNamesAndLevelsOfHats() != null) {
 				return j.getNamesAndLevelsOfHats();
 			}else {
-				return new ArrayList<Hat>();
+				return new ArrayList<PaintballHat>();
 			}
 		}else {
-			return MySql.getHatsJugador(plugin, player.getName());
+			return MySql.getPlayerHats(plugin, player.getName());
 		}
 	}
 	

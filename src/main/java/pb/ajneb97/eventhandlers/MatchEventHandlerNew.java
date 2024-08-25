@@ -6,7 +6,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerSwapHandItemsEvent;
 
 import pb.ajneb97.PaintballBattle;
-import pb.ajneb97.logic.PaintballArena;
+import pb.ajneb97.arena.PaintballArena;
 
 public class MatchEventHandlerNew implements Listener{
 

@@ -1,8 +1,9 @@
-package pb.ajneb97.logic;
+package pb.ajneb97.arena;
 
 import org.bukkit.Location;
 import org.bukkit.configuration.file.FileConfiguration;
 import pb.ajneb97.enums.ArenaState;
+import pb.ajneb97.player.PaintballTeam;
 
 import java.util.ArrayList;
 import java.util.Random;

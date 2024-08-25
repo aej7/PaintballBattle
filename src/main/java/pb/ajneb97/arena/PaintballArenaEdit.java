@@ -1,4 +1,4 @@
-package pb.ajneb97.logic;
+package pb.ajneb97.arena;
 
 import org.bukkit.entity.Player;
 

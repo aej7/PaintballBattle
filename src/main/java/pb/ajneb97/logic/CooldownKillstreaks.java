@@ -10,7 +10,10 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.scheduler.BukkitScheduler;
 
 import pb.ajneb97.PaintballBattle;
+import pb.ajneb97.arena.ArenaManager;
+import pb.ajneb97.arena.PaintballArena;
 import pb.ajneb97.enums.ArenaState;
+import pb.ajneb97.player.PaintballKillstreak;
 
 public class CooldownKillstreaks {
 
@@ -62,10 +65,10 @@ public class CooldownKillstreaks {
 				jugador.removerKillstreak(nombre);
 				return false;
 			}else {
-				Killstreak k = jugador.getKillstreak(nombre);
+				PaintballKillstreak k = jugador.getKillstreak(nombre);
 				if(k != null) {
 					tiempo--;
-					k.setTiempo(tiempo);
+					k.setTime(tiempo);
 					return true;
 				}else {
 					jugador.removerKillstreak(nombre);

@@ -20,8 +20,8 @@ import org.bukkit.inventory.meta.ItemMeta;
 
 import net.md_5.bungee.api.ChatColor;
 import pb.ajneb97.PaintballBattle;
-import pb.ajneb97.logic.PaintballArena;
-import pb.ajneb97.logic.PaintballArenaEdit;
+import pb.ajneb97.arena.PaintballArena;
+import pb.ajneb97.arena.PaintballArenaEdit;
 
 public class InventoryAdmin implements Listener{
 

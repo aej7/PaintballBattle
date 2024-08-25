@@ -1,4 +1,4 @@
-package pb.ajneb97.logic;
+package pb.ajneb97.arena;
 
 import java.util.*;
 
@@ -28,10 +28,13 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.FileConfiguration;
 
 import pb.ajneb97.PaintballBattle;
-import pb.ajneb97.api.Hat;
-import pb.ajneb97.api.PaintballAPI;
-import pb.ajneb97.api.Perk;
-import pb.ajneb97.configuration.SavedItems;
+import pb.ajneb97.logic.CooldownKillstreaks;
+import pb.ajneb97.logic.CooldownManager;
+import pb.ajneb97.player.PaintballTeam;
+import pb.ajneb97.player.PaintballHat;
+import pb.ajneb97.database.PaintballPlayerDAO;
+import pb.ajneb97.player.PaintballPerk;
+import pb.ajneb97.configuration.PaintballPlayerSavedData;
 import pb.ajneb97.database.MySql;
 import pb.ajneb97.enums.ArenaState;
 import pb.ajneb97.lib.titleapi.TitleAPI;
@@ -155,18 +158,18 @@ public class ArenaManager {
 	}
 
 	private static void restorePlayerState(Player player, PaintballArena paintballArena) {
-		SavedItems playerSavedItems = paintballArena.getPlayer(player.getName()).getSavedData();
+		PaintballPlayerSavedData playerPaintballPlayerSavedData = paintballArena.getPlayer(player.getName()).getSavedData();
 
-		player.getInventory().setContents(playerSavedItems.getInventory());
-		player.getEquipment().setArmorContents(playerSavedItems.getEquipment());
-		player.setGameMode(playerSavedItems.getGamemode());
-		player.setLevel(playerSavedItems.getLevel());
-		player.setExp(playerSavedItems.getXp());
-		player.setFoodLevel(playerSavedItems.GetHunger());
-		player.setMaxHealth(playerSavedItems.getMaxHealth());
-		player.setHealth(playerSavedItems.getHealth());
-		player.setAllowFlight(playerSavedItems.isAllowFlight());
-		player.setFlying(playerSavedItems.isFlying());
+		player.getInventory().setContents(playerPaintballPlayerSavedData.getInventory());
+		player.getEquipment().setArmorContents(playerPaintballPlayerSavedData.getEquipment());
+		player.setGameMode(playerPaintballPlayerSavedData.getGamemode());
+		player.setLevel(playerPaintballPlayerSavedData.getLevel());
+		player.setExp(playerPaintballPlayerSavedData.getXp());
+		player.setFoodLevel(playerPaintballPlayerSavedData.GetHunger());
+		player.setMaxHealth(playerPaintballPlayerSavedData.getMaxHealth());
+		player.setHealth(playerPaintballPlayerSavedData.getHealth());
+		player.setAllowFlight(playerPaintballPlayerSavedData.isFlightAllowed());
+		player.setFlying(playerPaintballPlayerSavedData.isFlying());
 
 		for (PotionEffect potionEffect : player.getActivePotionEffects()) {
 			player.removePotionEffect(potionEffect.getType());
@@ -299,7 +302,7 @@ public class ArenaManager {
 
 	private static void updateTeamLives(PaintballTeam paintballTeam, FileConfiguration shop) {
 		for (pb.ajneb97.logic.PaintballPlayer paintballPlayer : paintballTeam.getPlayers().values()) {
-			int extraLivesPerkLevel = PaintballAPI.getPerkLevel(paintballPlayer.getPlayer(), "extra_lives");
+			int extraLivesPerkLevel = PaintballPlayerDAO.getPerkLevel(paintballPlayer.getPlayer(), "extra_lives");
 			if (extraLivesPerkLevel > 0) {
 				String line = shop.getStringList("perks_upgrades.extra_lives").get(extraLivesPerkLevel - 1);
 				String[] sep = line.split(";");
@@ -442,7 +445,7 @@ public class ArenaManager {
 				givePlayerEquipment(player,0);
 			}
 
-			int initialKillcoinsPerkLevel = PaintballAPI.getPerkLevel(paintballPlayer.getPlayer(), "initial_killcoins");
+			int initialKillcoinsPerkLevel = PaintballPlayerDAO.getPerkLevel(paintballPlayer.getPlayer(), "initial_killcoins");
 			if(initialKillcoinsPerkLevel != 0) {
 				String line = shop.getStringList("perks_upgrades.initial_killcoins").get(initialKillcoinsPerkLevel-1);
 				String[] sep = line.split(";");
@@ -457,24 +460,24 @@ public class ArenaManager {
 	
 	@SuppressWarnings("unchecked")
 	public static void putHat(PaintballArena paintballArena, PaintballPlayer paintballPlayer, FileConfiguration config, FileConfiguration messages) {
-		ArrayList<Hat> hats = PaintballAPI.getHats(paintballPlayer.getPlayer());
-		for(Hat hat : hats) {
-			if(hat.isSelected()) {
-				paintballPlayer.setSelectedHat(hat.getName());
-				ItemStack item = ItemsUtils.creaItem(config, "hats_items."+hat.getName());
+		ArrayList<PaintballHat> paintballHats = PaintballPlayerDAO.getHats(paintballPlayer.getPlayer());
+		for(PaintballHat paintballHat : paintballHats) {
+			if(paintballHat.isEquipped()) {
+				paintballPlayer.setSelectedHat(paintballHat.getName());
+				ItemStack item = ItemsUtils.creaItem(config, "hats_items."+ paintballHat.getName());
 				ItemMeta meta = item.getItemMeta();
 				meta.setLore(null);
 				item.setItemMeta(meta);
-				if(config.contains("hats_items."+hat.getName()+".skull_id")) {
-					String id = config.getString("hats_items."+hat.getName()+".skull_id");
-					String textura = config.getString("hats_items."+hat.getName()+".skull_texture");
+				if(config.contains("hats_items."+ paintballHat.getName()+".skull_id")) {
+					String id = config.getString("hats_items."+ paintballHat.getName()+".skull_id");
+					String textura = config.getString("hats_items."+ paintballHat.getName()+".skull_texture");
 					item = ItemsUtils.getCabeza(item, id, textura);
 				}
 				paintballPlayer.getPlayer().getEquipment().setHelmet(item);
 				
-				if(hat.getName().equals("speed_hat")) {
+				if(paintballHat.getName().equals("speed_hat")) {
 					paintballPlayer.getPlayer().addPotionEffect(new PotionEffect(PotionEffectType.SPEED,9999999,0,false,false));
-				}else if(hat.getName().equals("present_hat")) {
+				}else if(paintballHat.getName().equals("present_hat")) {
 					PaintballTeam paintballTeam = paintballArena.GetPlayerTeam(paintballPlayer.getPlayer().getName());
 					ArrayList<pb.ajneb97.logic.PaintballPlayer> jugadoresCopy = (ArrayList<pb.ajneb97.logic.PaintballPlayer>) paintballTeam.getPlayers().clone();
 					jugadoresCopy.remove(paintballPlayer);
@@ -643,22 +646,22 @@ public class ArenaManager {
 					TitleAPI.sendTitle(j.getPlayer(), 10, 40, 10, messages.getString("loserTitleMessage"), "");
 				}
 				//Aqui se crea/modifica el registro global del jugador
-				if(!MySql.jugadorExiste(plugin, j.getPlayer().getName())) {
-					MySql.crearJugadorPartidaAsync(plugin, j.getPlayer().getUniqueId().toString(), j.getPlayer().getName(), "", win, tie, lose, j.getKills(),0, 1);
+				if(!MySql.playerExists(plugin, j.getPlayer().getName())) {
+					MySql.createPlayerArenaAsync(plugin, j.getPlayer().getUniqueId().toString(), j.getPlayer().getName(), "", win, tie, lose, j.getKills(),0, 1);
 				}else {
 					pb.ajneb97.database.PaintballPlayer paintballPlayer = MySql.getJugador(plugin, j.getPlayer().getName());
 					int kills = j.getKills()+ paintballPlayer.getKills();
 					int wins = paintballPlayer.getWins()+win;
 					int loses = paintballPlayer.getLosses()+lose;
 					int ties = paintballPlayer.getTies()+tie;
-					MySql.actualizarJugadorPartidaAsync(plugin, j.getPlayer().getUniqueId().toString(), j.getPlayer().getName(), wins, loses, ties, kills);
+					MySql.updatePlayerStatsAsync(plugin, j.getPlayer().getUniqueId().toString(), j.getPlayer().getName(), wins, loses, ties, kills);
 				}				
 				//Este registro es el que se crea para datos mensuales y semanales
-				MySql.crearJugadorPartidaAsync(plugin, j.getPlayer().getUniqueId().toString(), j.getPlayer().getName(), paintballArena.getMatchNumber(), win, tie, lose, j.getKills(),0,0);
+				MySql.createPlayerArenaAsync(plugin, j.getPlayer().getUniqueId().toString(), j.getPlayer().getName(), paintballArena.getMatchNumber(), win, tie, lose, j.getKills(),0,0);
 			}else {
 				plugin.registerPlayer(j.getPlayer().getUniqueId().toString()+".yml");
 				if(plugin.getPlayer(j.getPlayer().getName()) == null) {
-					plugin.addPlayer(new pb.ajneb97.database.PaintballPlayer(j.getPlayer().getName(),j.getPlayer().getUniqueId().toString(),0,0,0,0,0,new ArrayList<Perk>(),new ArrayList<Hat>()));
+					plugin.addPlayer(new pb.ajneb97.database.PaintballPlayer(j.getPlayer().getName(),j.getPlayer().getUniqueId().toString(),0,0,0,0,0,new ArrayList<PaintballPerk>(),new ArrayList<PaintballHat>()));
 				}
 				pb.ajneb97.database.PaintballPlayer jugador = plugin.getPlayer(j.getPlayer().getName());
 				if(paintballArena.GetPlayerTeam(j.getPlayer().getName()).equals(ganador)) {
@@ -777,7 +780,7 @@ public class ArenaManager {
 	}
 	
 	public static void muereJugador(PaintballArena paintballArena, pb.ajneb97.logic.PaintballPlayer jugadorAtacante, final pb.ajneb97.logic.PaintballPlayer jugadorDañado, PaintballBattle plugin, boolean lightning, boolean nuke) {
-		if(jugadorDañado.haSidoAsesinadoRecientemente()) {
+		if(jugadorDañado.getWasKilledRecently()) {
 			return;
 		}
 		if(jugadorDañado.getSelectedHat().equals("guardian_hat") && jugadorDañado.isEfectoHatActivado()) {
@@ -812,7 +815,7 @@ public class ArenaManager {
 		}catch(Exception ex) {
 			Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', PaintballBattle.prefix+"&7Sound Name: &c"+separados[0]+" &7is not valid."));
 		}
-		jugadorDañado.setAsesinadoRecientemente(true);
+		jugadorDañado.setWasKilledRecetly(true);
 		jugadorDañado.setLastKilledBy(jugadorAtacante.getPlayer().getName());
 		paintballTeamDañado.decreaseLives(1);
 		
@@ -865,7 +868,7 @@ public class ArenaManager {
 			
 		jugadorAtacante.aumentarAsesinatos();
 		int cantidadCoinsGanados = OthersUtils.coinsGanados(jugadorAtacante.getPlayer(), config);
-		int nivelExtraKillCoins = PaintballAPI.getPerkLevel(jugadorAtacante.getPlayer(), "extra_killcoins");
+		int nivelExtraKillCoins = PaintballPlayerDAO.getPerkLevel(jugadorAtacante.getPlayer(), "extra_killcoins");
 		if(nivelExtraKillCoins != 0) {
 			String linea = plugin.getShop().getStringList("perks_upgrades.extra_killcoins").get(nivelExtraKillCoins-1);
 			String[] sep = linea.split(";");
@@ -930,7 +933,7 @@ public class ArenaManager {
 		int invulnerability = Integer.valueOf(config.getString("respawn_invulnerability"));
 		Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
 			public void run() {
-				jugadorDañado.setAsesinadoRecientemente(false);
+				jugadorDañado.setWasKilledRecetly(false);
 			}
 		}, invulnerability*20L);
 	}

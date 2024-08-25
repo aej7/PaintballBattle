@@ -13,17 +13,17 @@ import org.bukkit.configuration.file.FileConfiguration;
 import net.md_5.bungee.api.ChatColor;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
-import pb.ajneb97.api.Hat;
-import pb.ajneb97.api.Perk;
+import pb.ajneb97.player.PaintballHat;
+import pb.ajneb97.player.PaintballPerk;
 import pb.ajneb97.database.PaintballPlayer;
 import pb.ajneb97.database.MySql;
 import pb.ajneb97.enums.ArenaState;
-import pb.ajneb97.logic.PaintballArena;
-import pb.ajneb97.logic.PaintballArenaEdit;
+import pb.ajneb97.arena.PaintballArena;
+import pb.ajneb97.arena.PaintballArenaEdit;
 import pb.ajneb97.configuration.Checks;
 import pb.ajneb97.admin.InventoryAdmin;
 import pb.ajneb97.eventhandlers.InventoryInteractEventHandler;
-import pb.ajneb97.logic.ArenaManager;
+import pb.ajneb97.arena.ArenaManager;
 import pb.ajneb97.logic.TopHologram;
 import pb.ajneb97.utils.OthersUtils;
 
@@ -425,8 +425,8 @@ public class CommandHandler implements CommandExecutor {
 				   int amount = Integer.parseInt(args[2]);
 				   //Si el jugador no esta en la base de datos, o en un archivo, DEBE estar conectado para darle coins.
 				   if(MySql.isEnabled(plugin.getConfig())) {
-					   if(MySql.jugadorExiste(plugin, player)) {
-						   MySql.agregarCoinsJugadorAsync(plugin, player, amount);
+					   if(MySql.playerExists(plugin, player)) {
+						   MySql.addPlayerCoins(plugin, player, amount);
 						   sender.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("giveCoinsMessage").replace("%player%", player).replace("%amount%", amount+"")));
 						   org.bukkit.entity.Player p = Bukkit.getPlayer(player);
 						   if(p != null) {
@@ -435,7 +435,7 @@ public class CommandHandler implements CommandExecutor {
 					   }else {
 						   org.bukkit.entity.Player p = Bukkit.getPlayer(player);
 						   if(p != null) {
-							   MySql.crearJugadorPartidaAsync(plugin, p.getUniqueId().toString(), p.getName(), "", 0, 0, 0, 0, amount, 1);
+							   MySql.createPlayerArenaAsync(plugin, p.getUniqueId().toString(), p.getName(), "", 0, 0, 0, 0, amount, 1);
 							   sender.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("giveCoinsMessage").replace("%player%", player).replace("%amount%", amount+"")));
 							   p.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("receiveCoinsMessage").replace("%amount%", amount+"")));
 						   }else {
@@ -447,7 +447,7 @@ public class CommandHandler implements CommandExecutor {
 					   if(p != null) {
 						   plugin.registerPlayer(p.getUniqueId().toString()+".yml");
 						   if(plugin.getPlayer(p.getName()) == null) {
-								plugin.addPlayer(new PaintballPlayer(p.getName(),p.getUniqueId().toString(),0,0,0,0,0,new ArrayList<Perk>(),new ArrayList<Hat>()));
+								plugin.addPlayer(new PaintballPlayer(p.getName(),p.getUniqueId().toString(),0,0,0,0,0,new ArrayList<PaintballPerk>(),new ArrayList<PaintballHat>()));
 						   }
 						   PaintballPlayer jDatos = plugin.getPlayer(p.getName());
 						   jDatos.increaseCoinsByAmount(amount);

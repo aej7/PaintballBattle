@@ -9,7 +9,9 @@ import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitScheduler;
 
 import pb.ajneb97.PaintballBattle;
+import pb.ajneb97.arena.PaintballArena;
 import pb.ajneb97.lib.actionbarapi.ActionBarAPI;
+import pb.ajneb97.player.PaintballKillstreak;
 
 public class CooldownKillstreaksActionbar {
 	
@@ -36,10 +38,10 @@ public class CooldownKillstreaksActionbar {
 		PaintballArena paintballArena = plugin.getPlayersMatch(player.getName());
 		if(paintballArena != null) {
 			PaintballPlayer jugador = paintballArena.getPlayer(player.getName());
-			Killstreak ultima = jugador.getUltimaKillstreak();
+			PaintballKillstreak ultima = jugador.getUltimaKillstreak();
 			if(ultima != null) {
-				String name = config.getString("killstreaks_items."+ultima.getTipo()+".name");
-				int tiempo = ultima.getTiempo();
+				String name = config.getString("killstreaks_items."+ultima.getType()+".name");
+				int tiempo = ultima.getTime();
 				ActionBarAPI.sendActionBar(jugador.getPlayer(), ChatColor.translateAlternateColorCodes('&', messages.getString("killstreakActionbar")
 						.replace("%killstreak%", name).replace("%time%", tiempo+"")));
 			}

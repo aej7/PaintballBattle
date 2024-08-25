@@ -13,7 +13,7 @@ import org.bukkit.scheduler.BukkitScheduler;
 
 import pb.ajneb97.PaintballBattle;
 import pb.ajneb97.enums.ArenaState;
-import pb.ajneb97.logic.PaintballArena;
+import pb.ajneb97.arena.PaintballArena;
 
 public class SignAdmin {
 	

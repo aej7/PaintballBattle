@@ -15,10 +15,10 @@ import org.bukkit.scheduler.BukkitScheduler;
 
 import me.clip.placeholderapi.PlaceholderAPI;
 import pb.ajneb97.PaintballBattle;
-import pb.ajneb97.logic.PaintballTeam;
+import pb.ajneb97.player.PaintballTeam;
 import pb.ajneb97.enums.ArenaState;
 import pb.ajneb97.logic.PaintballPlayer;
-import pb.ajneb97.logic.PaintballArena;
+import pb.ajneb97.arena.PaintballArena;
 import pb.ajneb97.lib.fastboard.FastBoard;
 import pb.ajneb97.utils.OthersUtils;
 

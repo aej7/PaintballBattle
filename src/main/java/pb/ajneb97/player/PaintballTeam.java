@@ -1,4 +1,4 @@
-package pb.ajneb97.logic;
+package pb.ajneb97.player;
 
 import java.util.HashMap;
 import java.util.Map;

@@ -1,84 +1,80 @@
 package pb.ajneb97.database;
 
 import java.sql.PreparedStatement;
+
+//TODO Use a more modern SQL library
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
+import java.util.*;
 
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.file.FileConfiguration;
 
 import pb.ajneb97.PaintballBattle;
-import pb.ajneb97.api.Hat;
-import pb.ajneb97.api.Perk;
+import pb.ajneb97.enums.HatState;
+import pb.ajneb97.player.PaintballHat;
+import pb.ajneb97.player.PaintballPerk;
+import pb.ajneb97.player.PaintballPlayer;
 
 public class MySql {
 
-	public static boolean isEnabled(FileConfiguration config){
-		if(config.getString("mysql-database.enabled").equals("true")){
-			return true;
-		}else{
-			return false;
-		}
+	public static boolean isEnabled(final FileConfiguration config) {
+    return config.getString("mysql-database.enabled").equals("true");
 	}
-	
-		//Cada usuario tendra un registro en donde se guardaran sus registros global, que se especifica con el INTEGER Global = 1
-		//Si el atributo Global = 0 significa que este registro sera usado para los tops mensuales y semanales
-		public static void createTablePlayers(DatabaseConnection conexion) {
+
+		public static void createTablePlayers(final DatabaseConnection connection) {
 	        try {
-	        	PreparedStatement statement = conexion.getConnection().prepareStatement("CREATE TABLE IF NOT EXISTS "+conexion.getTablePlayers()+" (`UUID` varchar(200), `Name` varchar(40), `Date` varchar(100), `Year` INT(10), `Month` INT(5), `Week` INT(5), `Day` INT(5), `Arena` varchar(40), `Win` INT(2), `Tie` INT(2), `Lose` INT(2), `Kills` INT(5), `Coins` INT(10), `Global_Data` INT(2) )");
+	        	PreparedStatement statement = connection.getConnection().prepareStatement("CREATE TABLE IF NOT EXISTS " + connection.getTablePlayers() + " (`UUID` varchar(200), `Name` varchar(40), `Date` varchar(100), `Year` INT(10), `Month` INT(5), `Week` INT(5), `Day` INT(5), `Arena` varchar(40), `Win` INT(2), `Tie` INT(2), `Lose` INT(2), `Kills` INT(5), `Coins` INT(10), `Global_Data` INT(2) )");
 	            statement.executeUpdate();
 	        } catch (SQLException e) {
 	            e.printStackTrace();
 	        }
 	    }
 		
-		public static void createTablePerks(DatabaseConnection conexion) {
+		public static void createTablePerks(final DatabaseConnection connection) {
 	        try {
-	        	PreparedStatement statement = conexion.getConnection().prepareStatement("CREATE TABLE IF NOT EXISTS "+conexion.getTablePerks()+" (`UUID` varchar(200), `Name` varchar(40), `Perk` varchar(40), `Level` INT(2) )");
+	        	PreparedStatement statement = connection.getConnection().prepareStatement("CREATE TABLE IF NOT EXISTS " + connection.getTablePerks() + " (`UUID` varchar(200), `Name` varchar(40), `Perk` varchar(40), `Level` INT(2) )");
 	            statement.executeUpdate();
 	        } catch (SQLException e) {
 	            e.printStackTrace();
 	        }
 	    }
 		
-		public static void createTableHats(DatabaseConnection conexion) {
+		public static void createTableHats(final DatabaseConnection connection) {
 	        try {
-	        	PreparedStatement statement = conexion.getConnection().prepareStatement("CREATE TABLE IF NOT EXISTS "+conexion.getTableHats()+" (`UUID` varchar(200), `Name` varchar(40), `Hat` varchar(40), `Selected` INT(2) )");
+	        	PreparedStatement statement = connection.getConnection().prepareStatement("CREATE TABLE IF NOT EXISTS " + connection.getTableHats() + " (`UUID` varchar(200), `Name` varchar(40), `Hat` varchar(40), `Selected` INT(2) )");
 	            statement.executeUpdate();
 	        } catch (SQLException e) {
 	            e.printStackTrace();
 	        }
 	    }
 		
-		public static int getStatsTotales(PaintballBattle plugin, String name, String tipo){
-			int cantidad = 0;
+		public static int getTotalStats(final PaintballBattle plugin, final String playerName, final String type){
+			int amount = 0;
 			try {
-				PreparedStatement statement = plugin.getDatabaseConnection().getConnection().prepareStatement("SELECT * FROM "+plugin.getDatabaseConnection().getTablePlayers()+" WHERE (Name=? AND Global_Data=1)");
-				statement.setString(1, name);
-				ResultSet resultado = statement.executeQuery();
+				PreparedStatement statement = plugin.getDatabaseConnection().getConnection().prepareStatement("SELECT * FROM " + plugin.getDatabaseConnection().getTablePlayers() + " WHERE (Name=? AND Global_Data=1)");
+				statement.setString(1, playerName);
+				ResultSet result = statement.executeQuery();
 				
-				while(resultado.next()){
-					cantidad = resultado.getInt(tipo);
+				while(result.next()){
+					amount = result.getInt(type);
 				}
 				
-				return cantidad;
+				return amount;
 			} catch (SQLException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-			return cantidad;
+			return amount;
 		}
 		
 		//Comprueba solo el dato global
-		public static boolean jugadorExiste(PaintballBattle plugin, String player){
+		public static boolean playerExists(final PaintballBattle plugin, final String playerName) {
 			try {
-				PreparedStatement statement = plugin.getDatabaseConnection().getConnection().prepareStatement("SELECT * FROM "+plugin.getDatabaseConnection().getTablePlayers()+" WHERE (Name=? AND Global_Data=1)");
-				statement.setString(1, player);
-				ResultSet resultado = statement.executeQuery();
-				if(resultado.next()){
+				PreparedStatement statement = plugin.getDatabaseConnection().getConnection().prepareStatement("SELECT * FROM " + plugin.getDatabaseConnection().getTablePlayers() + " WHERE (Name=? AND Global_Data=1)");
+				statement.setString(1, playerName);
+				ResultSet result = statement.executeQuery();
+				if(result.next()) {
 					return true;
 				}
 			} catch (SQLException e) {
@@ -88,106 +84,94 @@ public class MySql {
 			return false;
 		}
 		
-		public static void actualizarJugadorPartidaAsync(final PaintballBattle plugin,final String uuid,final String player,final int wins,final int loses,final int ties,final int kills){
-			Bukkit.getScheduler().runTaskAsynchronously(plugin, new Runnable() {
-	            @Override
-	            public void run() {
-	            	try {
-	            		PreparedStatement statement = plugin.getDatabaseConnection().getConnection().prepareStatement("UPDATE "+plugin.getDatabaseConnection().getTablePlayers()+" SET Win=?, Tie=?, Lose=?, Kills=? WHERE (Name=? AND Global_Data=1)");
-	    				statement.setInt(1, wins);
-	    				statement.setInt(2, ties);
-	    				statement.setInt(3, loses);
-	    				statement.setInt(4, kills);
-	    				statement.setString(5, player);
-	    				statement.executeUpdate();
-	        		} catch (SQLException e) {
-	        			// TODO Auto-generated catch block
-	        			e.printStackTrace();
-	        		}
-	            }
-			});	
+		public static void updatePlayerStatsAsync(final PaintballBattle plugin, final String playerName, final int wins, final int losses, final int ties, final int kills) {
+			Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+        try {
+          PreparedStatement statement = plugin.getDatabaseConnection().getConnection().prepareStatement("UPDATE " + plugin.getDatabaseConnection().getTablePlayers() + " SET Win=?, Tie=?, Lose=?, Kills=? WHERE (Name=? AND Global_Data=1)");
+      statement.setInt(1, wins);
+      statement.setInt(2, ties);
+      statement.setInt(3, losses);
+      statement.setInt(4, kills);
+      statement.setString(5, playerName);
+      statement.executeUpdate();
+      } catch (SQLException e) {
+        // TODO Auto-generated catch block
+        e.printStackTrace();
+      }
+      });
 		}
 		
-		public static void agregarCoinsJugadorAsync(final PaintballBattle plugin,final String player,final int coins){
-			Bukkit.getScheduler().runTaskAsynchronously(plugin, new Runnable() {
-	            @Override
-	            public void run() {
-	            	try {
-	            		PreparedStatement statement = plugin.getDatabaseConnection().getConnection().prepareStatement("UPDATE "+plugin.getDatabaseConnection().getTablePlayers()+" SET Coins=`Coins`+? WHERE (Name=? AND Global_Data=1)");
-	    				statement.setInt(1, coins);
-	    				statement.setString(2, player);
-	    				statement.executeUpdate();
-	        		} catch (SQLException e) {
-	        			// TODO Auto-generated catch block
-	        			e.printStackTrace();
-	        		}
-	            }
-			});	
+		public static void addPlayerCoins(final PaintballBattle plugin, final String playerName, final int coins) {
+			Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+        try {
+          PreparedStatement statement = plugin.getDatabaseConnection().getConnection().prepareStatement("UPDATE " + plugin.getDatabaseConnection().getTablePlayers() + " SET Coins=`Coins`+? WHERE (Name=? AND Global_Data=1)");
+      statement.setInt(1, coins);
+			statement.setString(2, playerName);
+      statement.executeUpdate();
+      } catch (SQLException e) {
+        // TODO Auto-generated catch block
+        e.printStackTrace();
+      }
+      });
 		}
 		
-		public static void removerCoinsJugadorAsync(final PaintballBattle plugin,final String player,final int coins){
-			Bukkit.getScheduler().runTaskAsynchronously(plugin, new Runnable() {
-	            @Override
-	            public void run() {
-	            	try {
-	            		PreparedStatement statement = plugin.getDatabaseConnection().getConnection().prepareStatement("UPDATE "+plugin.getDatabaseConnection().getTablePlayers()+" SET Coins=`Coins`-? WHERE (Name=? AND Global_Data=1)");
-	    				statement.setInt(1, coins);
-	    				statement.setString(2, player);
-	    				statement.executeUpdate();
-	        		} catch (SQLException e) {
-	        			// TODO Auto-generated catch block
-	        			e.printStackTrace();
-	        		}
-	            }
-			});	
+		public static void removePlayerCoins(final PaintballBattle plugin, final String playerName, final int coins) {
+			Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+        try {
+          PreparedStatement statement = plugin.getDatabaseConnection().getConnection().prepareStatement("UPDATE " + plugin.getDatabaseConnection().getTablePlayers() + " SET Coins=`Coins`-? WHERE (Name=? AND Global_Data=1)");
+      statement.setInt(1, coins);
+      statement.setString(2, playerName);
+      statement.executeUpdate();
+      } catch (SQLException e) {
+        // TODO Auto-generated catch block
+        e.printStackTrace();
+      }
+      });
 		}
 		
-		public static void crearJugadorPartidaAsync(final PaintballBattle plugin, final String uuid,final String name,final String arena,final int win,final int tie,final int lose,final int kills,final int coins,final int global){
-			Bukkit.getScheduler().runTaskAsynchronously(plugin, new Runnable() {
-	            @Override
-	            public void run() {
-	            	try{
-	            		Calendar calendar = Calendar.getInstance();
-	            		Date date = new Date();
-	            		calendar.setTime(date);
-	            		int mes = calendar.get(Calendar.MONTH);
-	            		int año = calendar.get(Calendar.YEAR);
-	            		int dia = calendar.get(Calendar.DAY_OF_MONTH);
-	            		int dia_semana = calendar.get(Calendar.WEEK_OF_MONTH);
-	            		
-	        			PreparedStatement insert = plugin.getDatabaseConnection().getConnection()
-	        					.prepareStatement("INSERT INTO "+plugin.getDatabaseConnection().getTablePlayers()+" (UUID,Name,Date,Year,Month,Week,Day,Arena,Win,Tie,Lose,Kills,Coins,Global_Data) VALUE (?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
-	        			insert.setString(1, uuid);
-	        			insert.setString(2, name);
-	        			insert.setString(3, date.getTime()+"");
-	        			insert.setInt(4, año);
-	        			insert.setInt(5, mes);
-	        			insert.setInt(6, dia_semana);
-	        			insert.setInt(7, dia);
-	        			insert.setString(8, arena);
-	        			insert.setInt(9, win);
-	        			insert.setInt(10, tie);
-	        			insert.setInt(11, lose);
-	        			insert.setInt(12, kills);
-	        			insert.setInt(13, coins);
-	        			insert.setInt(14, global);
-	        			insert.executeUpdate();
-	        		} catch (SQLException e) {
-	        			// TODO Auto-generated catch block
-	        			e.printStackTrace();
-	        		}
-	            }
-			});
+		public static void createPlayerArenaAsync(final PaintballBattle plugin, final String playerUuid, final String playerName, final String arena, final int win, final int tie, final int lose, final int kills, final int coins, final int global){
+			Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+        try {
+          Calendar calendar = Calendar.getInstance();
+          Date date = new Date();
+          calendar.setTime(date);
+          int month = calendar.get(Calendar.MONTH);
+          int year = calendar.get(Calendar.YEAR);
+          int dayOfMonth = calendar.get(Calendar.DAY_OF_MONTH);
+          int weekOfMonth = calendar.get(Calendar.WEEK_OF_MONTH);
+
+        PreparedStatement insert = plugin.getDatabaseConnection().getConnection()
+            .prepareStatement("INSERT INTO "+plugin.getDatabaseConnection().getTablePlayers()+" (UUID,Name,Date,Year,Month,Week,Day,Arena,Win,Tie,Lose,Kills,Coins,Global_Data) VALUE (?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
+        insert.setString(1, playerUuid);
+        insert.setString(2, playerName);
+        insert.setString(3, date.getTime()+"");
+        insert.setInt(4, year);
+        insert.setInt(5, month);
+        insert.setInt(6, weekOfMonth);
+        insert.setInt(7, dayOfMonth);
+        insert.setString(8, arena);
+        insert.setInt(9, win);
+        insert.setInt(10, tie);
+        insert.setInt(11, lose);
+        insert.setInt(12, kills);
+        insert.setInt(13, coins);
+        insert.setInt(14, global);
+        insert.executeUpdate();
+      } catch (SQLException e) {
+        // TODO Auto-generated catch block
+        e.printStackTrace();
+      }
+      });
 			
 		}
 		
-		public static boolean jugadorTieneHat(PaintballBattle plugin, String player, String hat){
+		public static boolean playerHasHat(final PaintballBattle plugin, final String playerName, final String hatName) {
 			try {
-				PreparedStatement statement = plugin.getDatabaseConnection().getConnection().prepareStatement("SELECT * FROM "+plugin.getDatabaseConnection().getTableHats()+" WHERE (Name=? AND Hat=?)");
-				statement.setString(1, player);
-				statement.setString(2, hat);
-				ResultSet resultado = statement.executeQuery();
-				if(resultado.next()){
+				PreparedStatement statement = plugin.getDatabaseConnection().getConnection().prepareStatement("SELECT * FROM " + plugin.getDatabaseConnection().getTableHats() + " WHERE (Name=? AND Hat=?)");
+				statement.setString(1, playerName);
+				statement.setString(2, hatName);
+				ResultSet result = statement.executeQuery();
+				if(result.next()){
 					return true;
 				}
 			} catch (SQLException e) {
@@ -197,33 +181,30 @@ public class MySql {
 			return false;
 		}
 		
-		public static void agregarJugadorHatAsync(final PaintballBattle plugin, final String uuid,final String name,final String hat){
-			Bukkit.getScheduler().runTaskAsynchronously(plugin, new Runnable() {
-	            @Override
-	            public void run() {
-	            	try{
-	        			PreparedStatement insert = plugin.getDatabaseConnection().getConnection()
-	        					.prepareStatement("INSERT INTO "+plugin.getDatabaseConnection().getTableHats()+" (UUID,Name,Hat,Selected) VALUE (?,?,?,?)");
-	        			insert.setString(1, uuid);
-	        			insert.setString(2, name);
-	        			insert.setString(3, hat);
-	        			insert.setInt(4, 0);
-	        			insert.executeUpdate();
-	        		} catch (SQLException e) {
-	        			// TODO Auto-generated catch block
-	        			e.printStackTrace();
-	        		}
-	            }
-			});
+		public static void addPlayerHatAsync(final PaintballBattle plugin, final String playerUuid, final String playerName, final String hatName) {
+			Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+        try{
+        PreparedStatement insert = plugin.getDatabaseConnection().getConnection()
+            .prepareStatement("INSERT INTO "+plugin.getDatabaseConnection().getTableHats()+" (UUID,Name,Hat,Selected) VALUE (?,?,?,?)");
+        insert.setString(1, playerUuid);
+        insert.setString(2, playerName);
+        insert.setString(3, hatName);
+        insert.setInt(4, 0);
+        insert.executeUpdate();
+      } catch (SQLException e) {
+        // TODO Auto-generated catch block
+        e.printStackTrace();
+      }
+      });
 		}
 		
-		public static boolean jugadorTieneHatSeleccionado(PaintballBattle plugin, String player, String hat){
+		public static boolean playerHasHatSelected(final PaintballBattle plugin, final String playerName, final String hatName) {
 			try {
 				PreparedStatement statement = plugin.getDatabaseConnection().getConnection().prepareStatement("SELECT * FROM "+plugin.getDatabaseConnection().getTableHats()+" WHERE (Name=? AND Hat=? AND Selected=1)");
-				statement.setString(1, player);
-				statement.setString(2, hat);
-				ResultSet resultado = statement.executeQuery();
-				if(resultado.next()){
+				statement.setString(1, playerName);
+				statement.setString(2, hatName);
+				ResultSet result = statement.executeQuery();
+				if(result.next()){
 					return true;
 				}
 			} catch (SQLException e) {
@@ -233,21 +214,23 @@ public class MySql {
 			return false;
 		}
 		
-		public static ArrayList<Hat> getHatsJugador(PaintballBattle plugin,String name){
-			ArrayList<Hat> hats = new ArrayList<Hat>();
+		public static Map<String, PaintballHat> getPlayerHats(final PaintballBattle plugin, final String playerName) {
+			Map<String, PaintballHat> hats = new HashMap<>();
+
 			try {
 				PreparedStatement statement = plugin.getDatabaseConnection().getConnection().prepareStatement("SELECT * FROM "+plugin.getDatabaseConnection().getTableHats()+" WHERE (Name=?)");
-				statement.setString(1, name);
-				ResultSet resultado = statement.executeQuery();	
-				while(resultado.next()){			
-					String hat = resultado.getString("Hat");
-					int selected = resultado.getInt("Selected");
-					boolean selectedB = false;
-					if(selected == 1) {
-						selectedB = true;
-					}
-					hats.add(new Hat(hat,selectedB));	
-				}		
+				statement.setString(1, playerName);
+				ResultSet result = statement.executeQuery();
+
+				while(result.next()) {
+					String hatName = result.getString("Hat");
+					boolean isSelected = result.getInt("Selected") == 1;
+					HatState hatState = isSelected ? HatState.EQUIPPED : HatState.UNEQUIPPED;
+
+
+					PaintballHat hat = new PaintballHat(hatName, hatState);
+					hats.put(hat.getName(), hat);
+				}
 			} catch (SQLException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -255,10 +238,10 @@ public class MySql {
 			return hats;
 		}
 		
-		public static void deseleccionarHats(final PaintballBattle plugin,final String player){
+		public static void unequipHats(final PaintballBattle plugin, final String playerName) {
 			try {
         		PreparedStatement statement = plugin.getDatabaseConnection().getConnection().prepareStatement("UPDATE "+plugin.getDatabaseConnection().getTableHats()+" SET Selected=0 WHERE (Name=? AND Selected=1)");
-				statement.setString(1, player);
+				statement.setString(1, playerName);
 				statement.executeUpdate();
     		} catch (SQLException e) {
     			// TODO Auto-generated catch block
@@ -266,16 +249,16 @@ public class MySql {
     		}	
 		}
 		
-		public static void seleccionarHatAsync(final PaintballBattle plugin,final String player,final String hat){
+		public static void equipHatAsync(final PaintballBattle plugin, final String playerName, final String hatName) {
 			Bukkit.getScheduler().runTaskAsynchronously(plugin, new Runnable() {
 	            @Override
 	            public void run() {
 	            	try {
-	            		deseleccionarHats(plugin,player);
+	            		unequipHats(plugin,playerName);
 	    				
 	            		PreparedStatement statement = plugin.getDatabaseConnection().getConnection().prepareStatement("UPDATE "+plugin.getDatabaseConnection().getTableHats()+" SET Selected=1 WHERE (Name=? AND Hat=?)");
-	            		statement.setString(1, player);
-	    				statement.setString(2, hat);
+	            		statement.setString(1, playerName);
+	    				statement.setString(2, hatName);
 	    				statement.executeUpdate();
 	        		} catch (SQLException e) {
 	        			// TODO Auto-generated catch block
@@ -340,8 +323,8 @@ public class MySql {
 			return false;
 		}
 		
-		public static ArrayList<Perk> getPerksJugador(PaintballBattle plugin,String name){
-			ArrayList<Perk> perks = new ArrayList<Perk>();
+		public static ArrayList<PaintballPerk> getPerksJugador(PaintballBattle plugin, String name){
+			ArrayList<PaintballPerk> paintballPerks = new ArrayList<PaintballPerk>();
 			try {
 				PreparedStatement statement = plugin.getDatabaseConnection().getConnection().prepareStatement("SELECT * FROM "+plugin.getDatabaseConnection().getTablePerks()+" WHERE (Name=?)");
 				statement.setString(1, name);
@@ -349,13 +332,13 @@ public class MySql {
 				while(resultado.next()){			
 					String perk = resultado.getString("Perk");
 					int level = resultado.getInt("Level");
-					perks.add(new Perk(perk,level));	
+					paintballPerks.add(new PaintballPerk(perk,level));
 				}		
 			} catch (SQLException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-			return perks;
+			return paintballPerks;
 		}
 		
 		public static void setPerkJugadorAsync(final PaintballBattle plugin,final String uuid,final String player,final String perk,final int level){
@@ -415,7 +398,7 @@ public class MySql {
 				ResultSet resultado = statement.executeQuery();	
 				while(resultado.next()){
 					String name = resultado.getString("Name");
-					if(!yaContieneJugador(paintballPlayers,name)) {
+					if(!containsPlayer(paintballPlayers,name)) {
 						int[] stats = getStatsTotalesMonthly(plugin,name,mes,año);
 						PaintballPlayer p = new PaintballPlayer(name,"",stats[0],stats[1],stats[2],stats[3],0,null,null);
 						paintballPlayers.add(p);
@@ -444,7 +427,7 @@ public class MySql {
 				ResultSet resultado = statement.executeQuery();	
 				while(resultado.next()){
 					String name = resultado.getString("Name");
-					if(!yaContieneJugador(paintballPlayers,name)) {
+					if(!containsPlayer(paintballPlayers,name)) {
 						int[] stats = getStatsTotalesWeekly(plugin,name,mes,año,semana);
 						PaintballPlayer p = new PaintballPlayer(name,"",stats[0],stats[1],stats[2],stats[3],0,null,null);
 						paintballPlayers.add(p);
@@ -456,15 +439,6 @@ public class MySql {
 			}
 			
 			return paintballPlayers;
-		}
-		
-		private static boolean yaContieneJugador(ArrayList<PaintballPlayer> paintballPlayers, String player) {
-			for(PaintballPlayer p : paintballPlayers) {
-				if(p.getName().equals(player)) {
-					return true;
-				}
-			}
-			return false;
 		}
 		
 		public static int[] getStatsTotalesWeekly(PaintballBattle plugin, String name, int mes, int año, int semana){
@@ -510,21 +484,22 @@ public class MySql {
 		}
 		
 		//Se cargan solo las globales
-		public static ArrayList<PaintballPlayer> getPlayerData(PaintballBattle plugin){
-			ArrayList<PaintballPlayer> paintballPlayers = new ArrayList<PaintballPlayer>();
+		public static Map<String, PaintballPlayer> getPlayerData(final PaintballBattle plugin){
+			Map<String, PaintballPlayer> players = new HashMap<>();
 			try {
-				PreparedStatement statement = plugin.getDatabaseConnection().getConnection().prepareStatement("SELECT * FROM "+plugin.getDatabaseConnection().getTablePlayers()+" WHERE Global_Data=1");
-				ResultSet resultado = statement.executeQuery();	
-				while(resultado.next()){			
-					String name = resultado.getString("Name");
-					if(!yaContieneJugador(paintballPlayers,name)) {
-						int wins = resultado.getInt("Win");
-						int loses = resultado.getInt("Lose");
-						int ties = resultado.getInt("Tie");
-						int kills = resultado.getInt("Kills");
-						int coins = resultado.getInt("Coins");
-						PaintballPlayer p = new PaintballPlayer(name,"",wins,loses,ties,kills,coins,null,null);
-						paintballPlayers.add(p);
+				PreparedStatement statement = plugin.getDatabaseConnection().getConnection().prepareStatement("SELECT * FROM " + plugin.getDatabaseConnection().getTablePlayers() + " WHERE Global_Data=1");
+				ResultSet result = statement.executeQuery();
+				while(result.next()) {
+					String playerName = result.getString("Name");
+					if(!players.containsKey(playerName)) {
+						int wins = result.getInt("Win");
+						int loses = result.getInt("Lose");
+						int ties = result.getInt("Tie");
+						int kills = result.getInt("Kills");
+						int coins = result.getInt("Coins");
+						plugin.getPlayer("")
+						PaintballPlayer player = new PaintballPlayer(playerName,"",wins,loses,ties,kills,coins,null,null);
+						players.put(player.getName(), player);
 					}	
 				}		
 			} catch (SQLException e) {

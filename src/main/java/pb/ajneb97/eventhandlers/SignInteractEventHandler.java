@@ -17,9 +17,9 @@ import org.bukkit.event.block.SignChangeEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 
 import pb.ajneb97.PaintballBattle;
-import pb.ajneb97.logic.ArenaManager;
+import pb.ajneb97.arena.ArenaManager;
 import pb.ajneb97.enums.ArenaState;
-import pb.ajneb97.logic.PaintballArena;
+import pb.ajneb97.arena.PaintballArena;
 import pb.ajneb97.configuration.Checks;
 import pb.ajneb97.utils.OthersUtils;
 

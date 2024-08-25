@@ -7,6 +7,7 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.scheduler.BukkitScheduler;
 
 import pb.ajneb97.PaintballBattle;
+import pb.ajneb97.arena.PaintballArena;
 import pb.ajneb97.enums.ArenaState;
 
 public class CooldownHats {

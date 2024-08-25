@@ -13,13 +13,15 @@ import org.bukkit.scheduler.BukkitScheduler;
 
 import net.md_5.bungee.api.ChatColor;
 import pb.ajneb97.PaintballBattle;
+import pb.ajneb97.arena.PaintballArena;
+import pb.ajneb97.player.PaintballKillstreak;
 import pb.ajneb97.utils.ItemsUtils;
 
-public class InventarioKillstreaks{
+public class KillstreaksInventory {
 
 	int taskID;
 	private PaintballBattle plugin;
-	public InventarioKillstreaks(PaintballBattle plugin) {
+	public KillstreaksInventory(PaintballBattle plugin) {
 		this.plugin = plugin;
 	}
 	
@@ -52,11 +54,11 @@ public class InventarioKillstreaks{
 			for(String key : config.getConfigurationSection("killstreaks_items").getKeys(false)) {
 				ItemStack item = ItemsUtils.creaItem(config, "killstreaks_items."+key);
 				
-				Killstreak k = j.getKillstreak(key);
+				PaintballKillstreak k = j.getKillstreak(key);
 				if(k != null) {
 					ItemMeta meta = item.getItemMeta();
 					List<String> lore = new ArrayList<String>();
-					lore.add(ChatColor.translateAlternateColorCodes('&', messages.getString("killstreakCurrentlyActive").replace("%time%", k.getTiempo()+"")));
+					lore.add(ChatColor.translateAlternateColorCodes('&', messages.getString("killstreakCurrentlyActive").replace("%time%", k.getTime()+"")));
 					meta.setLore(lore);
 					item.setItemMeta(meta);
 				}
