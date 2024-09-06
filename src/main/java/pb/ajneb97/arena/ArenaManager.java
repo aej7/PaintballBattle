@@ -32,7 +32,7 @@ import pb.ajneb97.logic.CooldownKillstreaks;
 import pb.ajneb97.logic.CooldownManager;
 import pb.ajneb97.player.PaintballTeam;
 import pb.ajneb97.player.PaintballHat;
-import pb.ajneb97.database.PaintballPlayerDAO;
+import pb.ajneb97.database.PaintballPlayerRepository;
 import pb.ajneb97.player.PaintballPerk;
 import pb.ajneb97.configuration.PaintballPlayerSavedData;
 import pb.ajneb97.database.MySql;
@@ -302,7 +302,7 @@ public class ArenaManager {
 
 	private static void updateTeamLives(PaintballTeam paintballTeam, FileConfiguration shop) {
 		for (pb.ajneb97.logic.PaintballPlayer paintballPlayer : paintballTeam.getPlayers().values()) {
-			int extraLivesPerkLevel = PaintballPlayerDAO.getPerkLevel(paintballPlayer.getPlayer(), "extra_lives");
+			int extraLivesPerkLevel = PaintballPlayerRepository.getPerkLevel(paintballPlayer.getPlayer(), "extra_lives");
 			if (extraLivesPerkLevel > 0) {
 				String line = shop.getStringList("perks_upgrades.extra_lives").get(extraLivesPerkLevel - 1);
 				String[] sep = line.split(";");
@@ -445,7 +445,7 @@ public class ArenaManager {
 				givePlayerEquipment(player,0);
 			}
 
-			int initialKillcoinsPerkLevel = PaintballPlayerDAO.getPerkLevel(paintballPlayer.getPlayer(), "initial_killcoins");
+			int initialKillcoinsPerkLevel = PaintballPlayerRepository.getPerkLevel(paintballPlayer.getPlayer(), "initial_killcoins");
 			if(initialKillcoinsPerkLevel != 0) {
 				String line = shop.getStringList("perks_upgrades.initial_killcoins").get(initialKillcoinsPerkLevel-1);
 				String[] sep = line.split(";");
@@ -460,7 +460,7 @@ public class ArenaManager {
 	
 	@SuppressWarnings("unchecked")
 	public static void putHat(PaintballArena paintballArena, PaintballPlayer paintballPlayer, FileConfiguration config, FileConfiguration messages) {
-		ArrayList<PaintballHat> paintballHats = PaintballPlayerDAO.getHats(paintballPlayer.getPlayer());
+		ArrayList<PaintballHat> paintballHats = PaintballPlayerRepository.getHats(paintballPlayer.getPlayer());
 		for(PaintballHat paintballHat : paintballHats) {
 			if(paintballHat.isEquipped()) {
 				paintballPlayer.setSelectedHat(paintballHat.getName());
@@ -868,7 +868,7 @@ public class ArenaManager {
 			
 		jugadorAtacante.aumentarAsesinatos();
 		int cantidadCoinsGanados = OthersUtils.coinsGanados(jugadorAtacante.getPlayer(), config);
-		int nivelExtraKillCoins = PaintballPlayerDAO.getPerkLevel(jugadorAtacante.getPlayer(), "extra_killcoins");
+		int nivelExtraKillCoins = PaintballPlayerRepository.getPerkLevel(jugadorAtacante.getPlayer(), "extra_killcoins");
 		if(nivelExtraKillCoins != 0) {
 			String linea = plugin.getShop().getStringList("perks_upgrades.extra_killcoins").get(nivelExtraKillCoins-1);
 			String[] sep = linea.split(";");

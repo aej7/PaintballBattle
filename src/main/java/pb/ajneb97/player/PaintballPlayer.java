@@ -2,7 +2,6 @@ package pb.ajneb97.player;
 
 import org.bukkit.entity.Player;
 import pb.ajneb97.configuration.PaintballPlayerSavedData;
-import pb.ajneb97.enums.HatState;
 
 import java.util.Map;
 import java.util.UUID;

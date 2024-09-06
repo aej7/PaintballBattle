@@ -16,7 +16,7 @@ import org.bukkit.inventory.meta.ItemMeta;
 import net.md_5.bungee.api.ChatColor;
 import pb.ajneb97.PaintballBattle;
 import pb.ajneb97.player.PaintballHat;
-import pb.ajneb97.database.PaintballPlayerDAO;
+import pb.ajneb97.database.PaintballPlayerRepository;
 import pb.ajneb97.database.MySql;
 import pb.ajneb97.player.PaintballPlayer;
 import pb.ajneb97.utils.ItemsUtils;
@@ -32,7 +32,7 @@ public class HatsInventory implements Listener{
 	public static void createInventory(Player player, PaintballBattle plugin) {
 		FileConfiguration config = plugin.getConfig();
 		Inventory inv = Bukkit.createInventory(null, 27, ChatColor.translateAlternateColorCodes('&', config.getString("hats_inventory_title")));
-		ArrayList<PaintballHat> paintballHats = PaintballPlayerDAO.getHats(player);
+		ArrayList<PaintballHat> paintballHats = PaintballPlayerRepository.getHats(player);
 		int slot = 0;
 		if(paintballHats.isEmpty()) {
 			ItemStack item = ItemsUtils.creaItem(config, "hats_items.no_hats");
@@ -92,7 +92,7 @@ public class HatsInventory implements Listener{
 				final org.bukkit.entity.Player jugador = (org.bukkit.entity.Player) event.getWhoClicked();
 				event.setCancelled(true);
 				if(event.getClickedInventory().equals(jugador.getOpenInventory().getTopInventory())) {
-					ArrayList<PaintballHat> paintballHats = PaintballPlayerDAO.getHats(jugador);
+					ArrayList<PaintballHat> paintballHats = PaintballPlayerRepository.getHats(jugador);
 					ItemStack item = event.getCurrentItem();
 					if(item.hasItemMeta() && item.getItemMeta().hasDisplayName()) {
 						if(event.getSlot() == 26) {
@@ -116,7 +116,7 @@ public class HatsInventory implements Listener{
 							ItemMeta metaConfig = itemConfig.getItemMeta();
 							if(item.getType().equals(itemConfig.getType()) && meta.getDisplayName().equals(metaConfig.getDisplayName())) {
 								//Seleccionar hat
-								if(PaintballPlayerDAO.hasHatSelected(jugador, h.getName())) {
+								if(PaintballPlayerRepository.hasHatSelected(jugador, h.getName())) {
 									jugador.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("hatAlreadySelected")));
 									return;
 								}

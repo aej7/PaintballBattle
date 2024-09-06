@@ -1,7 +1,7 @@
 package pb.ajneb97.player;
 
 public interface IPaintballStats {
-
+  
   int getWins();
   void setWins(int wins);
 

@@ -15,7 +15,10 @@ import pb.ajneb97.enums.HatState;
 import pb.ajneb97.player.PaintballHat;
 import pb.ajneb97.player.PaintballPerk;
 import pb.ajneb97.player.PaintballPlayer;
+import pb.ajneb97.player.PaintballStats;
 
+
+//TODO add a PaintballPlayerDAO object to hold the database manipulation and loading outside of the Mysql class
 public class MySql {
 
 	public static boolean isEnabled(final FileConfiguration config) {
@@ -366,18 +369,19 @@ public class MySql {
 		
 		public static PaintballPlayer getJugador(PaintballBattle plugin, String name){
 			try {
-				PreparedStatement statement = plugin.getDatabaseConnection().getConnection().prepareStatement("SELECT * FROM "+plugin.getDatabaseConnection().getTablePlayers()+" WHERE (Global_Data=1 AND Name=?)");
+				PreparedStatement statement = plugin.getDatabaseConnection().getConnection().prepareStatement("SELECT * FROM " + plugin.getDatabaseConnection().getTablePlayers() + " WHERE (Global_Data=1 AND Name=?)");
 				statement.setString(1, name);
-				ResultSet resultado = statement.executeQuery();	
-				while(resultado.next()){			
-					int wins = resultado.getInt("Win");
-					int loses = resultado.getInt("Lose");
-					int ties = resultado.getInt("Tie");
-					int kills = resultado.getInt("Kills");
-					int coins = resultado.getInt("Coins");
-					PaintballPlayer p = new PaintballPlayer(name,"",wins,loses,ties,kills,coins,null,null);
+				ResultSet result = statement.executeQuery();
+				//TODO wtf is this??? while(result.next()){
+					int wins = result.getInt("Win");
+					int losses = result.getInt("Lose");
+					int ties = result.getInt("Tie");
+					int kills = result.getInt("Kills");
+					PaintballStats stats = new PaintballStats(wins, losses, ties, kills);
+					int coins = result.getInt("Coins");
+					PaintballPlayerRepository playerDAO = new PaintballPlayerRepository(name, stats);
 					return p;
-				}		
+				//}
 			} catch (SQLException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -386,20 +390,20 @@ public class MySql {
 		}
 		
 		public static ArrayList<PaintballPlayer> getPlayerDataMonthly(PaintballBattle plugin){
-			
 			ArrayList<PaintballPlayer> paintballPlayers = new ArrayList<PaintballPlayer>();
 			Calendar calendar = Calendar.getInstance();
 			Date date = new Date();
 			calendar.setTime(date);
-			int mes = calendar.get(Calendar.MONTH);
-			int año = calendar.get(Calendar.YEAR);
+			int month = calendar.get(Calendar.MONTH);
+			int year = calendar.get(Calendar.YEAR);
+
 			try {
-				PreparedStatement statement = plugin.getDatabaseConnection().getConnection().prepareStatement("SELECT * FROM "+plugin.getDatabaseConnection().getTablePlayers()+" WHERE (Year="+año+" AND Month="+mes+" AND Global_Data=0)");
+				PreparedStatement statement = plugin.getDatabaseConnection().getConnection().prepareStatement("SELECT * FROM " + plugin.getDatabaseConnection().getTablePlayers()+" WHERE (Year=" + year + " AND Month=" + month + " AND Global_Data=0)");
 				ResultSet resultado = statement.executeQuery();	
 				while(resultado.next()){
 					String name = resultado.getString("Name");
 					if(!containsPlayer(paintballPlayers,name)) {
-						int[] stats = getStatsTotalesMonthly(plugin,name,mes,año);
+						int[] stats = getStatsTotalesMonthly(plugin,name,month,year);
 						PaintballPlayer p = new PaintballPlayer(name,"",stats[0],stats[1],stats[2],stats[3],0,null,null);
 						paintballPlayers.add(p);
 					}	

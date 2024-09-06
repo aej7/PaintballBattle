@@ -33,7 +33,7 @@ import net.milkbowl.vault.economy.Economy;
 
 import pb.ajneb97.api.ExpansionPaintballBattle;
 import pb.ajneb97.player.PaintballHat;
-import pb.ajneb97.database.PaintballPlayerDAO;
+import pb.ajneb97.database.PaintballPlayerRepository;
 import pb.ajneb97.player.PaintballPerk;
 import pb.ajneb97.configuration.PlayerConfig;
 import pb.ajneb97.database.DatabaseConnection;
@@ -124,7 +124,7 @@ public class PaintballBattle extends JavaPlugin {
     topHologramAdmin = new TopHologramAdmin(this);
     topHologramAdmin.scheduledUpdateHolograms();
 
-    PaintballPlayerDAO api = new PaintballPlayerDAO(this);
+    PaintballPlayerRepository api = new PaintballPlayerRepository(this);
     if(Bukkit.getPluginManager().getPlugin("PlaceholderAPI") != null){
       new ExpansionPaintballBattle(this).register();
     }

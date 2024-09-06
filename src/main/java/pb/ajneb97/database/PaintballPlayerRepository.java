@@ -12,11 +12,11 @@ import pb.ajneb97.player.PaintballHat;
 import pb.ajneb97.player.PaintballPerk;
 import pb.ajneb97.player.PaintballPlayer;
 
-public class PaintballPlayerDAO {
+public class PaintballPlayerRepository {
 
 	private static PaintballBattle plugin;
 	
-	public PaintballPlayerDAO(PaintballBattle plugin) {
+	public PaintballPlayerRepository(PaintballBattle plugin) {
 		this.plugin = plugin;
 	}
 	
@@ -36,6 +36,7 @@ public class PaintballPlayerDAO {
 	public static void addCoins(org.bukkit.entity.Player player, int coins) {
 		if(!MySql.isEnabled(plugin.getConfig())) {
 			PaintballPlayer j = plugin.getPlayer(player.getName());
+			plugin.
 			if(j != null) {
 				j.increaseCoinsByAmount(coins);
 			}

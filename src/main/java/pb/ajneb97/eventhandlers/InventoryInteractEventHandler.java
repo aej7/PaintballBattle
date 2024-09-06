@@ -19,7 +19,7 @@ import net.md_5.bungee.api.ChatColor;
 import net.milkbowl.vault.economy.Economy;
 import pb.ajneb97.PaintballBattle;
 import pb.ajneb97.player.PaintballHat;
-import pb.ajneb97.database.PaintballPlayerDAO;
+import pb.ajneb97.database.PaintballPlayerRepository;
 import pb.ajneb97.player.PaintballPerk;
 import pb.ajneb97.database.PaintballPlayer;
 import pb.ajneb97.database.MySql;
@@ -98,7 +98,7 @@ public class InventoryInteractEventHandler implements Listener{
 					meta.setDisplayName(ChatColor.translateAlternateColorCodes('&', meta.getDisplayName().replace("%coins%", tokenManager.getTokens(jugador).orElse(0)+"")));
 				}
 				else {
-					meta.setDisplayName(ChatColor.translateAlternateColorCodes('&', meta.getDisplayName().replace("%coins%", PaintballPlayerDAO.getCoins(jugador)+"")));
+					meta.setDisplayName(ChatColor.translateAlternateColorCodes('&', meta.getDisplayName().replace("%coins%", PaintballPlayerRepository.getCoins(jugador)+"")));
 				}
 				
 				item.setItemMeta(meta);
@@ -119,7 +119,7 @@ public class InventoryInteractEventHandler implements Listener{
 			inv.setItem(i, item);
 		}
 		
-		int levelExtraLives = PaintballPlayerDAO.getPerkLevel(jugador, "extra_lives");
+		int levelExtraLives = PaintballPlayerRepository.getPerkLevel(jugador, "extra_lives");
 		List<String> lista = shop.getStringList("perks_upgrades.extra_lives");
 		for(int i=0;i<lista.size();i++) {
 			if(i > levelExtraLives-1) {
@@ -143,7 +143,7 @@ public class InventoryInteractEventHandler implements Listener{
 			}
 		}
 		
-		int levelInitialKillcoins = PaintballPlayerDAO.getPerkLevel(jugador, "initial_killcoins");
+		int levelInitialKillcoins = PaintballPlayerRepository.getPerkLevel(jugador, "initial_killcoins");
 		lista = shop.getStringList("perks_upgrades.initial_killcoins");
 		for(int i=0;i<lista.size();i++) {
 			if(i > levelInitialKillcoins-1) {
@@ -167,7 +167,7 @@ public class InventoryInteractEventHandler implements Listener{
 			}
 		}
 		
-		int levelExtraKillcoins = PaintballPlayerDAO.getPerkLevel(jugador, "extra_killcoins");
+		int levelExtraKillcoins = PaintballPlayerRepository.getPerkLevel(jugador, "extra_killcoins");
 		lista = shop.getStringList("perks_upgrades.extra_killcoins");
 		for(int i=0;i<lista.size();i++) {
 			if(i > levelExtraKillcoins-1) {
@@ -238,7 +238,7 @@ public class InventoryInteractEventHandler implements Listener{
 								String[] separados = lista.get(i).split(";");
 								if(slot == slotSum+i) {
 									//Si es nivel 1 significa que el proximo nivel a desbloquear es el slot 10
-									int nivel = PaintballPlayerDAO.getPerkLevel(jugador, perk);
+									int nivel = PaintballPlayerRepository.getPerkLevel(jugador, perk);
 									int slotADesbloquear = nivel+slotSum;
 									if(slot == slotADesbloquear) {
 										int cost = Integer.valueOf(separados[1]);
@@ -261,12 +261,12 @@ public class InventoryInteractEventHandler implements Listener{
 											tokenManager.removeTokens(jugador, cost);
 										}
 										else {
-											dinero = PaintballPlayerDAO.getCoins(jugador);
+											dinero = PaintballPlayerRepository.getCoins(jugador);
 											if(dinero < cost) {
 												jugador.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("buyNoSufficientCoins"))); 
 												return;
 											}
-											PaintballPlayerDAO.removeCoins(jugador, cost);
+											PaintballPlayerRepository.removeCoins(jugador, cost);
 										}
 										if(MySql.isEnabled(config)) {
 											MySql.setPerkJugadorAsync(plugin, jugador.getUniqueId().toString(), jugador.getName(), perk, nivel+1);
@@ -327,13 +327,13 @@ public class InventoryInteractEventHandler implements Listener{
 					meta.setDisplayName(ChatColor.translateAlternateColorCodes('&', meta.getDisplayName().replace("%coins%", tokenManager.getTokens(jugador).orElse(0)+"")));
 				}
 				else {
-					meta.setDisplayName(ChatColor.translateAlternateColorCodes('&', meta.getDisplayName().replace("%coins%", PaintballPlayerDAO.getCoins(jugador)+"")));
+					meta.setDisplayName(ChatColor.translateAlternateColorCodes('&', meta.getDisplayName().replace("%coins%", PaintballPlayerRepository.getCoins(jugador)+"")));
 				}
 				
 				item.setItemMeta(meta);
 			}else {
 				if(!key.equals("go_to_menu")) {
-					if(PaintballPlayerDAO.hasHat(jugador, key)) {
+					if(PaintballPlayerRepository.hasHat(jugador, key)) {
 						ItemMeta meta = item.getItemMeta();
 						List<String> lore = shop.getStringList("hats_items."+key+".bought_lore");
 						for(int i=0;i<lore.size();i++) {
@@ -393,7 +393,7 @@ public class InventoryInteractEventHandler implements Listener{
 								}
 							}else if(!key.equals("coins_info")) {
 								if(slot == Integer.valueOf(shop.getString("hats_items."+key+".slot"))) {
-									if(PaintballPlayerDAO.hasHat(jugador, key)) {
+									if(PaintballPlayerRepository.hasHat(jugador, key)) {
 										jugador.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("hatErrorBought"))); 
 										return;
 									}
@@ -417,12 +417,12 @@ public class InventoryInteractEventHandler implements Listener{
 										tokenManager.removeTokens(jugador, cost);
 									}
 									else {
-										dinero = PaintballPlayerDAO.getCoins(jugador);
+										dinero = PaintballPlayerRepository.getCoins(jugador);
 										if(dinero < cost) {
 											jugador.sendMessage(prefix+ChatColor.translateAlternateColorCodes('&', messages.getString("buyNoSufficientCoins"))); 
 											return;
 										}
-										PaintballPlayerDAO.removeCoins(jugador, cost);
+										PaintballPlayerRepository.removeCoins(jugador, cost);
 									}
 									
 									if(MySql.isEnabled(config)) {
